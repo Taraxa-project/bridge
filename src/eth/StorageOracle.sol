@@ -44,7 +44,7 @@ contract StorageOracle {
 
         // The path for a storage value is the hash of its slot
         bytes32 proofPath = keccak256(abi.encodePacked(slot));
-        return bytes32(storageProof.verify(root, proofPath).toRlpItem().toUintStrict());
+        return bytes32(storageProof.verify(root, proofPath).toRlpItem().toUint());
     }
 
     function verifySlot(
@@ -66,7 +66,7 @@ contract StorageOracle {
 
         // The path for a storage value is the hash of its slot
         bytes32 proofPath = keccak256(abi.encodePacked(slot));
-        return bytes32(storageProof.verify(root, proofPath).toRlpItem().toUintStrict());
+        return bytes32(storageProof.verify(root, proofPath).toRlpItem().toUint());
     }
 
     /**
