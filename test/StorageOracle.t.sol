@@ -7,20 +7,6 @@ import {RLP} from "../src/lib/RLP.sol";
 import "../src/lib/RLPEncode.sol";
 
 contract StorageOracleTest is Test {
-    function bytesToHex(bytes memory buffer) public pure returns (string memory) {
-        // Fixed buffer size for hexadecimal convertion
-        bytes memory converted = new bytes(buffer.length * 2);
-
-        bytes memory _base = "0123456789abcdef";
-
-        for (uint256 i = 0; i < buffer.length; i++) {
-            converted[i * 2] = _base[uint8(buffer[i]) / _base.length];
-            converted[i * 2 + 1] = _base[uint8(buffer[i]) % _base.length];
-        }
-
-        return string(abi.encodePacked("0x", converted));
-    }
-
     StorageOracle oracle;
     address constant account = 0xdB7d6AB1f17c6b31909aE466702703dAEf9269Cf;
     bytes32 constant stateRoot = 0x328a4bffe51a6928b12fb0336a8aa64c534aa7331fc59bcbe304b4472ca02398;

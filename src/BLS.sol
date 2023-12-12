@@ -6,9 +6,11 @@ pragma experimental ABIEncoderV2;
 import "./lib/BLS/BN256G1.sol";
 import "./lib/BLS/BN256G2.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "forge-std/console.sol";
+import "./lib/Utils.sol";
 
 contract BLS {
-    using SafeMath for uint256;
+    using Math for uint256;
 
     struct G1Point {
         uint256 x;
@@ -58,6 +60,9 @@ contract BLS {
         public
         returns (bool)
     {
+        console.log("publicKey: %s", utils.bytesToHex(abi.encode(publicKey)));
+        console.log("_message: %s", utils.bytesToHex(_message));
+        console.log("signature: %s", utils.bytesToHex(abi.encode(signature)));
         return verifyPairing(hashToG1(_message), publicKey) && verifyPairing(signature, getG2Generator());
     }
 }
