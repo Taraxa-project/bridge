@@ -7,3 +7,4 @@
 [submodule "lib/elliptic-curve-solidity"]
 	path = lib/elliptic-curve-solidity
 	url = https://github.com/witnet/elliptic-curve-solidity
+	branch = master
