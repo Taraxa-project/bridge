@@ -17,6 +17,10 @@ contract TaraBridgeToken {
         state = new TaraBridgeState(_epoch);
     }
 
+    function epoch() public view returns (uint256) {
+        return state.epoch();
+    }
+
     function addAmount(address account, uint256 amount) public {
         state.addAmount(account, amount);
     }

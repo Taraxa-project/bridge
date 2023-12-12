@@ -27,7 +27,7 @@ contract EthBridgeToken {
     }
 
     function submitState(SharedStructs.TokenEpochState calldata state) public {
-        require(finalized, "Previous state not finalized");
+        require(finalized || block_number == 0, "Previous state not finalized");
         epoch_state = state;
         block_number = block.number;
         finalized = false;
@@ -46,14 +46,32 @@ contract EthBridgeToken {
     function finalizeStateProof(SharedStructs.TokenEpochState calldata state, SharedStructs.Proof calldata proof)
         public
     {
-        submitState(state);
-        finalizeWithProof(proof);
+        require(proof.state.epoch == proof.state.epoch, "Invalid epoch");
+        require(proof.root_hash == keccak256(abi.encode(proof.state)), "Invalid root hash");
+        bytes32 state_hash = keccak256(abi.encode(state));
+        // TODO: check exact position from the proof
+        bool found = false;
+        for (uint256 i = 0; i < proof.state.hashes.length; i++) {
+            if (proof.state.hashes[i] == state_hash) {
+                found = true;
+                break;
+            }
+        }
+        require(found, "State hash not found in proof");
+
+        finalized = true;
+        finalized_state_hash = state_hash;
+        epoch++;
+        for (uint256 i = 0; i < state.transfers.length; i++) {
+            require(token.transfer(state.transfers[i].account, state.transfers[i].amount), "Transfer failed");
+        }
     }
 
     function finalizeWithProof(SharedStructs.Proof calldata proof) public {
         require(epoch == proof.state.epoch, "Invalid epoch");
         require(proof.root_hash == keccak256(abi.encode(proof.state)), "Invalid root hash");
         bytes32 state_hash = getStateHash();
+        // TODO: check exact position from the proof
         bool found = false;
         for (uint256 i = 0; i < proof.state.hashes.length; i++) {
             if (proof.state.hashes[i] == state_hash) {
@@ -65,10 +83,16 @@ contract EthBridgeToken {
         _finalize(state_hash);
     }
 
-    function _processState() internal {
-        SharedStructs.TokenEpochState memory state = epoch_state;
+    function _processState(SharedStructs.TokenEpochState calldata state) internal {
         for (uint256 i = 0; i < state.transfers.length; i++) {
             bool res = token.transfer(state.transfers[i].account, state.transfers[i].amount);
+            require(res, "Transfer failed");
+        }
+    }
+
+    function _processLocalState() internal {
+        for (uint256 i = 0; i < epoch_state.transfers.length; i++) {
+            bool res = token.transfer(epoch_state.transfers[i].account, epoch_state.transfers[i].amount);
             require(res, "Transfer failed");
         }
     }
@@ -76,6 +100,6 @@ contract EthBridgeToken {
     function _finalize(bytes32 state_hash) internal {
         finalized = true;
         finalized_state_hash = state_hash;
-        _processState();
+        _processLocalState();
     }
 }

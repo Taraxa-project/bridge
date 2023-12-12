@@ -6,8 +6,8 @@ import "./BridgeToken.sol";
 
 contract TaraBridge {
     // IERC20 token;
-    mapping(bytes32 => TaraBridgeToken) tokens;
-    mapping(bytes32 => address) tokenAddress;
+    mapping(bytes32 => TaraBridgeToken) public tokens;
+    mapping(bytes32 => address) public tokenAddress;
     bytes32[] tokens_names;
     address constant tara = address(0);
     mapping(uint256 => bytes32) finalized_state_hash;
@@ -62,7 +62,8 @@ contract TaraBridge {
         for (uint256 i = 0; i < tokens_names.length; i++) {
             hashes[i] = tokens[tokens_names[i]].finalize();
         }
-        finalized_state_hash[current_epoch] = keccak256(abi.encode(hashes));
+        SharedStructs.BridgeState memory state = SharedStructs.BridgeState(current_epoch, hashes);
+        finalized_state_hash[current_epoch] = keccak256(abi.encode(state));
         current_epoch++;
     }
 

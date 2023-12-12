@@ -3,22 +3,23 @@
 pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
-import "../lib/ILightClient.sol";
+import "../lib/IBridgeLightClient.sol";
 import "../lib/TestERC20.sol";
 import "./BridgeToken.sol";
 
 contract EthBridge {
-    mapping(bytes32 => EthBridgeToken) tokens;
+    mapping(bytes32 => EthBridgeToken) public tokens;
     mapping(bytes32 => address) tokenAddress;
-    BridgeLightClient light_client;
-    TestERC20 public tara;
+    bytes32[] public token_names;
+    IBridgeLightClient light_client;
+    IERC20 public tara;
 
-    constructor() {
-        light_client = BridgeLightClient(address(0));
-        tara = new TestERC20();
-        tara.mint(1000000000000000000000000000);
+    constructor(IERC20 _tara, IBridgeLightClient _light_client) {
+        light_client = _light_client;
+        tara = _tara;
         tokens["TARA"] = new EthBridgeToken("TARA", address(tara));
         tokenAddress["TARA"] = address(tara);
+        token_names.push("TARA");
     }
 
     function registerToken(address _token, bytes32 name) public {
@@ -32,7 +33,7 @@ contract EthBridge {
         tokens[name].submitState(state);
     }
 
-    function submitStates(bytes32[] calldata token_names, SharedStructs.TokenEpochState[] calldata states) public {
+    function submitStates(SharedStructs.TokenEpochState[] calldata states) public {
         require(token_names.length == states.length, "Lengths of token_names and states arrays don't match");
         for (uint256 i = 0; i < states.length; i++) {
             submitTokenState(token_names[i], states[i]);
@@ -41,16 +42,23 @@ contract EthBridge {
 
     function finalizeEpoch(SharedStructs.StateWithProof calldata state_with_proof) public {
         // get bridge root from light client and compare it (it should be proved there)
-        // require(
-        //     state_with_proof.proof.root_hash == light_client.getEpochBridgeRoot(state_with_proof.proof.state.epoch),
-        //     "Bridge root hash doesn't match"
-        // );
+        require(
+            state_with_proof.proof.root_hash == light_client.getEpochBridgeRoot(state_with_proof.proof.state.epoch),
+            "Bridge root hash doesn't match"
+        );
         // bytes32 state_hash = keccak256(abi.encode(state_with_proof.proof.state));
         // require(state_with_proof.proof.root_hash == state_hash, "Invalid root hash in proof");
 
         for (uint256 i = 0; i < state_with_proof.state.length; i++) {
             EthBridgeToken token = tokens[state_with_proof.proof.token_names[i]];
             token.finalizeStateProof(state_with_proof.state[i], state_with_proof.proof);
+        }
+    }
+
+    function finalize() public {
+        for (uint256 i = 0; i < token_names.length; i++) {
+            EthBridgeToken token = tokens[token_names[i]];
+            token.finalize();
         }
     }
 
