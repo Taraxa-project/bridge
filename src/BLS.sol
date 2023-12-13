@@ -1,68 +1,105 @@
-// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.17;
 
-pragma solidity >=0.6.12;
-pragma experimental ABIEncoderV2;
 
-import "./lib/BLS/BN256G1.sol";
-import "./lib/BLS/BN256G2.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "forge-std/console.sol";
-import "./lib/Utils.sol";
+import { Precompiled } from "./lib/BLS/Precompiled.sol";
+import { Fp2Operations } from "./lib/BLS/fieldOperations/Fp2Operations.sol";
+import { G1Operations } from "./lib/BLS/fieldOperations/G1Operations.sol";
+import { G2Operations } from "./lib/BLS/fieldOperations/G2Operations.sol";
 
-contract BLS {
-    using Math for uint256;
+/**
+ * @title SkaleVerifier
+ * @dev Contains verify function to perform BLS signature verification.
+ */
+contract SkaleVerifier {
+    using Fp2Operations for Fp2Operations.Fp2Point;
+    using G2Operations for Fp2Operations.G2Point;
 
-    struct G1Point {
-        uint256 x;
-        uint256 y;
-    }
 
-    struct G2Point {
-        uint256[2] x;
-        uint256[2] y;
-    }
-
-    function getG1Generator() internal pure returns (G1Point memory) {
-        return G1Point(BN256G1.GX, BN256G1.GY);
-    }
-
-    function getG2Generator() internal pure returns (G2Point memory) {
-        return G2Point([BN256G2.G2_NEG_X_RE, BN256G2.G2_NEG_X_IM], [BN256G2.G2_NEG_Y_RE, BN256G2.G2_NEG_Y_IM]);
-    }
-
-    function hashToG1(bytes calldata _msg) internal pure returns (G1Point memory) {
-        (uint256 x, uint256 y) = BN256G1.hashToTryAndIncrement(_msg);
-        return G1Point(x, y);
-    }
-
-    function verifyPairing(G1Point memory point1, G2Point memory point2) internal returns (bool) {
-        G1Point memory g1Generator = getG1Generator();
-        G2Point memory g2Generator = getG2Generator();
-        return BN256G1.bn256CheckPairing(
-            [
-                point1.x,
-                point1.y,
-                point2.x[0],
-                point2.x[1],
-                point2.y[0],
-                point2.y[1],
-                g1Generator.x,
-                g1Generator.y,
-                g2Generator.x[0],
-                g2Generator.x[1],
-                g2Generator.y[0],
-                g2Generator.y[1]
-            ]
-        );
-    }
-
-    function verifySignature(G2Point calldata publicKey, bytes calldata _message, G1Point calldata signature)
-        public
-        returns (bool)
+    /**
+    * @dev Verifies a BLS signature.
+    *
+    * Requirements:
+    *
+    * - Signature is in G1.
+    * - Hash is in G1.
+    * - G2.one in G2.
+    * - Public Key in G2.
+    */
+    function verify(
+        Fp2Operations.Fp2Point calldata signature,
+        bytes32 hash,
+        uint256 counter,
+        uint256 hashA,
+        uint256 hashB,
+        Fp2Operations.G2Point calldata publicKey
+    )
+        external
+        view
+        returns (bool valid)
     {
-        console.log("publicKey: %s", utils.bytesToHex(abi.encode(publicKey)));
-        console.log("_message: %s", utils.bytesToHex(_message));
-        console.log("signature: %s", utils.bytesToHex(abi.encode(signature)));
-        return verifyPairing(hashToG1(_message), publicKey) && verifyPairing(signature, getG2Generator());
+        require(G1Operations.checkRange(signature), "Signature is not valid");
+        if (!_checkHashToGroupWithHelper(
+            hash,
+            counter,
+            hashA,
+            hashB
+            )
+        )
+        {
+            return false;
+        }
+
+        uint256 newSignB = G1Operations.negate(signature.b);
+        require(G1Operations.isG1Point(signature.a, newSignB), "Sign not in G1");
+        require(G1Operations.isG1Point(hashA, hashB), "Hash not in G1");
+
+        Fp2Operations.G2Point memory g2 = G2Operations.getG2Generator();
+        require(
+            G2Operations.isG2(publicKey),
+            "Public Key not in G2"
+        );
+
+        return Precompiled.bn256Pairing({
+            x1: signature.a,
+            y1: newSignB,
+            a1: g2.x.b,
+            b1: g2.x.a,
+            c1: g2.y.b,
+            d1: g2.y.a,
+            x2: hashA,
+            y2: hashB,
+            a2: publicKey.x.b,
+            b2: publicKey.x.a,
+            c2: publicKey.y.b,
+            d2: publicKey.y.a
+        });
+    }
+
+    function _checkHashToGroupWithHelper(
+        bytes32 hash,
+        uint256 counter,
+        uint256 hashA,
+        uint256 hashB
+    )
+        private
+        pure
+        returns (bool valid)
+    {
+        if (counter > 100) {
+            return false;
+        }
+        uint256 xCoord = uint(hash) % Fp2Operations.P;
+        xCoord = (xCoord + counter) % Fp2Operations.P;
+
+        uint256 ySquared = addmod(
+            mulmod(mulmod(xCoord, xCoord, Fp2Operations.P), xCoord, Fp2Operations.P),
+            3,
+            Fp2Operations.P
+        );
+        if (hashB < Fp2Operations.P / 2 || mulmod(hashB, hashB, Fp2Operations.P) != ySquared || xCoord != hashA) {
+            return false;
+        }
+
+        return true;
     }
 }
