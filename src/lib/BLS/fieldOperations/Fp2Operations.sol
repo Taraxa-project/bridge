@@ -41,7 +41,7 @@ library Fp2Operations {
 
     uint256 constant public P = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
-    function inverseFp2(Fp2Point memory value) internal view returns (Fp2Point memory result) {
+    function inverseFp2(Fp2Point memory value) public view returns (Fp2Point memory result) {
         uint256 p = P;
         uint256 t0 = mulmod(value.a, value.a, p);
         uint256 t1 = mulmod(value.b, value.b, p);
@@ -57,7 +57,7 @@ library Fp2Operations {
     }
 
     function addFp2(Fp2Point memory value1, Fp2Point memory value2)
-        internal
+        public
         pure
         returns (Fp2Point memory result)
     {
@@ -65,14 +65,14 @@ library Fp2Operations {
     }
 
     function scalarMulFp2(Fp2Point memory value, uint256 scalar)
-        internal
+        public
         pure
         returns (Fp2Point memory result)
     {
         return Fp2Point({ a: mulmod(scalar, value.a, P), b: mulmod(scalar, value.b, P) });
     }
 
-    function minusFp2(Fp2Point memory diminished, Fp2Point memory subtracted) internal pure
+    function minusFp2(Fp2Point memory diminished, Fp2Point memory subtracted) public pure
         returns (Fp2Point memory difference)
     {
         uint256 p = P;
@@ -92,7 +92,7 @@ library Fp2Operations {
         Fp2Point memory value1,
         Fp2Point memory value2
     )
-        internal
+        public
         pure
         returns (Fp2Point memory result)
     {
@@ -113,7 +113,7 @@ library Fp2Operations {
             p);
     }
 
-    function squaredFp2(Fp2Point memory value) internal pure returns (Fp2Point memory result) {
+    function squaredFp2(Fp2Point memory value) public pure returns (Fp2Point memory result) {
         uint256 p = P;
         uint256 ab = mulmod(value.a, value.b, p);
         uint256 multiplication = mulmod(addmod(value.a, value.b, p), addmod(value.a, mulmod(p - 1, value.b, p), p), p);
@@ -124,7 +124,7 @@ library Fp2Operations {
         Fp2Point memory value1,
         Fp2Point memory value2
     )
-        internal
+        public
         pure
         returns (bool result)
     {

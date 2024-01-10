@@ -27,6 +27,7 @@ pragma solidity ^0.8.17;
 import { Fp2Operations } from "./Fp2Operations.sol";
 
 library G2Operations {
+    using Fp2Operations for Fp2Operations.Fp2Point;
 
     function doubleG2(Fp2Operations.G2Point memory value)
         internal
