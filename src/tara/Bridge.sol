@@ -16,7 +16,7 @@ contract TaraBridge {
     constructor() {
         current_epoch = 0;
         bytes32 name = "TARA";
-        tokens[name] = new TaraBridgeToken(address(0), current_epoch);
+        tokens[name] = new TaraBridgeToken(name, address(0), current_epoch);
         tokenAddress[name] = address(0);
         tokens_names.push(name);
     }
@@ -29,7 +29,7 @@ contract TaraBridge {
     function registerToken(address _token, bytes32 name) public {
         // add some commission for registration here? or should bit be some pool to compensate for processing fees?
         tokenAddress[name] = _token;
-        tokens[name] = new TaraBridgeToken(_token, current_epoch);
+        tokens[name] = new TaraBridgeToken(name, _token, current_epoch);
         tokens_names.push(name);
     }
 

@@ -7,14 +7,20 @@ import "./TokenState.sol";
 import "../lib/SharedStructs.sol";
 
 contract TaraBridgeToken {
+    bytes32 name;
     IERC20 token;
     TaraBridgeState state;
     TaraBridgeState finalized_state;
     bytes32 finalized_state_hash;
 
-    constructor(address _token, uint256 _epoch) {
+    constructor(bytes32 _name, address _token, uint256 _epoch) {
+        name = _name;
         token = IERC20(_token);
         state = new TaraBridgeState(_epoch);
+    }
+
+    function getName() public view returns (bytes32) {
+        return name;
     }
 
     function epoch() public view returns (uint256) {
