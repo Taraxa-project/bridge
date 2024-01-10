@@ -6,10 +6,11 @@ import { Fp2Operations } from "../src/lib/BLS/fieldOperations/Fp2Operations.sol"
 import "../src/BLS.sol";
 
 contract BLSTest is Test {
-    SkaleVerifier bls;
+    using G2Operations for Fp2Operations.G2Point;
+    BLSVerifier bls;
 
     function setUp() public {
-        bls = new SkaleVerifier();
+        bls = new BLSVerifier();
     }
 
     function test_BLS() public {
@@ -30,5 +31,34 @@ contract BLSTest is Test {
 
         bool result = bls.verify(signautre, hash, 1, hashA, hashB, pubkey);
         assertEq(result, true);
+    }
+
+    function test_BLS_aggregation() public {
+        Fp2Operations.G2Point memory pubkeyA;
+        pubkeyA.x.a = 10085763193951079571124204877271349841825212543578455106832984683800437372529;
+        pubkeyA.x.b = 2493703640078278725573304888002016216250188520438554549917539359285769821223;
+        pubkeyA.y.a = 10079556850410272985107970528424818710040096982615043901621977589091818365491;
+        pubkeyA.y.b = 21881758683182466918733002975729560313015306238717506140801196668871812190369;
+
+        Fp2Operations.G2Point memory pubkeyB;
+        pubkeyB.x.a = 6471569225617245431422193872628339252875862498238807636108363216900884972055;
+        pubkeyB.x.b = 9068378997311385779675581535950620808614678028596154602853642347303479686748;
+        pubkeyB.y.a = 12473540520308979604109250807127805516107574094227858432709927168697897081326;
+        pubkeyB.y.b = 14054221154462569674857118049749929549435993506768796321378036680993629149169;
+
+
+        Fp2Operations.G2Point memory pubkeyAggr;
+        pubkeyB.x.a = 20192760469831279940375831156263999933831564376681383921183496459063478531384;
+        pubkeyB.x.b = 2713462787447301251128804949503127568969451877152719602544373878847839901252;
+        pubkeyB.y.a = 13441625985011916750172793244794825561566336428777659894848469848414331771884;
+        pubkeyB.y.b = 6924907831611358794066764874278790532283152488419984212230248400902160369509;
+
+
+        Fp2Operations.G2Point[] memory publicKeys = new Fp2Operations.G2Point[](2);
+        publicKeys[0] = pubkeyA;
+        publicKeys[1] = pubkeyB;
+
+        Fp2Operations.G2Point memory result = bls.aggregatePublicKey(publicKeys);
+        assertEq(result.isEqual(pubkeyAggr), true);
     }
 }
