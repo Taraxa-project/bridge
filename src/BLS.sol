@@ -1,30 +1,28 @@
 pragma solidity ^0.8.17;
 
-
-import { Precompiled } from "./lib/BLS/Precompiled.sol";
-import { Fp2Operations } from "./lib/BLS/fieldOperations/Fp2Operations.sol";
-import { G1Operations } from "./lib/BLS/fieldOperations/G1Operations.sol";
-import { G2Operations } from "./lib/BLS/fieldOperations/G2Operations.sol";
+import {Precompiled} from "./lib/BLS/Precompiled.sol";
+import {Fp2Operations} from "./lib/BLS/fieldOperations/Fp2Operations.sol";
+import {G1Operations} from "./lib/BLS/fieldOperations/G1Operations.sol";
+import {G2Operations} from "./lib/BLS/fieldOperations/G2Operations.sol";
 
 /**
  * @title SkaleVerifier
  * @dev Contains verify function to perform BLS signature verification.
  */
 contract SkaleVerifier {
-    using Fp2Operations for Fp2Operations.Fp2Point;
+    // using Fp2Operations for Fp2Operations.Fp2Point;
     using G2Operations for Fp2Operations.G2Point;
 
-
     /**
-    * @dev Verifies a BLS signature.
-    *
-    * Requirements:
-    *
-    * - Signature is in G1.
-    * - Hash is in G1.
-    * - G2.one in G2.
-    * - Public Key in G2.
-    */
+     * @dev Verifies a BLS signature.
+     *
+     * Requirements:
+     *
+     * - Signature is in G1.
+     * - Hash is in G1.
+     * - G2.one in G2.
+     * - Public Key in G2.
+     */
     function verify(
         Fp2Operations.Fp2Point calldata signature,
         bytes32 hash,
@@ -32,20 +30,9 @@ contract SkaleVerifier {
         uint256 hashA,
         uint256 hashB,
         Fp2Operations.G2Point calldata publicKey
-    )
-        external
-        view
-        returns (bool valid)
-    {
+    ) external view returns (bool valid) {
         require(G1Operations.checkRange(signature), "Signature is not valid");
-        if (!_checkHashToGroupWithHelper(
-            hash,
-            counter,
-            hashA,
-            hashB
-            )
-        )
-        {
+        if (!_checkHashToGroupWithHelper(hash, counter, hashA, hashB)) {
             return false;
         }
 
@@ -54,10 +41,7 @@ contract SkaleVerifier {
         require(G1Operations.isG1Point(hashA, hashB), "Hash not in G1");
 
         Fp2Operations.G2Point memory g2 = G2Operations.getG2Generator();
-        require(
-            G2Operations.isG2(publicKey),
-            "Public Key not in G2"
-        );
+        require(G2Operations.isG2(publicKey), "Public Key not in G2");
 
         return Precompiled.bn256Pairing({
             x1: signature.a,
@@ -75,12 +59,7 @@ contract SkaleVerifier {
         });
     }
 
-    function _checkHashToGroupWithHelper(
-        bytes32 hash,
-        uint256 counter,
-        uint256 hashA,
-        uint256 hashB
-    )
+    function _checkHashToGroupWithHelper(bytes32 hash, uint256 counter, uint256 hashA, uint256 hashB)
         private
         pure
         returns (bool valid)
@@ -88,14 +67,11 @@ contract SkaleVerifier {
         if (counter > 100) {
             return false;
         }
-        uint256 xCoord = uint(hash) % Fp2Operations.P;
+        uint256 xCoord = uint256(hash) % Fp2Operations.P;
         xCoord = (xCoord + counter) % Fp2Operations.P;
 
-        uint256 ySquared = addmod(
-            mulmod(mulmod(xCoord, xCoord, Fp2Operations.P), xCoord, Fp2Operations.P),
-            3,
-            Fp2Operations.P
-        );
+        uint256 ySquared =
+            addmod(mulmod(mulmod(xCoord, xCoord, Fp2Operations.P), xCoord, Fp2Operations.P), 3, Fp2Operations.P);
         if (hashB < Fp2Operations.P / 2 || mulmod(hashB, hashB, Fp2Operations.P) != ySquared || xCoord != hashA) {
             return false;
         }

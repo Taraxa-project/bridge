@@ -49,8 +49,8 @@ contract StorageOracle {
 
     function verifySlot(
         address account,
-        bytes calldata accountStateProof,
         bytes32 stateRoot,
+        bytes calldata accountStateProof,
         uint256 slot,
         bytes calldata storageProof
     ) external pure returns (bytes32) {

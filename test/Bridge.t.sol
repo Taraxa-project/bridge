@@ -28,7 +28,7 @@ contract BridgeTest is Test {
         taraBridge.transferTara{value: value}();
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
-        bridgeLightClient.setEpochBridgeRoot(state.proof.state.epoch, state.proof.root_hash);
+        bridgeLightClient.setBridgeRoot(state.proof.root_hash);
         ethBridge.finalizeEpoch(state);
         assertEq(taraToken.balanceOf(address(this)), value);
     }
@@ -57,7 +57,7 @@ contract BridgeTest is Test {
         }
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
-        bridgeLightClient.setEpochBridgeRoot(state.proof.state.epoch, state.proof.root_hash);
+        bridgeLightClient.setBridgeRoot(state.proof.root_hash);
         for (uint256 i = 0; i < count; i++) {
             assertEq(state.state[0].transfers[i].account, addrs[i]);
             assertEq(state.state[0].transfers[i].amount, value);
@@ -84,7 +84,7 @@ contract BridgeTest is Test {
         taraBridge.transferToken("TEST", 1 ether);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
-        bridgeLightClient.setEpochBridgeRoot(state.proof.state.epoch, state.proof.root_hash);
+        bridgeLightClient.setBridgeRoot(state.proof.root_hash);
         assertEq(ethTestToken.balanceOf(address(this)), 0);
         ethBridge.finalizeEpoch(state);
         assertEq(ethTestToken.balanceOf(address(this)), 1 ether);

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
-import "../lib/IBridgeLightClient.sol";
+import "../lib/ILightClient.sol";
 import "../lib/TestERC20.sol";
 import "./BridgeToken.sol";
 
@@ -11,10 +11,10 @@ contract EthBridge {
     mapping(bytes32 => EthBridgeToken) public tokens;
     mapping(bytes32 => address) tokenAddress;
     bytes32[] public token_names;
-    IBridgeLightClient light_client;
+    ILightClient public light_client;
     IERC20 public tara;
 
-    constructor(IERC20 _tara, IBridgeLightClient _light_client) {
+    constructor(IERC20 _tara, ILightClient _light_client) {
         light_client = _light_client;
         tara = _tara;
         tokens["TARA"] = new EthBridgeToken("TARA", address(tara));
@@ -31,8 +31,7 @@ contract EthBridge {
     function finalizeEpoch(SharedStructs.StateWithProof calldata state_with_proof) public {
         // get bridge root from light client and compare it (it should be proved there)
         require(
-            state_with_proof.proof.root_hash == light_client.getEpochBridgeRoot(state_with_proof.proof.state.epoch),
-            "Bridge root hash doesn't match"
+            state_with_proof.proof.root_hash == light_client.getFinalizedBridgeRoot(), "Bridge root hash doesn't match"
         );
         bytes32 state_hash = keccak256(abi.encode(state_with_proof.proof.state));
         require(state_with_proof.proof.root_hash == state_hash, "Invalid root hash in proof");
