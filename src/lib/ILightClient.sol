@@ -4,6 +4,6 @@ pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
 
-interface ILightClient {
+interface IBridgeLightClient {
     function getFinalizedBridgeRoot() external view returns (bytes32);
 }

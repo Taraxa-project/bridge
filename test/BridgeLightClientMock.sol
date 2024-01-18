@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import "../src/lib/ILightClient.sol";
 
-contract BridgeLightClientMock is ILightClient {
+contract BridgeLightClientMock is IBridgeLightClient {
     bytes32 bridgeRoot;
 
     function setBridgeRoot(bytes32 _bridgeRoot) public {

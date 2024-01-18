@@ -33,7 +33,7 @@ struct FinalizedBlock {
     PillarBlock block;
 }
 
-contract TaraClient is ILightClient {
+contract TaraClient is IBridgeLightClient {
     PillarBlockWithChanges public pending;
     FinalizedBlock public finalized;
     mapping(address => int96) public validators;
