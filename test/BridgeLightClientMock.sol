@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import "../src/lib/IBridgeLightClient.sol";
+import "../src/lib/ILightClient.sol";
 
 contract BridgeLightClientMock is IBridgeLightClient {
-    mapping(uint256 => bytes32) epochBridgeRoot;
+    bytes32 bridgeRoot;
 
-    function setEpochBridgeRoot(uint256 _epoch, bytes32 _epochBridgeRoot) public {
-        epochBridgeRoot[_epoch] = _epochBridgeRoot;
+    function setBridgeRoot(bytes32 _bridgeRoot) public {
+        bridgeRoot = _bridgeRoot;
     }
 
-    function getEpochBridgeRoot(uint256 _epoch) public view override returns (bytes32) {
-        return epochBridgeRoot[_epoch];
+    function getFinalizedBridgeRoot() public view override returns (bytes32) {
+        return bridgeRoot;
     }
 }
