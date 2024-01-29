@@ -6,10 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface IERC20MintableBurnable is IERC20 {
     /**
      * @dev Mints a specified amount of tokens and assigns them to the specified account.
-     * @param account The address to which the tokens will be minted.
-     * @param value The amount of tokens to be minted.
+     * @param receiver The address to which the tokens will be minted.
+     * @param amount The amount of tokens to be minted.
      */
-    function mintTo(address account, uint256 value) external;
+    function mintTo(address receiver, uint256 amount) external;
     /**
      * @dev Destroys a `value` amount of tokens from `account`, deducting from
      * the caller's allowance.

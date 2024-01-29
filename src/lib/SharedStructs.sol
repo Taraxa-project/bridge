@@ -8,7 +8,6 @@ library SharedStructs {
         bytes state;
     }
 
-    // BridgeState
     struct ContractStateHash {
         address contractAddress;
         bytes32 stateHash;

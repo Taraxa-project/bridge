@@ -11,6 +11,10 @@ contract ERC20MintingConnector is TokenConnectorBase {
         TokenConnectorBase(address(token), other_network_address)
     {}
 
+    /**
+     * @dev Applies the given state to the token contract by mint.
+     * @param _state The state to be applied.
+     */
     function applyState(bytes calldata _state) public override {
         ERC20State memory s = abi.decode(_state, (ERC20State));
         for (uint256 i = 0; i < s.transfers.length; i++) {
@@ -18,11 +22,12 @@ contract ERC20MintingConnector is TokenConnectorBase {
         }
     }
 
+    /**
+     * @dev Burns a specified amount of tokens to transfer them to the other network.
+     * @notice The amount of tokens to burn must be approved by the sender
+     * @param amount The amount of tokens to burn.
+     */
     function burn(uint256 amount) public payable {
-        require(
-            IERC20MintableBurnable(token).allowance(msg.sender, address(this)) == amount,
-            "allowance not equal to amount"
-        );
         IERC20MintableBurnable(token).burnFrom(msg.sender, amount);
         state.addAmount(msg.sender, amount);
     }
