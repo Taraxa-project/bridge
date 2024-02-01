@@ -35,7 +35,7 @@ contract EthClientWrapper is IBridgeLightClient {
     function processBridgeRoot(bytes[] memory account_proof, bytes[] memory storage_proof) external {
         bytes32 stateRoot = client.merkle_root();
         bytes memory br = StorageProof.verify(stateRoot, ethBridgeAddress, account_proof, bridgeRootKey, storage_proof);
-        require(bridgeRoot.length == 32, "invalid bridge root");
+        require(bridgeRoot.length == 32, "invalid bridge root(length)");
         bridgeRoot = bytes32(br);
     }
 

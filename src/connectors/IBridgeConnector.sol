@@ -11,9 +11,10 @@ import "../lib/SharedStructs.sol";
 interface IBridgeConnector {
     /**
      * @dev Finalizes the bridge operation and returns a bytes32 value hash
+     * @param epoch The epoch to be finalized
      * @return hash of the finalized state
      */
-    function finalize() external returns (bytes32);
+    function finalize(uint256 epoch) external returns (bytes32);
 
     /**
      * @dev Retrieves the finalized state of the bridgeable contract.

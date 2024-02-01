@@ -16,9 +16,9 @@ contract ERC20MintingConnector is TokenConnectorBase {
      * @param _state The state to be applied.
      */
     function applyState(bytes calldata _state) public override {
-        ERC20State memory s = abi.decode(_state, (ERC20State));
-        for (uint256 i = 0; i < s.transfers.length; i++) {
-            IERC20MintableBurnable(token).mintTo(s.transfers[i].account, s.transfers[i].amount);
+        Transfer[] memory transfers = deserializeTransfers(_state);
+        for (uint256 i = 0; i < transfers.length; i++) {
+            IERC20MintableBurnable(token).mintTo(transfers[i].account, transfers[i].amount);
         }
     }
 

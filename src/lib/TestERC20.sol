@@ -4,7 +4,6 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "../connectors/IERC20MintableBurnable.sol";
-import "forge-std/console.sol";
 
 contract TestERC20 is ERC20, IERC20MintableBurnable {
     constructor(string memory symbol) ERC20(symbol, symbol) {}

@@ -3,6 +3,7 @@
 pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
+import "../lib/Constants.sol";
 import "./IBridgeConnector.sol";
 import "./TokenState.sol";
 
@@ -15,18 +16,28 @@ abstract contract TokenConnectorBase is IBridgeConnector {
     constructor(address _token, address other_network_address) {
         otherNetworkAddress = other_network_address;
         token = _token;
-        state = new TokenState(0);
+        state = new TokenState(1);
     }
 
     function epoch() public view returns (uint256) {
         return state.epoch();
     }
 
-    function finalize() public override returns (bytes32) {
+    function deserializeTransfers(bytes memory data) internal pure returns (Transfer[] memory) {
+        return abi.decode(data, (Transfer[]));
+    }
+
+    function finalizedSerializedTransfers() internal view returns (bytes memory) {
+        Transfer[] memory transfers = finalizedState.getTransfers();
+        return abi.encode(transfers);
+    }
+
+    function finalize(uint256 epoch_to_finalize) public override returns (bytes32) {
+        require(epoch_to_finalize == state.epoch(), "Cannot finalize different epoch");
         // TODO: destruct the state before overwriting it?
         finalizedState = state;
-        state = new TokenState(finalizedState.epoch() + 1);
-        return keccak256(abi.encode(finalizedState.getState()));
+        state = new TokenState(epoch_to_finalize + 1);
+        return keccak256(finalizedSerializedTransfers());
     }
 
     /**
@@ -38,7 +49,7 @@ abstract contract TokenConnectorBase is IBridgeConnector {
             revert("No finalized state");
         }
 
-        return abi.encode(finalizedState.getState());
+        return finalizedSerializedTransfers();
     }
 
     /**

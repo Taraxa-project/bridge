@@ -5,13 +5,10 @@ import {Test, console} from "forge-std/Test.sol";
 import "../src/eth/TaraClient.sol";
 
 contract TaraClientTest is Test {
-    bytes32 hash_to_sign;
     TaraClient client;
     PillarBlockWithChanges currentBlock;
 
     function setUp() public {
-        hash_to_sign = keccak256(abi.encodePacked("hello world"));
-
         WeightChange[] memory initial = new WeightChange[](10);
         for (uint256 i = 0; i < initial.length; i++) {
             bytes32 pk = keccak256(abi.encodePacked(i));
@@ -39,7 +36,7 @@ contract TaraClientTest is Test {
 
     function test_blockAccept() public {
         client.finalizeBlock(currentBlock, getSignatures(200));
-        (bytes32 blockHash, uint256 finalizedAt, PillarBlock memory b) = client.finalized();
+        (bytes32 blockHash, uint256 finalizedAt,) = client.finalized();
         assertEq(blockHash, client.getBlockHash(currentBlock));
         assertEq(finalizedAt, block.number);
     }
