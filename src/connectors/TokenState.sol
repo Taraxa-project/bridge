@@ -22,10 +22,6 @@ contract TokenState {
         epoch = _epoch;
     }
 
-    function getBalance(address account) public view returns (uint256) {
-        return balances[account];
-    }
-
     function addAmount(address account, uint256 amount) public {
         if (balances[account] == 0) {
             accounts.push(account);

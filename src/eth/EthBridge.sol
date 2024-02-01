@@ -23,6 +23,10 @@ contract EthBridge {
         tokenAddresses.push(address(tara));
     }
 
+    /**
+     * @dev Registers a contract with the EthBridge by providing a connector contract.
+     * @param connector The address of the connector contract.
+     */
     function registerContract(IBridgeConnector connector) public {
         contracts[connector.getContractAddress()] = connector;
         taraEth[connector.getBridgedContractAddress()] = connector.getContractAddress();

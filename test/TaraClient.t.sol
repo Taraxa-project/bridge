@@ -21,13 +21,19 @@ contract TaraClientTest is Test {
         currentBlock = PillarBlockWithChanges(PillarBlock(1, bytes32(0), bytes32(0), bytes32(0)), new WeightChange[](0));
     }
 
-    function getSignatures(uint256 count) public view returns (Signature[] memory signatures) {
+    function test_signatures() public {
+        uint32 signatures_count = 200;
+        int256 weight = client.getSignaturesWeight(client.getBlockHash(currentBlock), getSignatures(signatures_count));
+        assertEq(weight, int256(uint256(signatures_count)));
+    }
+
+    function getSignatures(uint32 count) public view returns (Signature[] memory signatures) {
         signatures = new Signature[](count);
-        for (uint256 i = 0; i < count; i++) {
+        for (uint32 i = 0; i < count; i++) {
             Signature memory sig;
-            bytes32 pk = keccak256(abi.encodePacked(i));
+            bytes32 pk = keccak256(abi.encodePacked(uint256(i)));
             (sig.v, sig.r, sig.s) = vm.sign(uint256(pk), client.getBlockHash(currentBlock));
-            signatures[i] = sig;
+            signatures[uint256(i)] = sig;
         }
     }
 
@@ -48,13 +54,9 @@ contract TaraClientTest is Test {
         client.processValidatorChanges(changes);
     }
 
-    function test_signatures() public {
-        int256 weight = client.checkSignatures(client.getBlockHash(currentBlock), getSignatures(200));
-        console.log("weight", uint256(weight));
-    }
-
     function test_optimisticAccept() public {
         vm.roll(100);
+        currentBlock.block.prevHash = client.getBlockHash(client.getPending());
         client.addPendingBlock(currentBlock);
         vm.roll(110);
         PillarBlockWithChanges memory b2 = PillarBlockWithChanges(
