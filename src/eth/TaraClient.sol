@@ -66,6 +66,7 @@ contract TaraClient is IBridgeLightClient {
      * @dev Sets the vote weight threshold value.
      * @param _threshold The new threshold value to be set.
      */
+    // TODO: do we need this to be called by some "owner"?
     function setThreshold(int256 _threshold) public {
         threshold = _threshold;
     }

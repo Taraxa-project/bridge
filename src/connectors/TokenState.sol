@@ -9,10 +9,6 @@ struct Transfer {
     uint256 amount;
 }
 
-struct ERC20State {
-    Transfer[] transfers;
-}
-
 contract TokenState {
     uint256 public epoch;
     address[] accounts;
@@ -36,10 +32,5 @@ contract TokenState {
             transfers[i] = transfer;
         }
         return transfers;
-    }
-
-    function getState() public view returns (ERC20State memory ret) {
-        ret.transfers = getTransfers();
-        return ret;
     }
 }

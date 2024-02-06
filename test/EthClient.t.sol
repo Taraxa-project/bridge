@@ -64,4 +64,20 @@ contract EthClientTest is Test {
         bytes32 bridgeRoot = 0x2a6bdefe81a8e9d36fb1a8f8fb0b3e6e5fb45aa05b8542441a4c552b51e13fa7;
         assertEq(client.getFinalizedBridgeRoot(), bridgeRoot);
     }
+
+    function test_bridgeRootProofFail() public {
+        bytes32 stateRoot = 0x0fd6262cbcd27159356419dca723374bb7073bd7402b35f7461704e077a02b48;
+        lightClient.set_merkle_root(stateRoot);
+
+        bytes[] memory accountProof = new bytes[](1);
+        accountProof[0] =
+            hex"f8669d3b673e571fbd6665e87cf8fcba9fb5ed2dcaba58ab6ccf9542818163bbb846f8440180a08aa1155cba880c632d39005ac99902ef3c058f1f78e211654f597e8f5082583ea0f96223f375264fd32d76bb95755f6bd4ee7efe35fbf2daeaa2b76c3421df08ee";
+
+        bytes[] memory storageProof = new bytes[](1);
+        storageProof[0] =
+            hex"f844a120290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563a1a02a6bdefe81a8e9d36fb1a8f8fb0b3e6e5fb45aa05b8542441a4c552b51e13fa7";
+
+        vm.expectRevert("MerkleTrie: invalid root hash");
+        client.processBridgeRoot(accountProof, storageProof);
+    }
 }

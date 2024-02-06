@@ -2,12 +2,13 @@
 pragma solidity ^0.8.17;
 
 import "../src/lib/ILightClient.sol";
+import "../src/lib/SharedStructs.sol";
 
 contract BridgeLightClientMock is IBridgeLightClient {
     bytes32 bridgeRoot;
 
-    function setBridgeRoot(bytes32 _bridgeRoot) public {
-        bridgeRoot = _bridgeRoot;
+    function setBridgeRoot(SharedStructs.StateWithProof memory state_with_proof) public {
+        bridgeRoot = SharedStructs.getBridgeRoot(state_with_proof.state.epoch, state_with_proof.state_hashes);
     }
 
     function getFinalizedBridgeRoot() public view override returns (bytes32) {
