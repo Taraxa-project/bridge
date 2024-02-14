@@ -3,54 +3,89 @@
 pragma solidity ^0.8.17;
 
 import "../lib/ILightClient.sol";
+import "forge-std/console.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-struct WeightChange {
-    address validator;
-    int96 change;
-}
-
-struct PillarBlock {
-    uint256 number;
-    bytes32 prevHash;
-    bytes32 stateRoot;
-    bytes32 bridgeRoot;
-}
-
-struct PillarBlockWithChanges {
-    PillarBlock block;
-    WeightChange[] validatorChanges;
-}
-
-struct Signature {
+struct CompactSignature {
     bytes32 r;
-    bytes32 s;
-    uint8 v;
+    bytes32 vs;
 }
 
-struct FinalizedBlock {
-    bytes32 blockHash;
-    uint256 finalizedAt;
-    PillarBlock block;
+library PillarBlock {
+    struct WeightChange {
+        address validator;
+        int96 change;
+    }
+
+    struct FinalizationData {
+        uint256 number;
+        bytes32 stateRoot;
+        bytes32 bridgeRoot;
+        bytes32 prevHash;
+    }
+
+    struct WithChanges {
+        FinalizationData block;
+        WeightChange[] validatorChanges;
+    }
+
+    struct FinalizedBlock {
+        bytes32 blockHash;
+        FinalizationData block;
+        uint256 finalizedAt;
+    }
+
+    struct Vote {
+        uint256 period;
+        bytes32 block_hash;
+    }
+
+    struct SignedVote {
+        Vote vote;
+        CompactSignature signature;
+    }
+
+    function fromBytes(bytes memory b) public pure returns (WithChanges memory) {
+        return abi.decode(b, (WithChanges));
+    }
+
+    function getHash(bytes memory b) public pure returns (bytes32) {
+        return keccak256(b);
+    }
+
+    function getHash(WithChanges memory b) public pure returns (bytes32) {
+        return keccak256(abi.encode(b));
+    }
+
+    function getHash(Vote memory b) public pure returns (bytes32) {
+        return keccak256(abi.encode(b));
+    }
+
+    function getHash(SignedVote memory b) public pure returns (bytes32) {
+        return keccak256(abi.encode(b));
+    }
 }
 
 contract TaraClient is IBridgeLightClient {
-    PillarBlockWithChanges pending;
+    PillarBlock.WithChanges pending;
+    bytes32 public pendingHash;
     bool pendingFinalized;
 
-    FinalizedBlock public finalized;
+    PillarBlock.FinalizedBlock public finalized;
     mapping(address => int96) public validators;
     int256 totalWeight;
     int256 threshold;
     uint256 delay;
 
-    constructor(WeightChange[] memory _validatorChanges, int256 _threshold, uint256 _delay, bytes32 _initialHash) {
+    constructor(PillarBlock.WeightChange[] memory _validatorChanges, int256 _threshold, uint256 _delay) {
         processValidatorChanges(_validatorChanges);
         threshold = _threshold;
         delay = _delay;
-        finalized = FinalizedBlock(_initialHash, 0, PillarBlock(0, 0, 0, 0));
+
+        pendingHash = PillarBlock.getHash(pending);
     }
 
-    function getPending() public view returns (PillarBlockWithChanges memory) {
+    function getPending() public view returns (PillarBlock.WithChanges memory) {
         return pending;
     }
 
@@ -71,15 +106,11 @@ contract TaraClient is IBridgeLightClient {
         threshold = _threshold;
     }
 
-    // function recover(bytes32 hash, Signature memory sig) public pure returns (address) {
-    //     return ecrecover(hash, sig.v, sig.r, sig.s);
-    // }
-
     /**
      * @dev Processes the changes in validator weights.
      * @param validatorChanges An array of WeightChange structs representing the changes in validator weights.
      */
-    function processValidatorChanges(WeightChange[] memory validatorChanges) public {
+    function processValidatorChanges(PillarBlock.WeightChange[] memory validatorChanges) public {
         for (uint256 i = 0; i < validatorChanges.length; i++) {
             validators[validatorChanges[i].validator] += validatorChanges[i].change;
             totalWeight += validatorChanges[i].change;
@@ -87,25 +118,13 @@ contract TaraClient is IBridgeLightClient {
     }
 
     /**
-     * @dev Returns the hash of a PillarBlockWithChanges struct.
-     * @param b The PillarBlockWithChanges struct.
-     * @return The hash of the PillarBlockWithChanges struct.
-     */
-    function getBlockHash(PillarBlockWithChanges memory b) public pure returns (bytes32) {
-        return keccak256(
-            abi.encodePacked(
-                b.block.number, b.block.prevHash, b.block.stateRoot, b.block.bridgeRoot, abi.encode(b.validatorChanges)
-            )
-        );
-    }
-
-    /**
      * @dev Finalizes a block by verifying the signatures and processing the changes.
      * @param b PillarBlockWithChanges.
      * @param signatures An array of Signature structs representing the signatures of the block.
      */
-    function finalizeBlock(PillarBlockWithChanges memory b, Signature[] memory signatures) public {
-        _finalizeBlock(b, signatures);
+
+    function finalizeBlock(bytes memory b, CompactSignature[] memory signatures) public {
+        _finalizeBlock(PillarBlock.fromBytes(b), PillarBlock.getHash(b), signatures);
     }
 
     /**
@@ -114,46 +133,49 @@ contract TaraClient is IBridgeLightClient {
      * @param signatures An array of signatures.
      * @return weight The total weight of the signatures.
      */
-    function getSignaturesWeight(bytes32 h, Signature[] memory signatures) public view returns (int256 weight) {
+    function getSignaturesWeight(bytes32 h, CompactSignature[] memory signatures) public view returns (int256 weight) {
         for (uint256 i = 0; i < signatures.length; i++) {
-            address signer = ecrecover(h, signatures[i].v, signatures[i].r, signatures[i].s);
+            address signer = ECDSA.recover(h, signatures[i].r, signatures[i].vs);
             weight += validators[signer];
         }
     }
 
-    function setPending(PillarBlockWithChanges memory b) internal {
+    function setPending(PillarBlock.WithChanges memory b, bytes32 ph) internal {
+        pendingHash = ph;
         pending = b;
         pendingFinalized = false;
     }
 
     /**
      * @dev Adds a pending block
-     * @param b The PillarBlockWithChanges struct representing the pending block.
+     * @param b RLP encoded PillarBlockWithChanges struct representing the pending block.
      */
-    function addPendingBlock(PillarBlockWithChanges memory b) public {
+    function addPendingBlock(bytes memory b) public {
+        PillarBlock.WithChanges memory pb = PillarBlock.fromBytes(b);
+        bytes32 ph = PillarBlock.getHash(b);
+
         require(block.number >= finalized.finalizedAt + delay, "The delay isn't passed yet");
 
         if (pendingFinalized) {
-            require(finalized.block.number + 1 == b.block.number, "Block number + 1 != finalized block number");
-            require(b.block.prevHash == finalized.blockHash, "Block prevHash != finalized block hash");
-            setPending(b);
+            require(finalized.block.number + 1 == pb.block.number, "Block number + 1 != finalized block number");
+            require(pb.block.prevHash == finalized.blockHash, "Block prevHash != finalized block hash");
+            setPending(pb, ph);
             return;
         }
 
-        require(pending.block.number + 1 == b.block.number, "Block number + 1 != pending block number");
-        bytes32 pending_hash = getBlockHash(pending);
-        require(b.block.prevHash == pending_hash, "Block prevHash != pending block hash");
-        finalized = FinalizedBlock(pending_hash, block.number, pending.block);
+        require(pending.block.number + 1 == pb.block.number, "Block number + 1 != pending block number");
+        require(pb.block.prevHash == pendingHash, "Block prevHash != pending block hash");
+        finalized = PillarBlock.FinalizedBlock(pendingHash, pending.block, block.number);
         processValidatorChanges(pending.validatorChanges);
-        setPending(b);
+        setPending(pb, ph);
     }
 
     /**
      * @dev Finalizes a pending block by providing the required signatures.
      * @param signatures The array of signatures required to finalize the block.
      */
-    function finalizePendingBlock(Signature[] memory signatures) public {
-        _finalizeBlock(pending, signatures);
+    function finalizePendingBlock(CompactSignature[] memory signatures) public {
+        _finalizeBlock(pending, pendingHash, signatures);
         pendingFinalized = true;
     }
 
@@ -162,13 +184,14 @@ contract TaraClient is IBridgeLightClient {
      * @param b The PillarBlockWithChanges struct containing the block data and validators changes.
      * @param signatures An array of signatures.
      */
-    function _finalizeBlock(PillarBlockWithChanges memory b, Signature[] memory signatures) internal {
+    function _finalizeBlock(PillarBlock.WithChanges memory b, bytes32 h, CompactSignature[] memory signatures)
+        internal
+    {
         require(finalized.block.number + 1 == b.block.number, "Pending block should have number 1 greater than latest");
         require(b.block.prevHash == finalized.blockHash, "Pending block must be child of latest");
-        bytes32 h = getBlockHash(b);
         int256 weight = getSignaturesWeight(h, signatures);
         require(weight >= threshold, "Not enough weight");
         processValidatorChanges(b.validatorChanges);
-        finalized = FinalizedBlock(h, block.number, b.block);
+        finalized = PillarBlock.FinalizedBlock(h, b.block, block.number);
     }
 }
