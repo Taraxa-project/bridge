@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 import {Test, console} from "forge-std/Test.sol";
 import "../src/eth/TaraClient.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "./Utils.sol";
 
 contract TaraClientTest is Test {
     TaraClient client;
@@ -21,12 +22,6 @@ contract TaraClientTest is Test {
         );
     }
 
-    function test_signatures() public {
-        uint32 signatures_count = 200;
-        int256 weight = client.getSignaturesWeight(PillarBlock.getHash(currentBlock), getSignatures(signatures_count));
-        assertEq(weight, int256(uint256(signatures_count)));
-    }
-
     function getCompactSig(bytes32 pk, bytes32 h) public pure returns (CompactSignature memory) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(uint256(pk), h);
         if (v >= 27) {
@@ -40,37 +35,16 @@ contract TaraClientTest is Test {
         signatures = new CompactSignature[](count);
         for (uint32 i = 0; i < count; i++) {
             bytes32 pk = keccak256(abi.encodePacked(uint256(i)));
-            CompactSignature memory sig = getCompactSig(pk, PillarBlock.getHash(currentBlock));
+            CompactSignature memory sig = getCompactSig(pk, PillarBlock.getVoteHash(currentBlock));
             signatures[uint256(i)] = sig;
         }
     }
 
-    function bytesToHex(bytes32 buffer) public pure returns (string memory) {
-        // Fixed buffer size for hexadecimal convertion
-        bytes memory converted = new bytes(buffer.length * 2);
-
-        bytes memory _base = "0123456789abcdef";
-
-        for (uint256 i = 0; i < buffer.length; i++) {
-            converted[i * 2] = _base[uint8(buffer[i]) / _base.length];
-            converted[i * 2 + 1] = _base[uint8(buffer[i]) % _base.length];
-        }
-
-        return string(abi.encodePacked("0x", converted));
-    }
-
-    function bytesToHex(bytes memory buffer) public pure returns (string memory) {
-        // Fixed buffer size for hexadecimal convertion
-        bytes memory converted = new bytes(buffer.length * 2);
-
-        bytes memory _base = "0123456789abcdef";
-
-        for (uint256 i = 0; i < buffer.length; i++) {
-            converted[i * 2] = _base[uint8(buffer[i]) / _base.length];
-            converted[i * 2 + 1] = _base[uint8(buffer[i]) % _base.length];
-        }
-
-        return string(abi.encodePacked("0x", converted));
+    function test_signatures() public {
+        uint32 signatures_count = 200;
+        int256 weight =
+            client.getSignaturesWeight(PillarBlock.getVoteHash(currentBlock), getSignatures(signatures_count));
+        assertEq(weight, int256(uint256(signatures_count)));
     }
 
     function test_blockAccept() public {
@@ -102,7 +76,7 @@ contract TaraClientTest is Test {
         client.addPendingBlock(abi.encode(b2));
 
         (bytes32 blockHash, PillarBlock.FinalizationData memory b, uint256 finalizedAt) = client.finalized();
-        assertEq(b.number, 1);
+        assertEq(b.period, 1);
         assertEq(blockHash, PillarBlock.getHash(currentBlock));
         assertEq(finalizedAt, block.number);
     }
@@ -122,7 +96,7 @@ contract TaraClientTest is Test {
         changes[9] = PillarBlock.WeightChange(address(0x8a35AcfbC15Ff81A39Ae7d344fD709f28e8600B4), 465876798678065667);
 
         for (uint256 i = 0; i < changes.length; i++) {
-            console.log(bytesToHex(keccak256(abi.encodePacked(i))));
+            console.log(utils.bytesToHex(keccak256(abi.encodePacked(i))));
         }
 
         PillarBlock.WithChanges memory b = PillarBlock.WithChanges(
@@ -130,10 +104,10 @@ contract TaraClientTest is Test {
         );
 
         bytes memory bb = abi.encode(b);
-        console.log("hex encoded ", bytesToHex(bb));
+        console.log("hex encoded ", utils.bytesToHex(bb));
         console.log(
             "hello: ",
-            bytesToHex(
+            utils.bytesToHex(
                 abi.encode(
                     hex"f9aad20feab5c2c3f0d9655fe22e65288d04b8faa925db55dc2d6b0390e8d1192ff5b95dcc5dad1ea0e0e3e96af4c569a76aad5b083dc91e53f4874ee5170d861c"
                 )
@@ -145,9 +119,10 @@ contract TaraClientTest is Test {
         assertEq(PillarBlock.getHash(bb), PillarBlock.getHash(bcb));
     }
 
-    function test_voteEncodeDecode() public {
-        PillarBlock.Vote memory vote = PillarBlock.Vote(1, keccak256(abi.encode(1)));
-        console.log("vote: ", bytesToHex(abi.encode(vote)));
+    function test_voteHash() public {
+        PillarBlock.Vote memory vote = PillarBlock.Vote(1, bytes32(0));
+        bytes32 hash = PillarBlock.getHash(vote);
+        assertEq(hash, keccak256(abi.encodePacked(uint256(1), bytes32(0))));
     }
 
     function test_decodeRecover() public {

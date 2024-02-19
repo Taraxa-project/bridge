@@ -18,7 +18,7 @@ library PillarBlock {
     }
 
     struct FinalizationData {
-        uint256 number;
+        uint256 period;
         bytes32 stateRoot;
         bytes32 bridgeRoot;
         bytes32 prevHash;
@@ -63,6 +63,14 @@ library PillarBlock {
 
     function getHash(SignedVote memory b) public pure returns (bytes32) {
         return keccak256(abi.encode(b));
+    }
+
+    function getVoteHash(WithChanges memory b) public pure returns (bytes32) {
+        return keccak256(abi.encode(b.block.period, getHash(b)));
+    }
+
+    function getVoteHash(uint256 period, bytes32 bh) public pure returns (bytes32) {
+        return keccak256(abi.encode(period, bh));
     }
 }
 
@@ -157,13 +165,13 @@ contract TaraClient is IBridgeLightClient {
         require(block.number >= finalized.finalizedAt + delay, "The delay isn't passed yet");
 
         if (pendingFinalized) {
-            require(finalized.block.number + 1 == pb.block.number, "Block number + 1 != finalized block number");
+            require(finalized.block.period + 1 == pb.block.period, "Block number + 1 != finalized block number");
             require(pb.block.prevHash == finalized.blockHash, "Block prevHash != finalized block hash");
             setPending(pb, ph);
             return;
         }
 
-        require(pending.block.number + 1 == pb.block.number, "Block number + 1 != pending block number");
+        require(pending.block.period + 1 == pb.block.period, "Block period + 1 != pending block period");
         require(pb.block.prevHash == pendingHash, "Block prevHash != pending block hash");
         finalized = PillarBlock.FinalizedBlock(pendingHash, pending.block, block.number);
         processValidatorChanges(pending.validatorChanges);
@@ -187,9 +195,9 @@ contract TaraClient is IBridgeLightClient {
     function _finalizeBlock(PillarBlock.WithChanges memory b, bytes32 h, CompactSignature[] memory signatures)
         internal
     {
-        require(finalized.block.number + 1 == b.block.number, "Pending block should have number 1 greater than latest");
+        require(finalized.block.period + 1 == b.block.period, "Pending block should have number 1 greater than latest");
         require(b.block.prevHash == finalized.blockHash, "Pending block must be child of latest");
-        int256 weight = getSignaturesWeight(h, signatures);
+        int256 weight = getSignaturesWeight(PillarBlock.getVoteHash(b.block.period, h), signatures);
         require(weight >= threshold, "Not enough weight");
         processValidatorChanges(b.validatorChanges);
         finalized = PillarBlock.FinalizedBlock(h, b.block, block.number);
