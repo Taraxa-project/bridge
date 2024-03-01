@@ -12,6 +12,11 @@ struct CompactSignature {
 }
 
 library PillarBlock {
+    /**
+     * Weight change coming from a validator
+     * Encapsulates the address of the validator
+     * and the weight of the validator vote(signature)
+     */
     struct WeightChange {
         address validator;
         int96 change;
@@ -86,9 +91,9 @@ contract TaraClient is IBridgeLightClient {
 
     PillarBlock.FinalizedBlock public finalized;
     mapping(address => int96) public validators;
-    int256 totalWeight;
-    int256 threshold;
-    uint256 delay;
+    int256 public totalWeight;
+    int256 public threshold;
+    uint256 public delay;
 
     constructor(
         PillarBlock.WeightChange[] memory _validatorChanges,

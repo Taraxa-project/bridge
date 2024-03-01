@@ -13,7 +13,11 @@ contract EthClientWrapper is IBridgeLightClient {
 
     bytes32 bridgeRoot;
 
-    constructor(BeaconLightClient _client, address _eth_bridge_address, bytes32 _bridge_root_key) {
+    constructor(
+        BeaconLightClient _client,
+        address _eth_bridge_address,
+        bytes32 _bridge_root_key
+    ) {
         ethBridgeAddress = _eth_bridge_address;
         bridgeRootKey = _bridge_root_key;
         client = _client;
@@ -32,9 +36,18 @@ contract EthClientWrapper is IBridgeLightClient {
      * @param account_proof The account proofs for the bridge root.
      * @param storage_proof The storage proofs for the bridge root.
      */
-    function processBridgeRoot(bytes[] memory account_proof, bytes[] memory storage_proof) external {
+    function processBridgeRoot(
+        bytes[] memory account_proof,
+        bytes[] memory storage_proof
+    ) external {
         bytes32 stateRoot = client.merkle_root();
-        bytes memory br = StorageProof.verify(stateRoot, ethBridgeAddress, account_proof, bridgeRootKey, storage_proof);
+        bytes memory br = StorageProof.verify(
+            stateRoot,
+            ethBridgeAddress,
+            account_proof,
+            bridgeRootKey,
+            storage_proof
+        );
         require(bridgeRoot.length == 32, "invalid bridge root(length)");
         bridgeRoot = bytes32(br);
     }

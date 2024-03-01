@@ -6,6 +6,15 @@ import "../src/eth/TaraClient.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./Utils.sol";
 
+/**
+ * @title Taraxa Client-side test contract
+ * @author @kstdl
+ * @notice Tests all relevant units of the TaraClient.sol contract
+ * Invariants:
+ *  - at any given time the total weight should be the sum of all individual pillar block  vote weights
+ *  - once a block is finalized, regardless of what method is called, it should stay finalized
+ *  - the finalizedBlock should always be registered before the next pending block
+ */
 contract TaraClientTest is Test {
     TaraClient client;
     PillarBlock.WithChanges currentBlock;
@@ -50,6 +59,16 @@ contract TaraClientTest is Test {
         }
     }
 
+    function getTotalWeight(
+        PillarBlock.WithChanges memory validatorBlock
+    ) public returns (int256 totalWeight) {
+        totalWeight = 0;
+        for (uint256 i = 0; i < validatorBlock.validatorChanges.length; i++) {
+            totalWeight += validatorBlock.validatorChanges[i].change;
+        }
+        return totalWeight;
+    }
+
     function test_signatures() public {
         uint32 signatures_count = 200;
         int256 weight = client.getSignaturesWeight(
@@ -77,7 +96,7 @@ contract TaraClientTest is Test {
         client.processValidatorChanges(changes);
     }
 
-    function test_optimisticAccept() public {
+    function invariant_optimisticAccept() public {
         vm.roll(100);
         currentBlock.block.prevHash = PillarBlock.getHash(client.getPending());
         client.addPendingBlock(abi.encode(currentBlock));
@@ -91,6 +110,8 @@ contract TaraClientTest is Test {
             ),
             new PillarBlock.WeightChange[](0)
         );
+        int256 totalWeightBefore = client.totalWeight();
+        int256 blockWeight = getTotalWeight(b2);
         client.addPendingBlock(abi.encode(b2));
 
         (
@@ -101,6 +122,31 @@ contract TaraClientTest is Test {
         assertEq(b.period, 1);
         assertEq(blockHash, PillarBlock.getHash(currentBlock));
         assertEq(finalizedAt, block.number);
+
+        // // Invariant tests - total weight should still be 200 + 0 + 0 + 0 = 200
+        assertEq(
+            client.totalWeight(),
+            totalWeightBefore + blockWeight,
+            "total weight should still be weight before + block weight"
+        );
+        console.log("total weight:", uint256(client.totalWeight()));
+        // Invariant tests - finalized block should stay finalized
+        (
+            bytes32 finalizedBlockHash,
+            PillarBlock.FinalizationData memory b2Block,
+            uint256 lastFinalizedAt
+        ) = client.finalized();
+        assertEq(
+            finalizedBlockHash,
+            PillarBlock.getHash(currentBlock),
+            "Finalized block should stay finalized"
+        );
+        assertEq(
+            lastFinalizedAt,
+            block.number,
+            "Finalized block should stay finalized"
+        );
+        assertEq(b2Block.period, 1, "Finalized block should stay finalized");
     }
 
     function test_blockEncodeDecode() public {
