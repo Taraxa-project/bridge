@@ -100,6 +100,20 @@ contract TaraClientTest is Test {
         vm.roll(100);
         currentBlock.block.prevHash = PillarBlock.getHash(client.getPending());
         client.addPendingBlock(abi.encode(currentBlock));
+
+        // invariant tests - the finalized block should always be registered before the next pending block
+        bytes32 firstPendingBlockHash = client.pendingHash();
+        assertEq(
+            firstPendingBlockHash,
+            PillarBlock.getHash(currentBlock),
+            "Finalized block should always be registered before the next pending block"
+        );
+        assertEq(
+            client.pendingFinalized(),
+            false,
+            "Pending block should not be finalized"
+        );
+
         vm.roll(110);
         PillarBlock.WithChanges memory b2 = PillarBlock.WithChanges(
             PillarBlock.FinalizationData(

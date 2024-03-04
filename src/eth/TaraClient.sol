@@ -87,7 +87,7 @@ library PillarBlock {
 contract TaraClient is IBridgeLightClient {
     PillarBlock.WithChanges pending;
     bytes32 public pendingHash;
-    bool pendingFinalized;
+    bool public pendingFinalized;
 
     PillarBlock.FinalizedBlock public finalized;
     mapping(address => int96) public validators;
