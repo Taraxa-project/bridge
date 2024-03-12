@@ -48,18 +48,18 @@ abstract contract BridgeBase {
         require(state_with_proof.state.epoch == appliedEpoch + 1, "Epochs should be processed sequentially");
 
         for (uint256 i = 0; i < state_with_proof.state_hashes.length; i++) {
-            // require(
-            //     localAddress[state_with_proof.state_hashes[i].contractAddress] != address(0),
-            //     "Contract is not registered"
-            // );
-            // require(
-            //     keccak256(state_with_proof.state.states[i].state) == state_with_proof.state_hashes[i].stateHash,
-            //     "Invalid state hash"
-            // );
-            // require(
-            //     state_with_proof.state.states[i].contractAddress == state_with_proof.state_hashes[i].contractAddress,
-            //     "Contract addresses are not matching"
-            // );
+            require(
+                localAddress[state_with_proof.state_hashes[i].contractAddress] != address(0),
+                "Contract is not registered"
+            );
+            require(
+                keccak256(state_with_proof.state.states[i].state) == state_with_proof.state_hashes[i].stateHash,
+                "Invalid state hash"
+            );
+            require(
+                state_with_proof.state.states[i].contractAddress == state_with_proof.state_hashes[i].contractAddress,
+                "Contract addresses are not matching"
+            );
             connectors[localAddress[state_with_proof.state_hashes[i].contractAddress]].applyState(
                 state_with_proof.state.states[i].state
             );
