@@ -14,4 +14,8 @@ contract BridgeLightClientMock is IBridgeLightClient {
     function getFinalizedBridgeRoot() public view override returns (bytes32) {
         return bridgeRoot;
     }
+
+    function refundAmount() external pure returns (uint256) {
+        return 1 gwei;
+    }
 }

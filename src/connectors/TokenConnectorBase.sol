@@ -4,16 +4,17 @@ pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
 import "../lib/Constants.sol";
-import "./IBridgeConnector.sol";
+import "./BridgeConnectorBase.sol";
 import "./TokenState.sol";
 
-abstract contract TokenConnectorBase is IBridgeConnector {
+abstract contract TokenConnectorBase is BridgeConnectorBase {
     address token;
     address otherNetworkAddress;
     TokenState state;
     TokenState finalizedState;
+    mapping(address => uint256) public toClaim;
 
-    constructor(address _token, address other_network_address) {
+    constructor(address bridge, address _token, address other_network_address) payable BridgeConnectorBase(bridge) {
         otherNetworkAddress = other_network_address;
         token = _token;
         state = new TokenState(1);
@@ -32,7 +33,7 @@ abstract contract TokenConnectorBase is IBridgeConnector {
         return abi.encode(transfers);
     }
 
-    function finalize(uint256 epoch_to_finalize) public override returns (bytes32) {
+    function finalize(uint256 epoch_to_finalize) public override onlyOwner returns (bytes32) {
         require(epoch_to_finalize == state.epoch(), "Cannot finalize different epoch");
         // TODO: destruct the state before overwriting it?
         finalizedState = state;
@@ -65,4 +66,10 @@ abstract contract TokenConnectorBase is IBridgeConnector {
     function getBridgedContractAddress() external view returns (address) {
         return otherNetworkAddress;
     }
+
+    /**
+     * @dev Allows the caller to claim tokens by sending Ether to this function to cover fees.
+     * This function is virtual and must be implemented by derived contracts.
+     */
+    function claim() public payable virtual;
 }

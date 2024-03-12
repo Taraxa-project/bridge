@@ -3,22 +3,27 @@
 pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./TokenConnectorBase.sol";
 import "./IERC20MintableBurnable.sol";
 
 contract ERC20MintingConnector is TokenConnectorBase {
-    constructor(IERC20MintableBurnable token, address other_network_address)
-        TokenConnectorBase(address(token), other_network_address)
+    constructor(address bridge, IERC20MintableBurnable token, address tara_addresss_on_eth)
+        payable
+        TokenConnectorBase(bridge, address(token), tara_addresss_on_eth)
     {}
 
     /**
-     * @dev Applies the given state to the token contract by mint.
+     * @dev Applies the given state to the token contract by transfers.
      * @param _state The state to be applied.
+     * @return accounts Affected accounts that we should split fee between
      */
-    function applyState(bytes calldata _state) public override {
+    function applyState(bytes calldata _state) internal override returns (address[] memory accounts) {
         Transfer[] memory transfers = deserializeTransfers(_state);
+        accounts = new address[](transfers.length);
         for (uint256 i = 0; i < transfers.length; i++) {
-            IERC20MintableBurnable(token).mintTo(transfers[i].account, transfers[i].amount);
+            toClaim[transfers[i].account] += transfers[i].amount;
+            accounts[i] = transfers[i].account;
         }
     }
 
@@ -30,5 +35,12 @@ contract ERC20MintingConnector is TokenConnectorBase {
     function burn(uint256 amount) public payable {
         IERC20MintableBurnable(token).burnFrom(msg.sender, amount);
         state.addAmount(msg.sender, amount);
+    }
+
+    function claim() public payable override {
+        require(msg.value >= feeToClaim[msg.sender], "ERC20MintingConnector: insufficient funds to pay fee");
+        uint256 amount = toClaim[msg.sender];
+        toClaim[msg.sender] = 0;
+        IERC20MintableBurnable(token).mintTo(msg.sender, amount);
     }
 }

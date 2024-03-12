@@ -3,20 +3,29 @@
 pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "forge-std/console.sol";
+
 import "./TokenConnectorBase.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20LockingConnector is TokenConnectorBase {
-    constructor(IERC20 token, address tara_addresss_on_eth) TokenConnectorBase(address(token), tara_addresss_on_eth) {}
+    constructor(address bridge, IERC20 token, address tara_addresss_on_eth)
+        payable
+        TokenConnectorBase(bridge, address(token), tara_addresss_on_eth)
+    {}
 
     /**
      * @dev Applies the given state to the token contract by transfers.
      * @param _state The state to be applied.
+     * @return accounts Affected accounts that we should split fee between
      */
-    function applyState(bytes calldata _state) public override {
+    function applyState(bytes calldata _state) internal override returns (address[] memory accounts) {
         Transfer[] memory transfers = deserializeTransfers(_state);
+        accounts = new address[](transfers.length);
         for (uint256 i = 0; i < transfers.length; i++) {
-            IERC20(token).transfer(transfers[i].account, transfers[i].amount);
+            toClaim[transfers[i].account] += transfers[i].amount;
+            accounts[i] = transfers[i].account;
         }
     }
 
@@ -28,5 +37,12 @@ contract ERC20LockingConnector is TokenConnectorBase {
     function lock(uint256 value) public {
         IERC20(token).transferFrom(msg.sender, address(this), value);
         state.addAmount(msg.sender, value);
+    }
+
+    function claim() public payable override {
+        require(msg.value >= feeToClaim[msg.sender], "ERC20LockingConnector: insufficient funds to pay fee");
+        require(toClaim[msg.sender] > 0, "ERC20LockingConnector: nothing to claim");
+        IERC20(token).transfer(msg.sender, toClaim[msg.sender]);
+        toClaim[msg.sender] = 0;
     }
 }
