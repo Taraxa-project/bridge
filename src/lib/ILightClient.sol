@@ -4,4 +4,5 @@ pragma solidity ^0.8.17;
 
 interface IBridgeLightClient {
     function getFinalizedBridgeRoot() external view returns (bytes32);
+    function refundAmount() external view returns (uint256);
 }
