@@ -13,6 +13,8 @@ contract EthClientWrapper is IBridgeLightClient {
 
     bytes32 bridgeRoot;
 
+    uint256 refund;
+
     constructor(
         BeaconLightClient _client,
         address _eth_bridge_address,
@@ -29,6 +31,10 @@ contract EthClientWrapper is IBridgeLightClient {
      */
     function getFinalizedBridgeRoot() external view returns (bytes32) {
         return bridgeRoot;
+    }
+
+    function refundAmount() external view returns (uint256) {
+        return refund;
     }
 
     /**

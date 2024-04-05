@@ -95,6 +95,8 @@ contract TaraClient is IBridgeLightClient {
     int256 public threshold;
     uint256 public delay;
 
+    uint256 refund;
+
     constructor(
         PillarBlock.WeightChange[] memory _validatorChanges,
         int256 _threshold,
@@ -117,6 +119,10 @@ contract TaraClient is IBridgeLightClient {
      */
     function getFinalizedBridgeRoot() external view returns (bytes32) {
         return finalized.block.bridgeRoot;
+    }
+
+    function refundAmount() external view returns (uint256) {
+        return refund;
     }
 
     /**
@@ -247,6 +253,7 @@ contract TaraClient is IBridgeLightClient {
         bytes32 h,
         CompactSignature[] memory signatures
     ) internal {
+        uint256 gasleftbefore = gasleft();
         require(
             finalized.block.period + 1 == b.block.period,
             "Pending block should have number 1 greater than latest"
@@ -262,5 +269,6 @@ contract TaraClient is IBridgeLightClient {
         require(weight >= threshold, "Not enough weight");
         processValidatorChanges(b.validatorChanges);
         finalized = PillarBlock.FinalizedBlock(h, b.block, block.number);
+        refund = (gasleftbefore - gasleft()) * tx.gasprice;
     }
 }
