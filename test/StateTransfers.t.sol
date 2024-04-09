@@ -77,7 +77,7 @@ contract StateTransfersTest is Test {
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         state.state.states[0] = SharedStructs.StateWithAddress(address(0), abi.encode(1));
-        vm.expectRevert("State isn't matching bridge root");
+        vm.expectRevert("State isnt matching bridge root");
         ethBridge.applyState(state);
     }
 
@@ -89,7 +89,7 @@ contract StateTransfersTest is Test {
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         ethLightClient.setBridgeRoot(state);
         state.state.epoch = 2;
-        vm.expectRevert("State isn't matching bridge root");
+        vm.expectRevert("State isnt matching bridge root");
         ethBridge.applyState(state);
     }
 

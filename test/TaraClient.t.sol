@@ -90,8 +90,7 @@ contract TaraClientTest is Test {
         changes[4] = PillarBlock.WeightChange(address(uint160(5)), -5);
         changes[5] = PillarBlock.WeightChange(address(0x290DEcD9548b62A8D60345A988386Fc84Ba6BC95), 12151343246432);
         changes[6] = PillarBlock.WeightChange(address(0xB10e2D527612073B26EeCDFD717e6a320cF44B4A), -112321);
-        changes[7] =
-            PillarBlock.WeightChange(address(0x405787FA12A823e0F2b7631cc41B3bA8828b3321), -13534685468457923145);
+        changes[7] = PillarBlock.WeightChange(address(0x405787FA12A823e0F2b7631cc41B3bA8828b3321), -1353468546845791);
         changes[8] = PillarBlock.WeightChange(address(0xc2575a0E9E593c00f959F8C92f12dB2869C3395a), 9976987696);
         changes[9] = PillarBlock.WeightChange(address(0x8a35AcfbC15Ff81A39Ae7d344fD709f28e8600B4), 465876798678065667);
 
