@@ -3,10 +3,10 @@ pragma solidity ^0.8.17;
 
 import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
-import {EthBridge} from "../src/eth/EthBridge.sol";
-import {TaraClient, PillarBlock} from "../src/eth/TaraClient.sol";
-import {TestERC20} from "../src/lib/TestERC20.sol";
-import {IBridgeLightClient} from "../src/lib/ILightClient.sol";
+import {EthBridge} from "../eth/EthBridge.sol";
+import {TaraClient, PillarBlock} from "../eth/TaraClient.sol";
+import {TestERC20} from "../lib/TestERC20.sol";
+import {IBridgeLightClient} from "../lib/ILightClient.sol";
 
 contract EthDeployer is Script {
     function run() public {
@@ -15,7 +15,7 @@ contract EthDeployer is Script {
         console.log("Deployer address: %s", deployerAddress);
         vm.startBroadcast(deployerPrivateKey);
 
-        address taraAddress = vm.envAddress("TARA_ETH_ADDRESS");
+        address taraAddress = vm.envAddress("ETH_TARA_ADDRESS");
         console.log("TARA address: %s", taraAddress);
 
         PillarBlock.WeightChange[]

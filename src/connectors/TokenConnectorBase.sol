@@ -14,7 +14,11 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     TokenState finalizedState;
     mapping(address => uint256) public toClaim;
 
-    constructor(address bridge, address _token, address other_network_address) payable BridgeConnectorBase(bridge) {
+    constructor(
+        address bridge,
+        address _token,
+        address other_network_address
+    ) payable BridgeConnectorBase(bridge) {
         otherNetworkAddress = other_network_address;
         token = _token;
         state = new TokenState(1);
@@ -24,17 +28,28 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
         return state.epoch();
     }
 
-    function deserializeTransfers(bytes memory data) internal pure returns (Transfer[] memory) {
+    function deserializeTransfers(
+        bytes memory data
+    ) internal pure returns (Transfer[] memory) {
         return abi.decode(data, (Transfer[]));
     }
 
-    function finalizedSerializedTransfers() internal view returns (bytes memory) {
+    function finalizedSerializedTransfers()
+        internal
+        view
+        returns (bytes memory)
+    {
         Transfer[] memory transfers = finalizedState.getTransfers();
         return abi.encode(transfers);
     }
 
-    function finalize(uint256 epoch_to_finalize) public override onlyOwner returns (bytes32) {
-        require(epoch_to_finalize == state.epoch(), "Cannot finalize different epoch");
+    function finalize(
+        uint256 epoch_to_finalize
+    ) public override onlyOwner returns (bytes32) {
+        require(
+            epoch_to_finalize == state.epoch(),
+            "Cannot finalize different epoch"
+        );
         // TODO: destruct the state before overwriting it?
         finalizedState = state;
         state = new TokenState(epoch_to_finalize + 1);

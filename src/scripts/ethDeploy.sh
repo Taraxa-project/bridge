@@ -1,5 +1,11 @@
 #!/bin/bash
 
+echo "#################################"
+echo "#                               #"
+echo "#          RUN   THIS           #"
+echo "#            FIRST              #"
+echo "#################################"
+
 source .env
 
 echo "RPC: $RPC_HOLESKY"
@@ -25,11 +31,11 @@ taraAddress=$(echo "$res" | grep "Deployed to:" | awk '{print $3}')
 
 echo "Deployed to: $taraAddress"
 
-echo "TARA_ETH_ADDRESS=$taraAddress" >> .env
+echo "ETH_TARA_ADDRESS=$taraAddress" >> .env
 
 echo "Running deployment script for TaraClient & EthBridge"
 
-ethBridge=$(forge script scripts/Eth.deploy.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast | jq)
+ethBridge=$(forge script scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast | jq)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for EthBridge"

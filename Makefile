@@ -26,6 +26,8 @@ lint :; solhint src/**/*.sol && solhint src/*.sol
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
-eth-deploy :; bash ./scripts/fullDeploy.sh
+eth-deploy :; bash ./src/scripts/ethDeploy.sh
+
+tara-deploy :; bash ./src/scripts/taraDeploy.sh
 
 -include ${FCT_PLUGIN_PATH}/makefile-external

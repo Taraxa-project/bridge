@@ -7,8 +7,13 @@ import "../src/lib/SharedStructs.sol";
 contract BridgeLightClientMock is IBridgeLightClient {
     bytes32 bridgeRoot;
 
-    function setBridgeRoot(SharedStructs.StateWithProof memory state_with_proof) public {
-        bridgeRoot = SharedStructs.getBridgeRoot(state_with_proof.state.epoch, state_with_proof.state_hashes);
+    function setBridgeRoot(
+        SharedStructs.StateWithProof memory state_with_proof
+    ) public {
+        bridgeRoot = SharedStructs.getBridgeRoot(
+            state_with_proof.state.epoch,
+            state_with_proof.state_hashes
+        );
     }
 
     function getFinalizedBridgeRoot() public view override returns (bytes32) {

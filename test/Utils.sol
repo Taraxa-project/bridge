@@ -16,7 +16,9 @@ library utils {
         return string(abi.encodePacked("0x", converted));
     }
 
-    function bytesToHex(bytes memory buffer) public pure returns (string memory) {
+    function bytesToHex(
+        bytes memory buffer
+    ) public pure returns (string memory) {
         // Fixed buffer size for hexadecimal convertion
         bytes memory converted = new bytes(buffer.length * 2);
 

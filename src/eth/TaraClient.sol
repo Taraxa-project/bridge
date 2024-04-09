@@ -52,34 +52,34 @@ library PillarBlock {
 
     function fromBytes(
         bytes memory b
-    ) public pure returns (WithChanges memory) {
+    ) internal pure returns (WithChanges memory) {
         return abi.decode(b, (WithChanges));
     }
 
-    function getHash(bytes memory b) public pure returns (bytes32) {
+    function getHash(bytes memory b) internal pure returns (bytes32) {
         return keccak256(b);
     }
 
-    function getHash(WithChanges memory b) public pure returns (bytes32) {
+    function getHash(WithChanges memory b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b));
     }
 
-    function getHash(Vote memory b) public pure returns (bytes32) {
+    function getHash(Vote memory b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b));
     }
 
-    function getHash(SignedVote memory b) public pure returns (bytes32) {
+    function getHash(SignedVote memory b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b));
     }
 
-    function getVoteHash(WithChanges memory b) public pure returns (bytes32) {
+    function getVoteHash(WithChanges memory b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b.block.period, getHash(b)));
     }
 
     function getVoteHash(
         uint256 period,
         bytes32 bh
-    ) public pure returns (bytes32) {
+    ) internal pure returns (bytes32) {
         return keccak256(abi.encode(period, bh));
     }
 }
@@ -137,6 +137,7 @@ contract TaraClient is IBridgeLightClient {
     /**
      * @dev Processes the changes in validator weights.
      * @param validatorChanges An array of WeightChange structs representing the changes in validator weights.
+     *  optimize for gas cost!!
      */
     function processValidatorChanges(
         PillarBlock.WeightChange[] memory validatorChanges
