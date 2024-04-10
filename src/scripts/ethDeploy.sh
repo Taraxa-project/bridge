@@ -4,12 +4,12 @@ echo "#################################"
 echo "#                               #"
 echo "#          RUN   THIS           #"
 echo "#            FIRST              #"
+echo "#                               #"
 echo "#################################"
 
 source .env
 
 echo "RPC: $RPC_HOLESKY"
-echo "PRIVATE_KEY: $PRIVATE_KEY"
 # Check if the RPC_URL and PRIVATE_KEY are set
 if [ -z "$RPC_HOLESKY" ] || [ -z "$PRIVATE_KEY" ]; then
   echo "Please set the RPC_HOLESKY and PRIVATE_KEY in the .env file"
@@ -35,7 +35,7 @@ echo "ETH_TARA_ADDRESS=$taraAddress" >> .env
 
 echo "Running deployment script for TaraClient & EthBridge"
 
-ethBridge=$(forge script scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast | jq)
+ethBridge=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for EthBridge"

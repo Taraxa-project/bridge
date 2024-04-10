@@ -64,13 +64,11 @@ contract TaraDeployer is Script {
 
         console.log("TARA Bridge address: %s", address(taraBridge));
 
-        bytes32 _bridge_root_key = vm.envBytes32("ETH_BRIDGE_ROOT_KEY");
         address _eth_bridge_address = vm.envAddress("ETH_BRIDGE_ADDRESS");
 
         EthClientWrapper wrapper = new EthClientWrapper(
             client,
-            _eth_bridge_address,
-            _bridge_root_key
+            _eth_bridge_address
         );
 
         console.log("Wrapper address: %s", address(wrapper));

@@ -8,19 +8,15 @@ import "beacon-light-client/src/trie/StorageProof.sol";
 contract EthClientWrapper is IBridgeLightClient {
     BeaconLightClient public client;
     address ethBridgeAddress;
-    bytes32 bridgeRootKey;
+    bytes32 constant bridgeRootKey =
+        0x0000000000000000000000000000000000000000000000000000000000000006;
 
     bytes32 bridgeRoot;
 
     uint256 refund;
 
-    constructor(
-        BeaconLightClient _client,
-        address _eth_bridge_address,
-        bytes32 _bridge_root_key
-    ) {
+    constructor(BeaconLightClient _client, address _eth_bridge_address) {
         ethBridgeAddress = _eth_bridge_address;
-        bridgeRootKey = _bridge_root_key;
         client = _client;
     }
 

@@ -22,11 +22,9 @@ contract EthClientTest is Test {
 
     function setUp() public {
         address ethBridgeAddress = 0x47A5339E575aC525b1278eA1F0bCE3A092384416;
-        bytes32 key = 0x0;
         client = new EthClientWrapper(
             BeaconLightClient(address(lightClient)),
-            ethBridgeAddress,
-            key
+            ethBridgeAddress
         );
     }
 
