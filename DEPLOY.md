@@ -42,6 +42,9 @@ This will deploy the ETH side of the bridge and output the contract addresses. H
     Deployer address: 0x602EFf175fcC46936563BB7A9C4F257De2fc5421
     TARA address: 0xe01095F5f61211b2daF395E947C3dA78D7a431Ab
     Bridge address: 0xeeaC5d17458E3AAABaC2D818e33490CC42c83d8C
+    ERC20MintingConnector: https://holesky.etherscan.io/address/0x5788cf1b95dd2f7591a355642aaa34b7b4fab2d1
+    TaraClient: https://holesky.etherscan.io/address/0x52a7c8db4a32016e4b8b6b4b44590c52079f32a9
+
 ```
 
 ### Deploy Tara side of the bridge
