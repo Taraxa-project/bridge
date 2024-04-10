@@ -13,9 +13,9 @@ abstract contract BridgeBase {
     address[] public tokenAddresses;
     mapping(address => IBridgeConnector) public connectors;
     mapping(address => address) public localAddress;
-    mapping(uint256 => bytes32) finalizedStateHash;
     uint256 finalizedEpoch;
     uint256 appliedEpoch;
+    bytes32 bridgeRoot;
 
     constructor(IBridgeLightClient light_client) {
         lightClient = light_client;
@@ -103,10 +103,7 @@ abstract contract BridgeBase {
                 connectors[tokenAddresses[i]].finalize(finalizedEpoch)
             );
         }
-        finalizedStateHash[finalizedEpoch] = SharedStructs.getBridgeRoot(
-            finalizedEpoch,
-            hashes
-        );
+        bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, hashes);
     }
 
     /**
