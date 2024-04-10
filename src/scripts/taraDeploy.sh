@@ -17,10 +17,19 @@ if [ -z "$RPC_FICUS_PRNET" ] || [ -z "$PRIVATE_KEY" ]; then
   exit 1
 fi
 
+echo "Calculating current sync committe aggregated PK"
+
+pk=$(python3 src/scripts/calculate_sync_committee_hash.py)
+
+if [ $? -ne 0 ]; then
+  echo "Error calculating current sync committe aggregated PK"
+  exit 1
+fi
+
 echo "Deploying BeaconLightClient contract"
 
 # Run the deployment script for TaraClient
-res=$(forge script scripts/Tara.deploy.sol:TaraDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast | jq)
+res=$(forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast | jq)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for TaraClient"
