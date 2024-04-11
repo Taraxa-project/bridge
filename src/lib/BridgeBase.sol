@@ -5,9 +5,7 @@ pragma solidity ^0.8.17;
 import "../lib/SharedStructs.sol";
 import "../lib/ILightClient.sol";
 import "../connectors/IBridgeConnector.sol";
-import "../connectors/ERC20MintingConnector.sol";
-import "../lib/TestERC20.sol";
-import "../lib/Constants.sol";
+import "forge-std/console.sol";
 
 abstract contract BridgeBase {
     IBridgeLightClient public lightClient;
@@ -39,15 +37,19 @@ abstract contract BridgeBase {
      */
 
     function applyState(SharedStructs.StateWithProof calldata state_with_proof) public {
+        uint256 gasleftbefore = gasleft();
+        uint256 common = lightClient.refundAmount();
         // get bridge root from light client and compare it (it should be proved there)
         require(
             SharedStructs.getBridgeRoot(state_with_proof.state.epoch, state_with_proof.state_hashes)
                 == lightClient.getFinalizedBridgeRoot(),
-            "State isn't matching bridge root"
+            "State isnt matching bridge root"
         );
         require(state_with_proof.state.epoch == appliedEpoch + 1, "Epochs should be processed sequentially");
+        common += (gasleftbefore - gasleft()) * tx.gasprice;
 
         for (uint256 i = 0; i < state_with_proof.state_hashes.length; i++) {
+            gasleftbefore = gasleft();
             require(
                 localAddress[state_with_proof.state_hashes[i].contractAddress] != address(0),
                 "Contract is not registered"
@@ -60,8 +62,11 @@ abstract contract BridgeBase {
                 state_with_proof.state.states[i].contractAddress == state_with_proof.state_hashes[i].contractAddress,
                 "Contract addresses are not matching"
             );
-            connectors[localAddress[state_with_proof.state_hashes[i].contractAddress]].applyState(
-                state_with_proof.state.states[i].state
+            uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
+            connectors[localAddress[state_with_proof.state_hashes[i].contractAddress]].applyStateWithRefund(
+                state_with_proof.state.states[i].state,
+                payable(msg.sender),
+                (used + common / state_with_proof.state_hashes.length)
             );
         }
         appliedEpoch++;
