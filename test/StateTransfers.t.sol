@@ -114,7 +114,7 @@ contract StateTransfersTest is Test {
             .getStateWithProof();
         ethLightClient.setBridgeRoot(state);
         state.state.epoch = 2;
-        vm.expectRevert("State isn't matching bridge root");
+        vm.expectRevert("State isnt matching bridge root");
         ethBridge.applyState(state);
     }
 
