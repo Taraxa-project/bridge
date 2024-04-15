@@ -8,9 +8,9 @@ import "./TokenConnectorBase.sol";
 import "./IERC20MintableBurnable.sol";
 
 contract ERC20MintingConnector is TokenConnectorBase {
-    constructor(address bridge, IERC20MintableBurnable token, address tara_addresss_on_eth)
+    constructor(address bridge, IERC20MintableBurnable token, address other_network_address)
         payable
-        TokenConnectorBase(bridge, address(token), tara_addresss_on_eth)
+        TokenConnectorBase(bridge, address(token), other_network_address)
     {}
 
     /**
@@ -37,6 +37,10 @@ contract ERC20MintingConnector is TokenConnectorBase {
         state.addAmount(msg.sender, amount);
     }
 
+    /**
+     * @dev Allows the caller to claim tokens
+     * @notice The caller must send enough Ether to cover the fees.
+     */
     function claim() public payable override {
         require(msg.value >= feeToClaim[msg.sender], "ERC20MintingConnector: insufficient funds to pay fee");
         uint256 amount = toClaim[msg.sender];
