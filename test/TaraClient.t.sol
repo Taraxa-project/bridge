@@ -20,16 +20,15 @@ contract TaraClientTest is Test {
     PillarBlock.WithChanges currentBlock;
 
     function setUp() public {
-        PillarBlock.VoteCountChange[] memory initial = new PillarBlock.VoteCountChange[](10);
+        PillarBlock.WeightChange[] memory initial = new PillarBlock.WeightChange[](10);
         for (uint256 i = 0; i < initial.length; i++) {
             bytes32 pk = keccak256(abi.encodePacked(i));
-            initial[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 20);
+            initial[i] = PillarBlock.WeightChange(vm.addr(uint256(pk)), 20);
         }
-        currentBlock =
-            PillarBlock.WithChanges(PillarBlock.FinalizationData(1, bytes32(0), bytes32(0), bytes32(0)), initial);
-        client = new TaraClient(currentBlock, 100, 10);
-        currentBlock.block.period += 1;
-        currentBlock.block.prevHash = client.getFinalized().blockHash;
+        client = new TaraClient(initial, 100, 10);
+        currentBlock = PillarBlock.WithChanges(
+            PillarBlock.FinalizationData(1, bytes32(0), bytes32(0), bytes32(0)), new PillarBlock.WeightChange[](0)
+        );
     }
 
     function getCompactSig(bytes32 pk, bytes32 h) public pure returns (CompactSignature memory) {
@@ -73,10 +72,10 @@ contract TaraClientTest is Test {
     }
 
     function test_weightChanges() public {
-        PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](20);
+        PillarBlock.WeightChange[] memory changes = new PillarBlock.WeightChange[](20);
         for (uint256 i = 0; i < changes.length; i++) {
             bytes32 pk = keccak256(abi.encodePacked(i));
-            changes[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 10);
+            changes[i] = PillarBlock.WeightChange(vm.addr(uint256(pk)), 10);
         }
         client.setThreshold(1);
         client.processValidatorChanges(changes);
@@ -84,6 +83,7 @@ contract TaraClientTest is Test {
 
     function invariant_optimisticAccept() public {
         vm.roll(100);
+        currentBlock.block.prevHash = PillarBlock.getHash(client.getPending());
         client.addPendingBlock(abi.encode(currentBlock));
 
         // invariant tests - the finalized block should always be registered before the next pending block
@@ -96,17 +96,16 @@ contract TaraClientTest is Test {
         assertEq(client.pendingFinalized(), false, "Pending block should not be finalized");
 
         vm.roll(110);
-        uint256 period = 2;
         PillarBlock.WithChanges memory b2 = PillarBlock.WithChanges(
-            PillarBlock.FinalizationData(period, bytes32(0), bytes32(0), PillarBlock.getHash(currentBlock)),
-            new PillarBlock.VoteCountChange[](0)
+            PillarBlock.FinalizationData(2, bytes32(0), bytes32(0), PillarBlock.getHash(currentBlock)),
+            new PillarBlock.WeightChange[](0)
         );
         int256 totalWeightBefore = client.totalWeight();
         int256 blockWeight = getTotalWeight(b2);
         client.addPendingBlock(abi.encode(b2));
 
         (bytes32 blockHash, PillarBlock.FinalizationData memory b, uint256 finalizedAt) = client.finalized();
-        assertEq(b.period, period);
+        assertEq(b.period, 1);
         assertEq(blockHash, PillarBlock.getHash(currentBlock));
         assertEq(finalizedAt, block.number);
 
@@ -125,17 +124,17 @@ contract TaraClientTest is Test {
     }
 
     function test_blockEncodeDecode() public {
-        PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](10);
-        changes[0] = PillarBlock.VoteCountChange(address(uint160(1)), -1);
-        changes[1] = PillarBlock.VoteCountChange(address(uint160(2)), 2);
-        changes[2] = PillarBlock.VoteCountChange(address(uint160(3)), -3);
-        changes[3] = PillarBlock.VoteCountChange(address(uint160(4)), 4);
-        changes[4] = PillarBlock.VoteCountChange(address(uint160(5)), -5);
-        changes[5] = PillarBlock.VoteCountChange(address(0x290DEcD9548b62A8D60345A988386Fc84Ba6BC95), 1215134324);
-        changes[6] = PillarBlock.VoteCountChange(address(0xB10e2D527612073B26EeCDFD717e6a320cF44B4A), -112321);
-        changes[7] = PillarBlock.VoteCountChange(address(0x405787FA12A823e0F2b7631cc41B3bA8828b3321), -1353468546);
-        changes[8] = PillarBlock.VoteCountChange(address(0xc2575a0E9E593c00f959F8C92f12dB2869C3395a), 997698769);
-        changes[9] = PillarBlock.VoteCountChange(address(0x8a35AcfbC15Ff81A39Ae7d344fD709f28e8600B4), 465876798);
+        PillarBlock.WeightChange[] memory changes = new PillarBlock.WeightChange[](10);
+        changes[0] = PillarBlock.WeightChange(address(uint160(1)), -1);
+        changes[1] = PillarBlock.WeightChange(address(uint160(2)), 2);
+        changes[2] = PillarBlock.WeightChange(address(uint160(3)), -3);
+        changes[3] = PillarBlock.WeightChange(address(uint160(4)), 4);
+        changes[4] = PillarBlock.WeightChange(address(uint160(5)), -5);
+        changes[5] = PillarBlock.WeightChange(address(0x290DEcD9548b62A8D60345A988386Fc84Ba6BC95), 1215134324);
+        changes[6] = PillarBlock.WeightChange(address(0xB10e2D527612073B26EeCDFD717e6a320cF44B4A), -112321);
+        changes[7] = PillarBlock.WeightChange(address(0x405787FA12A823e0F2b7631cc41B3bA8828b3321), -1353468546);
+        changes[8] = PillarBlock.WeightChange(address(0xc2575a0E9E593c00f959F8C92f12dB2869C3395a), 997698769);
+        changes[9] = PillarBlock.WeightChange(address(0x8a35AcfbC15Ff81A39Ae7d344fD709f28e8600B4), 465876798);
 
         for (uint256 i = 0; i < changes.length; i++) {
             console.log(utils.bytesToHex(keccak256(abi.encodePacked(i))));
