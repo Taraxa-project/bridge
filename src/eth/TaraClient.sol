@@ -174,7 +174,7 @@ contract TaraClient is IBridgeLightClient {
         PillarBlock.WithChanges memory pb = PillarBlock.fromBytes(b);
         bytes32 ph = PillarBlock.getHash(b);
 
-        require(block.number >= finalized.finalizedAt + delay, "The delay isn't passed yet");
+        require(block.number >= finalized.finalizedAt + delay, "The delay has not passed yet");
 
         if (pendingFinalized) {
             require(finalized.block.period + 1 == pb.block.period, "Block number + 1 != finalized block number");

@@ -115,7 +115,6 @@ contract TaraClientTest is Test {
             totalWeightBefore + blockWeight,
             "total weight should still be weight before + block weight"
         );
-        console.log("total weight:", uint256(client.totalWeight()));
         // Invariant tests - finalized block should stay finalized
         (bytes32 finalizedBlockHash, PillarBlock.FinalizationData memory b2Block, uint256 lastFinalizedAt) =
             client.finalized();
