@@ -18,7 +18,7 @@ contract FeesTest is Test {
     TaraBridge taraBridge;
     EthBridge ethBridge;
 
-    address caller = address(bytes20(sha256(hex"1234")));
+    address caller = vm.addr(0x1234);
 
     function setUp() public {
         payable(caller).transfer(100 ether);

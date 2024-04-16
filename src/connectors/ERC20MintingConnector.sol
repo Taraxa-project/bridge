@@ -8,9 +8,9 @@ import "./TokenConnectorBase.sol";
 import "./IERC20MintableBurnable.sol";
 
 contract ERC20MintingConnector is TokenConnectorBase {
-    constructor(address bridge, IERC20MintableBurnable token, address other_network_address)
+    constructor(address bridge, IERC20MintableBurnable token, address token_on_other_network)
         payable
-        TokenConnectorBase(bridge, address(token), other_network_address)
+        TokenConnectorBase(bridge, address(token), token_on_other_network)
     {}
 
     /**

@@ -10,9 +10,9 @@ import "./TokenConnectorBase.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20LockingConnector is TokenConnectorBase {
-    constructor(address bridge, IERC20 token, address other_network_address)
+    constructor(address bridge, IERC20 token, address token_on_other_network)
         payable
-        TokenConnectorBase(bridge, address(token), other_network_address)
+        TokenConnectorBase(bridge, address(token), token_on_other_network)
     {}
 
     /**

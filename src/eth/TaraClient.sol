@@ -209,7 +209,6 @@ contract TaraClient is IBridgeLightClient {
         internal
     {
         uint256 gasleftbefore = gasleft();
-        require(finalized.block.period + 1 == b.block.period, "block.number != finalized.number +1");
         require(b.block.prevHash == finalized.blockHash, "block.prevHash != finalized.blockHash");
         int256 weight = getSignaturesWeight(PillarBlock.getVoteHash(b.block.period, h), signatures);
         require(weight >= threshold, "Not enough weight");
