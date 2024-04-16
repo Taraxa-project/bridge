@@ -43,7 +43,7 @@ abstract contract BridgeBase {
         require(
             SharedStructs.getBridgeRoot(state_with_proof.state.epoch, state_with_proof.state_hashes)
                 == lightClient.getFinalizedBridgeRoot(),
-            "State isn't matching bridge root"
+            "State does not matching bridge root"
         );
         require(state_with_proof.state.epoch == appliedEpoch + 1, "Epochs should be processed sequentially");
         common += (gasleftbefore - gasleft()) * tx.gasprice;
