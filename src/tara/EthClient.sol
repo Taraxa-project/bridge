@@ -8,8 +8,7 @@ import "beacon-light-client/src/trie/StorageProof.sol";
 contract EthClientWrapper is IBridgeLightClient {
     BeaconLightClient public client;
     address ethBridgeAddress;
-    bytes32 constant bridgeRootKey =
-        0x0000000000000000000000000000000000000000000000000000000000000006;
+    bytes32 constant bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000006;
 
     bytes32 bridgeRoot;
 
@@ -37,18 +36,9 @@ contract EthClientWrapper is IBridgeLightClient {
      * @param account_proof The account proofs for the bridge root.
      * @param storage_proof The storage proofs for the bridge root.
      */
-    function processBridgeRoot(
-        bytes[] memory account_proof,
-        bytes[] memory storage_proof
-    ) external {
+    function processBridgeRoot(bytes[] memory account_proof, bytes[] memory storage_proof) external {
         bytes32 stateRoot = client.merkle_root();
-        bytes memory br = StorageProof.verify(
-            stateRoot,
-            ethBridgeAddress,
-            account_proof,
-            bridgeRootKey,
-            storage_proof
-        );
+        bytes memory br = StorageProof.verify(stateRoot, ethBridgeAddress, account_proof, bridgeRootKey, storage_proof);
         require(bridgeRoot.length == 32, "invalid bridge root(length)");
         bridgeRoot = bytes32(br);
     }

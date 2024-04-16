@@ -18,8 +18,7 @@ contract EthDeployer is Script {
         address taraAddress = vm.envAddress("ETH_TARA_ADDRESS");
         console.log("TARA address: %s", taraAddress);
 
-        PillarBlock.WeightChange[]
-            memory changes = new PillarBlock.WeightChange[](3);
+        PillarBlock.WeightChange[] memory changes = new PillarBlock.WeightChange[](3);
         changes[0] = PillarBlock.WeightChange({
             validator: 0xFe3d5E3B9c2080bF338638Fd831a35A4B4344a2C,
             change: 0x84595161401484a000000

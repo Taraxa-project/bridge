@@ -8,3 +8,5 @@ auto_detect_solc = true
 [profile.default.optimizer_details]
 constantOptimizer = true
 yul = true
+[fmt]
+FOUNDRY_FMT_LINE_LENGTH = 100

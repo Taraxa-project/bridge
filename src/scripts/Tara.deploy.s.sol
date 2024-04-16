@@ -35,9 +35,7 @@ contract TaraDeployer is Script {
         uint256 _block_number = 1312501;
         bytes32 _merkle_root = 0x542b4b41fcfbe910a43b852d77ba5b87a6b6499759d51b4b583496fce13baafa;
 
-        bytes memory _current_sync_committee_aggregated_pubkey = vm.envBytes(
-            "AGGREGATED_PUBLIC_KEY"
-        );
+        bytes memory _current_sync_committee_aggregated_pubkey = vm.envBytes("AGGREGATED_PUBLIC_KEY");
         bytes32 _genesis_validators_root = 0x9143aa7c615a7f7115e2b6aac319c03529df8242ae705fba9df39b79c59fa8b1;
 
         BeaconLightClient client = new BeaconLightClient(

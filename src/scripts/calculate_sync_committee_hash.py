@@ -12,13 +12,6 @@ def get_flags(z: int) -> Tuple[bool, bool, bool]:
     a_flag = bool((z >> 381) & 1)  # The third-most significant bit.
     return c_flag, b_flag, a_flag
 
-
-
-def _serialize_uncompressed_g1(g1):
-    x = int(g1[0]).to_bytes(48, byteorder="big")
-    y = int(g1[1]).to_bytes(48, byteorder="big")
-    return x + y
-
 # Get the current sync committee pubkeys
 url = 'http://unstable.holesky.beacon-api.nimbus.team/eth/v1/beacon/light_client/updates?start_period=170&count=1'
 response = requests.get(url)

@@ -23,10 +23,7 @@ library SharedStructs {
         ContractStateHash[] state_hashes;
     }
 
-    function getBridgeRoot(
-        uint256 epoch,
-        ContractStateHash[] memory state_hashes
-    ) public pure returns (bytes32) {
+    function getBridgeRoot(uint256 epoch, ContractStateHash[] memory state_hashes) public pure returns (bytes32) {
         return keccak256(abi.encode(epoch, state_hashes));
     }
 }

@@ -39,11 +39,7 @@ interface IBridgeConnector {
      * @param receiver The address of the receiver.
      * @param amount The amount of refund to send.
      */
-    function applyStateWithRefund(
-        bytes calldata _state,
-        address payable receiver,
-        uint256 amount
-    ) external;
+    function applyStateWithRefund(bytes calldata _state, address payable receiver, uint256 amount) external;
 
     /**
      * @dev Refunds the given amount to the receiver

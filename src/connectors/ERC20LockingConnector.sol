@@ -10,11 +10,7 @@ import "./TokenConnectorBase.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20LockingConnector is TokenConnectorBase {
-    constructor(
-        address bridge,
-        IERC20 token,
-        address tara_addresss_on_eth
-    )
+    constructor(address bridge, IERC20 token, address tara_addresss_on_eth)
         payable
         TokenConnectorBase(bridge, address(token), tara_addresss_on_eth)
     {}
@@ -24,9 +20,7 @@ contract ERC20LockingConnector is TokenConnectorBase {
      * @param _state The state to be applied.
      * @return accounts Affected accounts that we should split fee between
      */
-    function applyState(
-        bytes calldata _state
-    ) internal override returns (address[] memory accounts) {
+    function applyState(bytes calldata _state) internal override returns (address[] memory accounts) {
         Transfer[] memory transfers = deserializeTransfers(_state);
         accounts = new address[](transfers.length);
         for (uint256 i = 0; i < transfers.length; i++) {
@@ -46,14 +40,8 @@ contract ERC20LockingConnector is TokenConnectorBase {
     }
 
     function claim() public payable override {
-        require(
-            msg.value >= feeToClaim[msg.sender],
-            "ERC20LockingConnector: insufficient funds to pay fee"
-        );
-        require(
-            toClaim[msg.sender] > 0,
-            "ERC20LockingConnector: nothing to claim"
-        );
+        require(msg.value >= feeToClaim[msg.sender], "ERC20LockingConnector: insufficient funds to pay fee");
+        require(toClaim[msg.sender] > 0, "ERC20LockingConnector: nothing to claim");
         IERC20(token).transfer(msg.sender, toClaim[msg.sender]);
         toClaim[msg.sender] = 0;
     }

@@ -16,3 +16,5 @@ docs/
 
 # python venv
 venv/
+
+.DS_Store
