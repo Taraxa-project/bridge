@@ -12,6 +12,11 @@ struct CompactSignature {
 }
 
 library PillarBlock {
+    /**
+     * Weight change coming from a validator
+     * Encapsulates the address of the validator
+     * and the weight of the validator vote(signature)
+     */
     struct WeightChange {
         address validator;
         int96 change;
@@ -45,31 +50,31 @@ library PillarBlock {
         CompactSignature signature;
     }
 
-    function fromBytes(bytes memory b) public pure returns (WithChanges memory) {
+    function fromBytes(bytes memory b) internal pure returns (WithChanges memory) {
         return abi.decode(b, (WithChanges));
     }
 
-    function getHash(bytes memory b) public pure returns (bytes32) {
+    function getHash(bytes memory b) internal pure returns (bytes32) {
         return keccak256(b);
     }
 
-    function getHash(WithChanges memory b) public pure returns (bytes32) {
+    function getHash(WithChanges memory b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b));
     }
 
-    function getHash(Vote memory b) public pure returns (bytes32) {
+    function getHash(Vote memory b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b));
     }
 
-    function getHash(SignedVote memory b) public pure returns (bytes32) {
+    function getHash(SignedVote memory b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b));
     }
 
-    function getVoteHash(WithChanges memory b) public pure returns (bytes32) {
+    function getVoteHash(WithChanges memory b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b.block.period, getHash(b)));
     }
 
-    function getVoteHash(uint256 period, bytes32 bh) public pure returns (bytes32) {
+    function getVoteHash(uint256 period, bytes32 bh) internal pure returns (bytes32) {
         return keccak256(abi.encode(period, bh));
     }
 }
@@ -77,13 +82,13 @@ library PillarBlock {
 contract TaraClient is IBridgeLightClient {
     PillarBlock.WithChanges pending;
     bytes32 public pendingHash;
-    bool pendingFinalized;
+    bool public pendingFinalized;
 
     PillarBlock.FinalizedBlock public finalized;
     mapping(address => int96) public validators;
-    int256 totalWeight;
-    int256 threshold;
-    uint256 delay;
+    int256 public totalWeight;
+    int256 public threshold;
+    uint256 public delay;
 
     uint256 refund;
 
@@ -123,6 +128,7 @@ contract TaraClient is IBridgeLightClient {
     /**
      * @dev Processes the changes in validator weights.
      * @param validatorChanges An array of WeightChange structs representing the changes in validator weights.
+     *  optimize for gas cost!!
      */
     function processValidatorChanges(PillarBlock.WeightChange[] memory validatorChanges) public {
         for (uint256 i = 0; i < validatorChanges.length; i++) {
@@ -168,7 +174,7 @@ contract TaraClient is IBridgeLightClient {
         PillarBlock.WithChanges memory pb = PillarBlock.fromBytes(b);
         bytes32 ph = PillarBlock.getHash(b);
 
-        require(block.number >= finalized.finalizedAt + delay, "The delay isn't passed yet");
+        require(block.number >= finalized.finalizedAt + delay, "The delay has not passed yet");
 
         if (pendingFinalized) {
             require(finalized.block.period + 1 == pb.block.period, "Block number + 1 != finalized block number");

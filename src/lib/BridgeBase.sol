@@ -13,9 +13,9 @@ abstract contract BridgeBase {
     address[] public tokenAddresses;
     mapping(address => IBridgeConnector) public connectors;
     mapping(address => address) public localAddress;
-    mapping(uint256 => bytes32) finalizedStateHash;
     uint256 finalizedEpoch;
     uint256 appliedEpoch;
+    bytes32 bridgeRoot;
 
     constructor(IBridgeLightClient light_client) {
         lightClient = light_client;
@@ -43,7 +43,7 @@ abstract contract BridgeBase {
         require(
             SharedStructs.getBridgeRoot(state_with_proof.state.epoch, state_with_proof.state_hashes)
                 == lightClient.getFinalizedBridgeRoot(),
-            "State isnt matching bridge root"
+            "State does not match bridge root"
         );
         require(state_with_proof.state.epoch == appliedEpoch + 1, "Epochs should be processed sequentially");
         common += (gasleftbefore - gasleft()) * tx.gasprice;
@@ -79,13 +79,15 @@ abstract contract BridgeBase {
     function finalizeEpoch() public {
         // TODO: should be called at least every N blocks?
         finalizedEpoch++;
-        SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
+        SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](
+                tokenAddresses.length
+            );
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             hashes[i] = SharedStructs.ContractStateHash(
                 tokenAddresses[i], connectors[tokenAddresses[i]].finalize(finalizedEpoch)
             );
         }
-        finalizedStateHash[finalizedEpoch] = SharedStructs.getBridgeRoot(finalizedEpoch, hashes);
+        bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, hashes);
     }
 
     /**
@@ -93,8 +95,12 @@ abstract contract BridgeBase {
      */
     function getStateWithProof() public view returns (SharedStructs.StateWithProof memory ret) {
         ret.state.epoch = finalizedEpoch;
-        ret.state.states = new SharedStructs.StateWithAddress[](tokenAddresses.length);
-        ret.state_hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
+        ret.state.states = new SharedStructs.StateWithAddress[](
+            tokenAddresses.length
+        );
+        ret.state_hashes = new SharedStructs.ContractStateHash[](
+            tokenAddresses.length
+        );
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             bytes memory state = connectors[tokenAddresses[i]].getFinalizedState();
             ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));

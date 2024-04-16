@@ -10,6 +10,7 @@ interface IERC20MintableBurnable is IERC20 {
      * @param amount The amount of tokens to be minted.
      */
     function mintTo(address receiver, uint256 amount) external;
+
     /**
      * @dev Destroys a `value` amount of tokens from `account`, deducting from
      * the caller's allowance.

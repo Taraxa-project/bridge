@@ -9,8 +9,9 @@ import "forge-std/console.sol";
 abstract contract BridgeConnectorBase is IBridgeConnector, Ownable {
     mapping(address => uint256) public feeToClaim;
 
-    constructor(address bridge) payable Ownable(bridge) {
+    constructor(address bridge) payable Ownable() {
         require(msg.value >= 2 ether, "BridgeConnectorBase: insufficient funds");
+        _transferOwnership(bridge);
     }
 
     /**

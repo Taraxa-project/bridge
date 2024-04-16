@@ -12,7 +12,11 @@ import "../lib/BridgeBase.sol";
 
 contract EthBridge is BridgeBase {
     constructor(IERC20MintableBurnable tara, IBridgeLightClient light_client) payable BridgeBase(light_client) {
-        connectors[address(tara)] = new ERC20MintingConnector{value: msg.value}(address(this), tara, address(tara));
+        connectors[address(tara)] = new ERC20MintingConnector{value: msg.value}(
+            address(this),
+            tara,
+            address(tara)
+        );
         localAddress[Constants.TARA_PLACEHOLDER] = address(tara);
         tokenAddresses.push(address(tara));
     }

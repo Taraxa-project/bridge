@@ -3,6 +3,7 @@
 pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
+
 /**
  * @title IBridgeConnector
  * @dev Interface for bridgeable contracts.

@@ -25,8 +25,14 @@ contract StateTransfersTest is Test {
         taraLightClient = new BridgeLightClientMock();
         ethLightClient = new BridgeLightClientMock();
         ethTaraToken = new TestERC20("TARA");
-        taraBridge = new TaraBridge{value: 2 ether}(address(ethTaraToken), ethLightClient);
-        ethBridge = new EthBridge{value: 2 ether}(IERC20MintableBurnable(address(ethTaraToken)), taraLightClient);
+        taraBridge = new TaraBridge{value: 2 ether}(
+            address(ethTaraToken),
+            ethLightClient
+        );
+        ethBridge = new EthBridge{value: 2 ether}(
+            IERC20MintableBurnable(address(ethTaraToken)),
+            taraLightClient
+        );
     }
 
     // define it to not fail on incoming transfers
@@ -77,7 +83,7 @@ contract StateTransfersTest is Test {
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         state.state.states[0] = SharedStructs.StateWithAddress(address(0), abi.encode(1));
-        vm.expectRevert("State isnt matching bridge root");
+        vm.expectRevert("State does not match bridge root");
         ethBridge.applyState(state);
     }
 
@@ -89,7 +95,7 @@ contract StateTransfersTest is Test {
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         ethLightClient.setBridgeRoot(state);
         state.state.epoch = 2;
-        vm.expectRevert("State isnt matching bridge root");
+        vm.expectRevert("State does not match bridge root");
         ethBridge.applyState(state);
     }
 
@@ -164,10 +170,12 @@ contract StateTransfersTest is Test {
         // deploy and register token on both sides
         taraTestToken = new TestERC20("TEST");
         ethTestToken = new TestERC20("TEST");
-        ERC20LockingConnector taraTestTokenConnector =
-            new ERC20LockingConnector{value: 2 ether}(address(taraBridge), taraTestToken, address(ethTestToken));
-        ERC20MintingConnector ethTestTokenConnector =
-            new ERC20MintingConnector{value: 2 ether}(address(ethBridge), ethTestToken, address(taraTestToken));
+        ERC20LockingConnector taraTestTokenConnector = new ERC20LockingConnector{
+                value: 2 ether
+            }(address(taraBridge), taraTestToken, address(ethTestToken));
+        ERC20MintingConnector ethTestTokenConnector = new ERC20MintingConnector{
+            value: 2 ether
+        }(address(ethBridge), ethTestToken, address(taraTestToken));
         taraBridge.registerContract(taraTestTokenConnector);
         ethBridge.registerContract(ethTestTokenConnector);
 
