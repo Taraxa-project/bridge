@@ -9,7 +9,7 @@ import {EthBridge} from "../eth/EthBridge.sol";
 import {TaraClient, PillarBlock} from "../eth/TaraClient.sol";
 import {TestERC20} from "../lib/TestERC20.sol";
 import {IBridgeLightClient} from "../lib/ILightClient.sol";
-import {EthClientWrapper} from "../tara/EthClient.sol";
+import {EthClient} from "../tara/EthClient.sol";
 import {TaraBridge} from "../tara/TaraBridge.sol";
 
 contract TaraDeployer is Script {
@@ -64,7 +64,7 @@ contract TaraDeployer is Script {
 
         address _eth_bridge_address = vm.envAddress("ETH_BRIDGE_ADDRESS");
 
-        EthClientWrapper wrapper = new EthClientWrapper(
+        EthClient wrapper = new EthClient(
             client,
             _eth_bridge_address
         );

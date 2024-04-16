@@ -16,13 +16,19 @@ contract LightClientMock {
     }
 }
 
+contract EthClientMock is EthClient {
+    constructor(BeaconLightClient _client, address _eth_bridge_address) EthClient(_client, _eth_bridge_address) {
+        bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000000;
+    }
+}
+
 contract EthClientTest is Test {
-    EthClientWrapper client;
+    EthClientMock client;
     LightClientMock lightClient = new LightClientMock();
 
     function setUp() public {
         address ethBridgeAddress = 0x47A5339E575aC525b1278eA1F0bCE3A092384416;
-        client = new EthClientWrapper(
+        client = new EthClientMock(
             BeaconLightClient(address(lightClient)),
             ethBridgeAddress
         );
@@ -63,8 +69,7 @@ contract EthClientTest is Test {
 
         client.processBridgeRoot(accountProof, storageProof);
 
-        bytes32 bridgeRoot = 0x2a6bdefe81a8e9d36fb1a8f8fb0b3e6e5fb45aa05b8542441a4c552b51e13fa7;
-        assertEq(client.getFinalizedBridgeRoot(), bridgeRoot);
+        assertEq(client.getFinalizedBridgeRoot(), 0x2a6bdefe81a8e9d36fb1a8f8fb0b3e6e5fb45aa05b8542441a4c552b51e13fa7);
     }
 
     function test_bridgeRootProofFail() public {
