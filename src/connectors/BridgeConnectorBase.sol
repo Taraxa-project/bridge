@@ -28,10 +28,10 @@ abstract contract BridgeConnectorBase is IBridgeConnector, Ownable {
     /**
      * @dev Applies the given state with a refund to the specified receiver.
      * @param _state The state to apply.
-     * @param refund_receiver The address of the refund_receiver.
+     * @param receiver The address of the receiver.
      * @param common_part The common part of the refund.
      */
-    function applyStateWithRefund(bytes calldata _state, address payable refund_receiver, uint256 common_part)
+    function applyStateWithRefund(bytes calldata _state, address payable receiver, uint256 common_part)
         public
         override
         onlyOwner
@@ -43,6 +43,6 @@ abstract contract BridgeConnectorBase is IBridgeConnector, Ownable {
         for (uint256 i = 0; i < addresses.length; i++) {
             feeToClaim[addresses[i]] += total_fee / addresses.length;
         }
-        refund(refund_receiver, total_fee);
+        refund(receiver, total_fee);
     }
 }

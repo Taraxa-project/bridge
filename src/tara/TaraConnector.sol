@@ -35,10 +35,6 @@ contract TaraConnector is TokenConnectorBase {
         state.addAmount(msg.sender, msg.value);
     }
 
-    /**
-     * @dev Allows the caller to claim tokens
-     * @notice The caller must send enough Ether to cover the fees.
-     */
     function claim() public payable override {
         require(msg.value >= feeToClaim[msg.sender], "ERC20LockingConnector: insufficient funds to pay fee");
         require(toClaim[msg.sender] > 0, "ERC20LockingConnector: nothing to claim");

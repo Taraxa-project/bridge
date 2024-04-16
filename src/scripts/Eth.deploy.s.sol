@@ -18,19 +18,21 @@ contract EthDeployer is Script {
         address taraAddress = vm.envAddress("ETH_TARA_ADDRESS");
         console.log("TARA address: %s", taraAddress);
 
-        PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](3);
-        changes[0] =
-            PillarBlock.VoteCountChange({validator: 0xFe3d5E3B9c2080bF338638Fd831a35A4B4344a2C, change: 0x84595});
-        changes[1] =
-            PillarBlock.VoteCountChange({validator: 0x515C990Ef87668E57A290F650b4C39c343d73d9a, change: 0x84595});
-        changes[2] =
-            PillarBlock.VoteCountChange({validator: 0x3E62C62Ac89c71412CA68688530D112433FEC78C, change: 0x84595});
-
-        PillarBlock.WithChanges memory genesis = PillarBlock.WithChanges({
-            block: PillarBlock.FinalizationData({period: 0, stateRoot: 0x0, bridgeRoot: 0x0, prevHash: 0x0}),
-            validatorChanges: changes
+        PillarBlock.WeightChange[] memory changes = new PillarBlock.WeightChange[](3);
+        changes[0] = PillarBlock.WeightChange({
+            validator: 0xFe3d5E3B9c2080bF338638Fd831a35A4B4344a2C,
+            change: 0x84595161401484a000000
         });
-        TaraClient client = new TaraClient(genesis, 3, 100);
+        changes[1] = PillarBlock.WeightChange({
+            validator: 0x515C990Ef87668E57A290F650b4C39c343d73d9a,
+            change: 0x84595161401484a000000
+        });
+        changes[2] = PillarBlock.WeightChange({
+            validator: 0x3E62C62Ac89c71412CA68688530D112433FEC78C,
+            change: 0x84595161401484a000000
+        });
+
+        TaraClient client = new TaraClient(changes, 3, 100);
 
         EthBridge bridge = new EthBridge{value: 2 ether}(
             TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),
