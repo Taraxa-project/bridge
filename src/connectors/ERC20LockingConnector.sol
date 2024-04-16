@@ -10,9 +10,9 @@ import "./TokenConnectorBase.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20LockingConnector is TokenConnectorBase {
-    constructor(address bridge, IERC20 token, address tara_addresss_on_eth)
+    constructor(address bridge, IERC20 token, address token_on_other_network)
         payable
-        TokenConnectorBase(bridge, address(token), tara_addresss_on_eth)
+        TokenConnectorBase(bridge, address(token), token_on_other_network)
     {}
 
     /**
@@ -39,6 +39,10 @@ contract ERC20LockingConnector is TokenConnectorBase {
         state.addAmount(msg.sender, value);
     }
 
+    /**
+     * @dev Allows the caller to claim tokens
+     * @notice The caller must send enough Ether to cover the fees.
+     */
     function claim() public payable override {
         require(msg.value >= feeToClaim[msg.sender], "ERC20LockingConnector: insufficient funds to pay fee");
         require(toClaim[msg.sender] > 0, "ERC20LockingConnector: nothing to claim");
