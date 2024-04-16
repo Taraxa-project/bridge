@@ -14,8 +14,8 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     TokenState finalizedState;
     mapping(address => uint256) public toClaim;
 
-    constructor(address bridge, address _token, address other_network_address) payable BridgeConnectorBase(bridge) {
-        otherNetworkAddress = other_network_address;
+    constructor(address bridge, address _token, address token_on_other_network) payable BridgeConnectorBase(bridge) {
+        otherNetworkAddress = token_on_other_network;
         token = _token;
         state = new TokenState(1);
     }
