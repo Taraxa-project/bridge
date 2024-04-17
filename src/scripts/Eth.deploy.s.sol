@@ -35,7 +35,7 @@ contract EthDeployer is Script {
         TaraClient client = new TaraClient(genesis, 3, 100, 100);
 
         EthBridge bridge = new EthBridge{value: 2 ether}(
-            TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),
+            TestERC20(0x3E02bDF20b8aFb2fF8EA73ef5419679722955074),
             IBridgeLightClient(client)
         );
 

@@ -35,7 +35,7 @@ echo "ETH_TARA_ADDRESS=$taraAddress" >> .env
 
 echo "Running deployment script for TaraClient & EthBridge"
 
-ethBridge=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast --legacy)
+ethBridge=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for EthBridge"

@@ -28,4 +28,4 @@ env_file_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
 
 # # Writing the aggregated public key into the .env file
 with open(env_file_path, 'a') as file:
-    file.write(f"AGGREGATED_PUBLIC_KEY=0x{agg_pk.hex()}\n")
+    file.write(f"\nAGGREGATED_PUBLIC_KEY=0x{agg_pk.hex()}\n")
