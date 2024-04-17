@@ -33,6 +33,12 @@ library PillarBlock {
         VoteCountChange[] validatorChanges;
     }
 
+    struct PendingBlock {
+        bytes32 blockHash;
+        WithChanges blockWithChanges;
+        bool finalized;
+    }
+
     struct FinalizedBlock {
         bytes32 blockHash;
         FinalizationData block;
@@ -79,28 +85,37 @@ library PillarBlock {
 }
 
 contract TaraClient is IBridgeLightClient {
-    PillarBlock.WithChanges pending;
-    bytes32 public pendingHash;
-    bool public pendingFinalized;
+    PillarBlock.PendingBlock public pending;
 
     PillarBlock.FinalizedBlock public finalized;
-    mapping(address => int96) public validators;
-    int256 public totalWeight;
-    int256 public threshold;
+    mapping(address => uint256) public validatorVoteCounts;
+    uint256 public totalWeight;
+    uint256 public threshold;
     uint256 public delay;
+    uint256 public pillarBlockInterval;
 
     uint256 refund;
 
-    constructor(PillarBlock.WithChanges memory genesis_block, int256 _threshold, uint256 _delay) {
+    constructor(
+        PillarBlock.WithChanges memory genesis_block,
+        uint256 _threshold,
+        uint256 _delay,
+        uint256 _pillarBlockInterval
+    ) {
         finalized = PillarBlock.FinalizedBlock(PillarBlock.getHash(genesis_block), genesis_block.block, block.number);
         processValidatorChanges(genesis_block.validatorChanges);
         threshold = _threshold;
         delay = _delay;
-        pendingFinalized = true;
+        pillarBlockInterval = _pillarBlockInterval;
+        pending = PillarBlock.PendingBlock(PillarBlock.getHash(genesis_block), genesis_block, true);
     }
 
-    function getPending() public view returns (PillarBlock.WithChanges memory) {
+    function getPending() public view returns (PillarBlock.PendingBlock memory) {
         return pending;
+    }
+
+    function getPendingPillarBlock() public view returns (PillarBlock.WithChanges memory) {
+        return pending.blockWithChanges;
     }
 
     function getFinalized() public view returns (PillarBlock.FinalizedBlock memory) {
@@ -124,7 +139,7 @@ contract TaraClient is IBridgeLightClient {
      * @param _threshold The new threshold value to be set.
      */
     // TODO: do we need this to be called by some "owner"?
-    function setThreshold(int256 _threshold) public {
+    function setThreshold(uint256 _threshold) public {
         threshold = _threshold;
     }
 
@@ -135,8 +150,17 @@ contract TaraClient is IBridgeLightClient {
      */
     function processValidatorChanges(PillarBlock.VoteCountChange[] memory validatorChanges) public {
         for (uint256 i = 0; i < validatorChanges.length; i++) {
-            validators[validatorChanges[i].validator] += validatorChanges[i].change;
-            totalWeight += validatorChanges[i].change;
+            if (validatorChanges[i].change > 0) {
+                validatorVoteCounts[validatorChanges[i].validator] += uint256(uint32(validatorChanges[i].change));
+                totalWeight += uint256(uint32(validatorChanges[i].change));
+            } else {
+                if (validatorVoteCounts[validatorChanges[i].validator] < uint256(uint32(-validatorChanges[i].change))) {
+                    validatorVoteCounts[validatorChanges[i].validator] = 0;
+                } else {
+                    validatorVoteCounts[validatorChanges[i].validator] -= uint256(uint32(-validatorChanges[i].change));
+                }
+                totalWeight -= uint256(uint32(-validatorChanges[i].change));
+            }
         }
     }
 
@@ -156,17 +180,21 @@ contract TaraClient is IBridgeLightClient {
      * @param signatures An array of signatures.
      * @return weight The total weight of the signatures.
      */
-    function getSignaturesWeight(bytes32 h, CompactSignature[] memory signatures) public view returns (int256 weight) {
+    function getSignaturesWeight(bytes32 h, CompactSignature[] memory signatures)
+        public
+        view
+        returns (uint256 weight)
+    {
         for (uint256 i = 0; i < signatures.length; i++) {
             address signer = ECDSA.recover(h, signatures[i].r, signatures[i].vs);
-            weight += validators[signer];
+            weight += validatorVoteCounts[signer];
         }
     }
 
     function setPending(PillarBlock.WithChanges memory b, bytes32 ph) internal {
-        pendingHash = ph;
-        pending = b;
-        pendingFinalized = false;
+        pending.blockWithChanges = b;
+        pending.blockHash = ph;
+        pending.finalized = false;
     }
 
     /**
@@ -179,15 +207,15 @@ contract TaraClient is IBridgeLightClient {
 
         require(block.number >= finalized.finalizedAt + delay, "The delay has not passed yet");
 
-        if (pendingFinalized) {
+        if (pending.finalized) {
             require(pb.block.prevHash == finalized.blockHash, "Block prevHash != finalized block hash");
             setPending(pb, ph);
             return;
         }
 
-        require(pb.block.prevHash == pendingHash, "Block prevHash != pending block hash");
-        finalized = PillarBlock.FinalizedBlock(pendingHash, pending.block, block.number);
-        processValidatorChanges(pending.validatorChanges);
+        require(pb.block.prevHash == pending.blockHash, "Block prevHash != pending block hash");
+        finalized = PillarBlock.FinalizedBlock(pending.blockHash, pending.blockWithChanges.block, block.number);
+        processValidatorChanges(pending.blockWithChanges.validatorChanges);
         setPending(pb, ph);
     }
 
@@ -196,8 +224,8 @@ contract TaraClient is IBridgeLightClient {
      * @param signatures The array of signatures required to finalize the block.
      */
     function finalizePendingBlock(CompactSignature[] memory signatures) public {
-        _finalizeBlock(pending, pendingHash, signatures);
-        pendingFinalized = true;
+        _finalizeBlock(pending.blockWithChanges, pending.blockHash, signatures);
+        pending.finalized = true;
     }
 
     /**
@@ -210,10 +238,15 @@ contract TaraClient is IBridgeLightClient {
     {
         uint256 gasleftbefore = gasleft();
         require(b.block.prevHash == finalized.blockHash, "block.prevHash != finalized.blockHash");
-        int256 weight = getSignaturesWeight(PillarBlock.getVoteHash(b.block.period, h), signatures);
+        require(
+            b.block.period == finalized.block.period + pillarBlockInterval,
+            "Pending block should have number pillarBlockInterval greater than latest"
+        );
+        uint256 weight = getSignaturesWeight(PillarBlock.getVoteHash(b.block.period, h), signatures);
         require(weight >= threshold, "Not enough weight");
         processValidatorChanges(b.validatorChanges);
         finalized = PillarBlock.FinalizedBlock(h, b.block, block.number);
+
         refund = (gasleftbefore - gasleft()) * tx.gasprice;
     }
 }
