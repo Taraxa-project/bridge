@@ -38,7 +38,6 @@ abstract contract BridgeBase {
 
     function applyState(SharedStructs.StateWithProof calldata state_with_proof) public {
         uint256 gasleftbefore = gasleft();
-        uint256 common = lightClient.refundAmount();
         // get bridge root from light client and compare it (it should be proved there)
         require(
             SharedStructs.getBridgeRoot(state_with_proof.state.epoch, state_with_proof.state_hashes)
@@ -46,7 +45,7 @@ abstract contract BridgeBase {
             "State does not match bridge root"
         );
         require(state_with_proof.state.epoch == appliedEpoch + 1, "Epochs should be processed sequentially");
-        common += (gasleftbefore - gasleft()) * tx.gasprice;
+        uint256 common = (gasleftbefore - gasleft()) * tx.gasprice;
 
         for (uint256 i = 0; i < state_with_proof.state_hashes.length; i++) {
             gasleftbefore = gasleft();
