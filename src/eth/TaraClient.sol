@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.17;
 
+import "../lib/Maths.sol";
 import "../lib/ILightClient.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
@@ -150,17 +151,9 @@ contract TaraClient is IBridgeLightClient {
      */
     function processValidatorChanges(PillarBlock.VoteCountChange[] memory validatorChanges) public {
         for (uint256 i = 0; i < validatorChanges.length; i++) {
-            if (validatorChanges[i].change > 0) {
-                validatorVoteCounts[validatorChanges[i].validator] += uint256(uint32(validatorChanges[i].change));
-                totalWeight += uint256(uint32(validatorChanges[i].change));
-            } else {
-                if (validatorVoteCounts[validatorChanges[i].validator] < uint256(uint32(-validatorChanges[i].change))) {
-                    validatorVoteCounts[validatorChanges[i].validator] = 0;
-                } else {
-                    validatorVoteCounts[validatorChanges[i].validator] -= uint256(uint32(-validatorChanges[i].change));
-                }
-                totalWeight -= uint256(uint32(-validatorChanges[i].change));
-            }
+            validatorVoteCounts[validatorChanges[i].validator] =
+                Maths.add(validatorVoteCounts[validatorChanges[i].validator], validatorChanges[i].change);
+            totalWeight = Maths.add(totalWeight, validatorChanges[i].change);
         }
     }
 
