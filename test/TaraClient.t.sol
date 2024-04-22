@@ -205,4 +205,11 @@ contract TaraClientTest is Test {
             ECDSA.recover(PillarBlock.getHash(decoded.vote), decoded.signature.r, decoded.signature.vs);
         assertEq(recovered_signer, signer);
     }
+
+    function test_pillarVoteSerialization() public {
+        assertEq(
+            PillarBlock.getVoteHash(12, bytes32(uint256(34))),
+            0x00ec94cd6076f5d010620194cc66952562bc3ba027026bdd156000479a7754b1
+        );
+    }
 }
