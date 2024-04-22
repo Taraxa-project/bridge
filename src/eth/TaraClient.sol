@@ -34,12 +34,6 @@ library PillarBlock {
         VoteCountChange[] validatorChanges;
     }
 
-    struct PendingBlock {
-        bytes32 blockHash;
-        WithChanges blockWithChanges;
-        bool finalized;
-    }
-
     struct FinalizedBlock {
         bytes32 blockHash;
         FinalizationData block;
@@ -48,7 +42,7 @@ library PillarBlock {
 
     struct Vote {
         uint256 period;
-        bytes32 block_hash;
+        bytes32 blockHash;
     }
 
     struct SignedVote {
@@ -86,29 +80,17 @@ library PillarBlock {
 }
 
 contract TaraClient is IBridgeLightClient {
-    PillarBlock.PendingBlock public pending;
-
     PillarBlock.FinalizedBlock public finalized;
     mapping(address => uint256) public validatorVoteCounts;
     uint256 public totalWeight;
     uint256 public threshold;
-    uint256 public delay;
     uint256 public pillarBlockInterval;
 
-    constructor(PillarBlock.WithChanges memory genesis_block, uint256 _threshold, uint256 _pillarBlockInterval) {
-        finalized = PillarBlock.FinalizedBlock(PillarBlock.getHash(genesis_block), genesis_block.block, block.number);
-        processValidatorChanges(genesis_block.validatorChanges);
+    constructor(PillarBlock.WithChanges memory _genesisBlock, uint256 _threshold, uint256 _pillarBlockInterval) {
+        finalized = PillarBlock.FinalizedBlock(PillarBlock.getHash(_genesisBlock), _genesisBlock.block, block.number);
+        processValidatorChanges(_genesisBlock.validatorChanges);
         threshold = _threshold;
         pillarBlockInterval = _pillarBlockInterval;
-        pending = PillarBlock.PendingBlock(PillarBlock.getHash(genesis_block), genesis_block, true);
-    }
-
-    function getPending() public view returns (PillarBlock.PendingBlock memory) {
-        return pending;
-    }
-
-    function getPendingPillarBlock() public view returns (PillarBlock.WithChanges memory) {
-        return pending.blockWithChanges;
     }
 
     function getFinalized() public view returns (PillarBlock.FinalizedBlock memory) {
@@ -147,22 +129,26 @@ contract TaraClient is IBridgeLightClient {
 
     /**
      * @dev Finalizes blocks by verifying the signatures for the last blocks
-     * @param encoded_blocks list if PillarBlockWithChanges.
-     * @param last_block_sigs An array of Signature structs representing the signatures of the last block.
+     * @param blocks list of PillarBlockWithChanges.
+     * @param lastBlockSigs An array of Signature structs representing the signatures of the last block.
      */
-    function finalizeBlocks(bytes[] memory encoded_blocks, CompactSignature[] memory last_block_sigs) public {
-        for (uint256 i = 0; i < encoded_blocks.length; i++) {
-            PillarBlock.WithChanges memory b = PillarBlock.fromBytes(encoded_blocks[i]);
-            bytes32 pbh = PillarBlock.getHash(encoded_blocks[i]);
-            require(b.block.prevHash == finalized.blockHash, "block.prevHash != finalized.hash");
+    function finalizeBlocks(PillarBlock.WithChanges[] memory blocks, CompactSignature[] memory lastBlockSigs) public {
+        for (uint256 i = 0; i < blocks.length; i++) {
+            bytes32 pbh = PillarBlock.getHash(blocks[i]);
+            require(blocks[i].block.prevHash == finalized.blockHash, "block.prevHash != finalized.blockHash");
+            require(
+                blocks[i].block.period == finalized.block.period + pillarBlockInterval,
+                "Finalized block should have number pillarBlockInterval greater than latest"
+            );
             // this should be processed before the signatures verification to have a proper weights
-            processValidatorChanges(b.validatorChanges);
+            processValidatorChanges(blocks[i].validatorChanges);
             // verify signatures only for the last block
-            if (i == (encoded_blocks.length - 1)) {
-                uint256 weight = getSignaturesWeight(PillarBlock.getVoteHash(b.block.period, pbh), last_block_sigs);
+            if (i == (blocks.length - 1)) {
+                uint256 weight =
+                    getSignaturesWeight(PillarBlock.getVoteHash(blocks[i].block.period, pbh), lastBlockSigs);
                 require(weight >= threshold, "Signatures weight is less than threshold");
             }
-            _finalizeBlock(b, pbh);
+            finalized = PillarBlock.FinalizedBlock(pbh, blocks[i].block, block.number);
         }
     }
 
@@ -181,19 +167,5 @@ contract TaraClient is IBridgeLightClient {
             address signer = ECDSA.recover(h, signatures[i].r, signatures[i].vs);
             weight += validatorVoteCounts[signer];
         }
-    }
-
-    /**
-     * @dev Finalizes
-     * @param b The PillarBlockWithChanges struct containing the block data and validators changes.
-     * @param h Pillar block hash
-     */
-    function _finalizeBlock(PillarBlock.WithChanges memory b, bytes32 h) internal {
-        require(b.block.prevHash == finalized.blockHash, "block.prevHash != finalized.blockHash");
-        require(
-            b.block.period == finalized.block.period + pillarBlockInterval,
-            "Pending block should have number pillarBlockInterval greater than latest"
-        );
-        finalized = PillarBlock.FinalizedBlock(h, b.block, block.number);
     }
 }

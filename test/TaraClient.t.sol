@@ -82,8 +82,8 @@ contract TaraClientTest is Test {
 
     function test_blockAccept() public {
         currentBlock.validatorChanges = getVoteCountChanges();
-        bytes[] memory blocks = new bytes[](1);
-        blocks[0] = abi.encode(currentBlock);
+        PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
+        blocks[0] = currentBlock;
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
         (bytes32 blockHash,, uint256 finalizedAt) = client.finalized();
         assertEq(blockHash, PillarBlock.getHash(currentBlock));
@@ -92,48 +92,46 @@ contract TaraClientTest is Test {
 
     function test_rejectBlockWithWrongSignatures() public {
         currentBlock.validatorChanges = getVoteCountChanges();
-        bytes[] memory blocks = new bytes[](1);
-        blocks[0] = abi.encode(currentBlock);
+        PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
+        blocks[0] = currentBlock;
         currentBlock.block.period += 1;
         vm.expectRevert("Signatures weight is less than threshold");
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
-    function makePillarChain(uint256 count) public returns (bytes[] memory blocks) {
-        blocks = new bytes[](count);
-        blocks[0] = abi.encode(currentBlock);
+    function makePillarChain(uint256 count) public returns (PillarBlock.WithChanges[] memory blocks) {
+        blocks = new PillarBlock.WithChanges[](count);
+        blocks[0] = currentBlock;
         for (uint256 i = 1; i < count; i++) {
             currentBlock.block.prevHash = PillarBlock.getHash(currentBlock);
             currentBlock.block.period += PILLAR_BLOCK_INTERVAL;
-            blocks[i] = abi.encode(currentBlock);
+            blocks[i] = currentBlock;
         }
     }
 
     function test_acceptBatch() public {
         currentBlock.validatorChanges = getVoteCountChanges();
-        bytes[] memory blocks = makePillarChain(10);
+        PillarBlock.WithChanges[] memory blocks = makePillarChain(10);
 
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
     function test_rejectBatchWithWrongPrevHash() public {
         currentBlock.validatorChanges = getVoteCountChanges();
-        bytes[] memory blocks = makePillarChain(10);
+        PillarBlock.WithChanges[] memory blocks = makePillarChain(10);
 
-        PillarBlock.WithChanges memory b3 = PillarBlock.fromBytes(blocks[3]);
-        b3.block.prevHash = bytes32(0);
-        blocks[3] = abi.encode(b3);
+        blocks[3].block.prevHash = bytes32(0);
 
-        vm.expectRevert("block.prevHash != finalized.hash");
+        vm.expectRevert("block.prevHash != finalized.blockHash");
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
     function test_rejectBatchWithWrongSignatures() public {
         currentBlock.validatorChanges = getVoteCountChanges();
-        bytes[] memory blocks = makePillarChain(10);
+        PillarBlock.WithChanges[] memory blocks = makePillarChain(10);
 
-        // set some block in the middle to get signatures for
-        currentBlock = PillarBlock.fromBytes(blocks[3]);
+        // set some block in the middle to create signatures for
+        currentBlock = blocks[3];
         vm.expectRevert("Signatures weight is less than threshold");
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
     }
