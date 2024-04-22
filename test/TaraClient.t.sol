@@ -19,6 +19,7 @@ contract TaraClientTest is Test {
     TaraClient client;
     PillarBlock.WithChanges currentBlock;
     uint256 constant PILLAR_BLOCK_INTERVAL = 100;
+    uint32 constant PILLAR_BLOCK_THRESHOLD = 50;
 
     function setUp() public {
         PillarBlock.VoteCountChange[] memory initial = new PillarBlock.VoteCountChange[](10);
@@ -28,9 +29,18 @@ contract TaraClientTest is Test {
         }
         currentBlock =
             PillarBlock.WithChanges(PillarBlock.FinalizationData(1, bytes32(0), bytes32(0), bytes32(0)), initial);
-        client = new TaraClient(currentBlock, 100, 10, 100);
+        client = new TaraClient(currentBlock, PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL);
         currentBlock.block.period += PILLAR_BLOCK_INTERVAL;
         currentBlock.block.prevHash = client.getFinalized().blockHash;
+    }
+
+    function getVoteCountChanges() internal pure returns (PillarBlock.VoteCountChange[] memory) {
+        PillarBlock.VoteCountChange[] memory vote_changes = new PillarBlock.VoteCountChange[](20);
+        for (uint256 i = 0; i < vote_changes.length; i++) {
+            bytes32 pk = keccak256(abi.encodePacked(i));
+            vote_changes[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 10);
+        }
+        return vote_changes;
     }
 
     function getCompactSig(bytes32 pk, bytes32 h) public pure returns (CompactSignature memory) {
@@ -51,7 +61,7 @@ contract TaraClientTest is Test {
         }
     }
 
-    function getTotalWeight(PillarBlock.WithChanges memory validatorBlock) public view returns (uint256 totalWeight) {
+    function getTotalWeight(PillarBlock.WithChanges memory validatorBlock) public pure returns (uint256 totalWeight) {
         totalWeight = 0;
         for (uint256 i = 0; i < validatorBlock.validatorChanges.length; i++) {
             if (validatorBlock.validatorChanges[i].change < 0) {
@@ -71,10 +81,59 @@ contract TaraClientTest is Test {
     }
 
     function test_blockAccept() public {
-        client.finalizeBlock(abi.encode(currentBlock), getSignatures(200));
+        currentBlock.validatorChanges = getVoteCountChanges();
+        PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
+        blocks[0] = currentBlock;
+        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
         (bytes32 blockHash,, uint256 finalizedAt) = client.finalized();
         assertEq(blockHash, PillarBlock.getHash(currentBlock));
         assertEq(finalizedAt, block.number);
+    }
+
+    function test_rejectBlockWithWrongSignatures() public {
+        currentBlock.validatorChanges = getVoteCountChanges();
+        PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
+        blocks[0] = currentBlock;
+        currentBlock.block.period += 1;
+        vm.expectRevert("Signatures weight is less than threshold");
+        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+    }
+
+    function makePillarChain(uint256 count) public returns (PillarBlock.WithChanges[] memory blocks) {
+        blocks = new PillarBlock.WithChanges[](count);
+        blocks[0] = currentBlock;
+        for (uint256 i = 1; i < count; i++) {
+            currentBlock.block.prevHash = PillarBlock.getHash(currentBlock);
+            currentBlock.block.period += PILLAR_BLOCK_INTERVAL;
+            blocks[i] = currentBlock;
+        }
+    }
+
+    function test_acceptBatch() public {
+        currentBlock.validatorChanges = getVoteCountChanges();
+        PillarBlock.WithChanges[] memory blocks = makePillarChain(10);
+
+        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+    }
+
+    function test_rejectBatchWithWrongPrevHash() public {
+        currentBlock.validatorChanges = getVoteCountChanges();
+        PillarBlock.WithChanges[] memory blocks = makePillarChain(10);
+
+        blocks[3].block.prevHash = bytes32(0);
+
+        vm.expectRevert("block.prevHash != finalized.blockHash");
+        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+    }
+
+    function test_rejectBatchWithWrongSignatures() public {
+        currentBlock.validatorChanges = getVoteCountChanges();
+        PillarBlock.WithChanges[] memory blocks = makePillarChain(10);
+
+        // set some block in the middle to create signatures for
+        currentBlock = blocks[3];
+        vm.expectRevert("Signatures weight is less than threshold");
+        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
     function test_weightChanges() public {
@@ -85,51 +144,6 @@ contract TaraClientTest is Test {
         }
         client.setThreshold(1);
         client.processValidatorChanges(changes);
-    }
-
-    function test_optimisticAccept() public {
-        vm.roll(100);
-        client.addPendingBlock(abi.encode(currentBlock));
-
-        // invariant tests - the finalized block should always be registered before the next pending block
-        bytes32 firstPendingBlockHash = client.getPending().blockHash;
-        assertEq(
-            firstPendingBlockHash,
-            PillarBlock.getHash(currentBlock),
-            "Finalized block should always be registered before the next pending block"
-        );
-        assertEq(client.getPending().finalized, false, "Pending block should not be finalized");
-
-        vm.roll(110);
-        uint256 period = 1 + PILLAR_BLOCK_INTERVAL;
-        PillarBlock.WithChanges memory b2 = PillarBlock.WithChanges(
-            PillarBlock.FinalizationData(period, bytes32(0), bytes32(0), PillarBlock.getHash(currentBlock)),
-            new PillarBlock.VoteCountChange[](0)
-        );
-        uint256 totalWeightBefore = client.totalWeight();
-        uint256 blockWeight = getTotalWeight(b2);
-        uint256 currentPendingWeightBefore = getTotalWeight(client.getPendingPillarBlock());
-        client.addPendingBlock(abi.encode(b2));
-        uint256 currentPendingWeightAfter = getTotalWeight(client.getPendingPillarBlock());
-
-        (bytes32 blockHash, PillarBlock.FinalizationData memory b, uint256 finalizedAt) = client.finalized();
-        assertEq(b.period, period);
-        assertEq(blockHash, PillarBlock.getHash(currentBlock));
-        assertEq(finalizedAt, block.number);
-
-        // // Invariant tests - total weight should still be 200 + 0 + 0 + 0 = 200
-        assertEq(
-            client.totalWeight(),
-            totalWeightBefore + currentPendingWeightBefore,
-            "total weight should still be weight before + block weight"
-        );
-        assertEq(currentPendingWeightAfter, blockWeight, "current pending weight should be equal to the block weight");
-        // Invariant tests - finalized block should stay finalized
-        (bytes32 finalizedBlockHash, PillarBlock.FinalizationData memory b2Block, uint256 lastFinalizedAt) =
-            client.finalized();
-        assertEq(finalizedBlockHash, PillarBlock.getHash(currentBlock), "Finalized block should stay finalized");
-        assertEq(lastFinalizedAt, block.number, "Finalized block should stay finalized");
-        assertEq(b2Block.period, 1 + PILLAR_BLOCK_INTERVAL, "Finalized block should stay finalized");
     }
 
     function test_blockEncodeDecode() public {
@@ -190,5 +204,12 @@ contract TaraClientTest is Test {
         address recovered_signer =
             ECDSA.recover(PillarBlock.getHash(decoded.vote), decoded.signature.r, decoded.signature.vs);
         assertEq(recovered_signer, signer);
+    }
+
+    function test_pillarVoteSerialization() public {
+        assertEq(
+            PillarBlock.getVoteHash(12, bytes32(uint256(34))),
+            0x00ec94cd6076f5d010620194cc66952562bc3ba027026bdd156000479a7754b1
+        );
     }
 }

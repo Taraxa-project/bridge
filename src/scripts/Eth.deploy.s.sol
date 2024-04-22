@@ -32,7 +32,7 @@ contract EthDeployer is Script {
             }),
             validatorChanges: changes
         });
-        TaraClient client = new TaraClient(genesis, 3, 100, 100);
+        TaraClient client = new TaraClient(genesis, 3, 100);
 
         EthBridge bridge = new EthBridge{value: 2 ether}(
             TestERC20(0x3E02bDF20b8aFb2fF8EA73ef5419679722955074),
