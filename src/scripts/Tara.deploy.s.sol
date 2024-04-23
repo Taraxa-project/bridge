@@ -16,8 +16,6 @@ import {TaraBridge} from "../tara/TaraBridge.sol";
 contract TaraDeployer is Script {
     using Bytes for bytes;
 
-    uint64 internal constant SYNC_COMMITTEE_SIZE = 512;
-
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address deployerAddress = vm.envAddress("DEPLOYMENT_ADDRESS");
@@ -33,12 +31,7 @@ contract TaraDeployer is Script {
         bytes32 _body_root =  vm.envBytes32("BODY_ROOT");
         uint256 _block_number = vm.envUint("BLOCK_NUMBER");
         bytes32 _merkle_root = vm.envBytes32("MERKLE_ROOT");
-
-        BeaconChain.SyncCommittee memory _sync_committee;
-        _sync_committee.aggregate_pubkey = vm.envBytes("AGGREGATED_PUBLIC_KEY");
-        for (uint256 i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
-            _sync_committee.pubkeys[i] = vm.envBytes("SYNC_COMMITTEE_PUBKEY_", i);
-        }
+        bytes32 _sync_root = vm.envBytes32("SYNC_COMMITTEE_ROOT");
 
 
         bytes32 _genesis_validators_root = 0x9143aa7c615a7f7115e2b6aac319c03529df8242ae705fba9df39b79c59fa8b1;
@@ -51,7 +44,7 @@ contract TaraDeployer is Script {
             _body_root,
             _block_number,
             _merkle_root,
-            BeaconChain.hash_tree_root(_sync_committee),
+            _sync_root,
             _genesis_validators_root
         );
 
