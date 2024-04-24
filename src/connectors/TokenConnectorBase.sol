@@ -8,8 +8,8 @@ import "./BridgeConnectorBase.sol";
 import "./TokenState.sol";
 
 abstract contract TokenConnectorBase is BridgeConnectorBase {
-    address token;
-    address otherNetworkAddress;
+    address public immutable token;
+    address public immutable otherNetworkAddress;
     TokenState state;
     TokenState finalizedState;
     mapping(address => uint256) public toClaim;

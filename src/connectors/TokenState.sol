@@ -10,7 +10,7 @@ struct Transfer {
 }
 
 contract TokenState {
-    uint256 public epoch;
+    uint256 public immutable epoch;
     address[] accounts;
     mapping(address => uint256) balances; // position = 2
 

@@ -6,9 +6,9 @@ import "beacon-light-client/src/BeaconLightClient.sol";
 import "beacon-light-client/src/trie/StorageProof.sol";
 
 contract EthClient is IBridgeLightClient {
-    BeaconLightClient public client;
-    address ethBridgeAddress;
-    bytes32 bridgeRootKey;
+    BeaconLightClient public immutable client;
+    address public immutable ethBridgeAddress;
+    bytes32 public bridgeRootKey;
 
     bytes32 bridgeRoot;
 

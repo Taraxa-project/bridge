@@ -12,7 +12,7 @@ contract TaraClient is IBridgeLightClient {
     mapping(address => uint256) public validatorVoteCounts;
     uint256 public totalWeight;
     uint256 public threshold;
-    uint256 public pillarBlockInterval;
+    uint256 public immutable pillarBlockInterval;
 
     constructor(PillarBlock.WithChanges memory _genesisBlock, uint256 _threshold, uint256 _pillarBlockInterval) {
         finalized = PillarBlock.FinalizedBlock(PillarBlock.getHash(_genesisBlock), _genesisBlock.block, block.number);
@@ -59,7 +59,7 @@ contract TaraClient is IBridgeLightClient {
     }
 
     /**
-     * @dev Finalizes blocks by verifying the signatures for the last blocks
+     * @dev Pinalizes blocks by verifying the signatures for the last blocks
      * @param blocks list of PillarBlockWithChanges.
      * @param lastBlockSigs An array of Signature structs representing the signatures of the last block.
      */
