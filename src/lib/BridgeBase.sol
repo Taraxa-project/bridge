@@ -77,7 +77,9 @@ abstract contract BridgeBase {
 
     function finalizeEpoch() public {
         // TODO: should be called at least every N blocks?
-        finalizedEpoch++;
+        unchecked {
+            finalizedEpoch++;
+        }
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](
                 tokenAddresses.length
             );
@@ -100,10 +102,12 @@ abstract contract BridgeBase {
         ret.state_hashes = new SharedStructs.ContractStateHash[](
             tokenAddresses.length
         );
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            bytes memory state = connectors[tokenAddresses[i]].getFinalizedState();
-            ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));
-            ret.state.states[i] = SharedStructs.StateWithAddress(tokenAddresses[i], state);
+        unchecked {
+            for (uint256 i = 0; i < tokenAddresses.length; i++) {
+                bytes memory state = connectors[tokenAddresses[i]].getFinalizedState();
+                ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));
+                ret.state.states[i] = SharedStructs.StateWithAddress(tokenAddresses[i], state);
+            }
         }
     }
 }

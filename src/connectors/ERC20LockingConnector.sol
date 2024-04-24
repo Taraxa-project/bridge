@@ -23,9 +23,11 @@ contract ERC20LockingConnector is TokenConnectorBase {
     function applyState(bytes calldata _state) internal override returns (address[] memory accounts) {
         Transfer[] memory transfers = deserializeTransfers(_state);
         accounts = new address[](transfers.length);
-        for (uint256 i = 0; i < transfers.length; i++) {
-            toClaim[transfers[i].account] += transfers[i].amount;
-            accounts[i] = transfers[i].account;
+        unchecked {
+            for (uint256 i = 0; i < transfers.length; i++) {
+                toClaim[transfers[i].account] += transfers[i].amount;
+                accounts[i] = transfers[i].account;
+            }
         }
     }
 

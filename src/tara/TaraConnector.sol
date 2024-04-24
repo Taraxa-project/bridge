@@ -42,7 +42,9 @@ contract TaraConnector is TokenConnectorBase {
     function claim() public payable override {
         require(msg.value >= feeToClaim[msg.sender], "ERC20LockingConnector: insufficient funds to pay fee");
         require(toClaim[msg.sender] > 0, "ERC20LockingConnector: nothing to claim");
-        payable(msg.sender).transfer(toClaim[msg.sender]);
+        uint256 fee = toClaim[msg.sender];
         toClaim[msg.sender] = 0;
+        (bool success,) = payable(msg.sender).call{value: fee}("");
+        require(success, "ERC20LockingConnector: claim failed");
     }
 }

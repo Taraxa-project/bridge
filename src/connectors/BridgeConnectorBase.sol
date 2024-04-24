@@ -20,7 +20,8 @@ abstract contract BridgeConnectorBase is IBridgeConnector, Ownable {
      * @param amount The amount to be refunded.
      */
     function refund(address payable receiver, uint256 amount) public override onlyOwner {
-        receiver.transfer(amount);
+        (bool refundSuccess,) = receiver.call{value: amount}("");
+        require(refundSuccess, "BridgeConnectorBase: refund failed");
     }
 
     function applyState(bytes calldata) internal virtual returns (address[] memory);
@@ -40,8 +41,10 @@ abstract contract BridgeConnectorBase is IBridgeConnector, Ownable {
         address[] memory addresses = applyState(_state);
         uint256 total_fee = common_part + (gasleftbefore - gasleft()) * tx.gasprice;
 
-        for (uint256 i = 0; i < addresses.length; i++) {
-            feeToClaim[addresses[i]] += total_fee / addresses.length;
+        unchecked {
+            for (uint256 i = 0; i < addresses.length; i++) {
+                feeToClaim[addresses[i]] += total_fee / addresses.length;
+            }
         }
         refund(refund_receiver, total_fee);
     }
