@@ -6,3 +6,4 @@ error NotSuccessiveEpochs(uint256 epoch, uint256 nextEpoch);
 error UnregisteredContract(address contractAddress);
 error InvalidStateHash(bytes32 stateHash, bytes32 expectedStateHash);
 error UnmatchingContractAddresses(address contractAddress, address expectedContractAddress);
+error InvalidBridgeRoot(bytes32 bridgeRoot);

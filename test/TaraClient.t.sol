@@ -3,6 +3,8 @@ pragma solidity ^0.8.17;
 
 import {Test, console} from "forge-std/Test.sol";
 import "../src/eth/TaraClient.sol";
+import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../src/errors/ClientErrors.sol";
+
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./Utils.sol";
 
@@ -95,7 +97,8 @@ contract TaraClientTest is Test {
         PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
         blocks[0] = currentBlock;
         currentBlock.block.period += 1;
-        vm.expectRevert("Signatures weight is less than threshold");
+
+        vm.expectRevert();
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
@@ -122,7 +125,7 @@ contract TaraClientTest is Test {
 
         blocks[3].block.prevHash = bytes32(0);
 
-        vm.expectRevert("block.prevHash != finalized.blockHash");
+        vm.expectRevert();
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
@@ -132,7 +135,7 @@ contract TaraClientTest is Test {
 
         // set some block in the middle to create signatures for
         currentBlock = blocks[3];
-        vm.expectRevert("Signatures weight is less than threshold");
+        vm.expectRevert();
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 

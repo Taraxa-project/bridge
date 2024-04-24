@@ -2,6 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {InsufficientFunds, NoClaimAvailable, RefundFailed} from "../errors/ConnectorErrors.sol";
 import "../connectors/TokenState.sol";
 import "../lib/SharedStructs.sol";
 import "../connectors/TokenConnectorBase.sol";
@@ -41,11 +42,17 @@ contract TaraConnector is TokenConnectorBase {
      * @notice The caller must send enough Ether to cover the fees.
      */
     function claim() public payable override {
-        require(msg.value >= feeToClaim[msg.sender], "ERC20LockingConnector: insufficient funds to pay fee");
-        require(toClaim[msg.sender] > 0, "ERC20LockingConnector: nothing to claim");
+        if (msg.value > feeToClaim[msg.sender]) {
+            revert InsufficientFunds({expected: feeToClaim[msg.sender], actual: msg.value});
+        }
+        if (toClaim[msg.sender] == 0) {
+            revert NoClaimAvailable();
+        }
         uint256 fee = toClaim[msg.sender];
         toClaim[msg.sender] = 0;
         (bool success,) = payable(msg.sender).call{value: fee}("");
-        require(success, "ERC20LockingConnector: claim failed");
+        if (!success) {
+            revert RefundFailed({recipient: msg.sender, amount: fee});
+        }
     }
 }

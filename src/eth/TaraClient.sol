@@ -3,9 +3,11 @@
 pragma solidity ^0.8.17;
 
 import "../lib/Maths.sol";
+import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../errors/ClientErrors.sol";
 import "../lib/ILightClient.sol";
 import "../lib/PillarBlock.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "forge-std/console.sol";
 
 contract TaraClient is IBridgeLightClient {
     PillarBlock.FinalizedBlock public finalized;
@@ -67,18 +69,27 @@ contract TaraClient is IBridgeLightClient {
         uint256 blocksLength = blocks.length;
         for (uint256 i = 0; i < blocksLength; i++) {
             bytes32 pbh = PillarBlock.getHash(blocks[i]);
-            require(blocks[i].block.prevHash == finalized.blockHash, "block.prevHash != finalized.blockHash");
-            require(
-                blocks[i].block.period == finalized.block.period + pillarBlockInterval,
-                "Finalized block should have number pillarBlockInterval greater than latest"
-            );
+            if (blocks[i].block.prevHash != finalized.blockHash) {
+                console.logBytes32(finalized.blockHash);
+                console.logBytes32(blocks[i].block.prevHash);
+                revert HashesNotMatching({expected: finalized.blockHash, actual: blocks[i].block.prevHash});
+            }
+            if (blocks[i].block.period != (finalized.block.period + pillarBlockInterval)) {
+                revert InvalidBlockInterval({
+                    expected: finalized.block.period + pillarBlockInterval,
+                    actual: blocks[i].block.period
+                });
+            }
+
             // this should be processed before the signatures verification to have a proper weights
             processValidatorChanges(blocks[i].validatorChanges);
             // verify signatures only for the last block
             if (i == (blocks.length - 1)) {
                 uint256 weight =
                     getSignaturesWeight(PillarBlock.getVoteHash(blocks[i].block.period, pbh), lastBlockSigs);
-                require(weight >= threshold, "Signatures weight is less than threshold");
+                if (weight < threshold) {
+                    revert ThresholdNotMet({threshold: threshold, weight: weight});
+                }
             }
             finalized = PillarBlock.FinalizedBlock(pbh, blocks[i].block, block.number);
         }

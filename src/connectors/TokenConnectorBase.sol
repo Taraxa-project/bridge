@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.17;
 
+import {InvalidEpoch, NoFinalizedState} from "../errors/ConnectorErrors.sol";
 import "../lib/SharedStructs.sol";
 import "../lib/Constants.sol";
 import "./BridgeConnectorBase.sol";
@@ -34,8 +35,9 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     }
 
     function finalize(uint256 epoch_to_finalize) public override onlyOwner returns (bytes32) {
-        require(epoch_to_finalize == state.epoch(), "Cannot finalize different epoch");
-        // TODO: destruct the state before overwriting it?
+        if (epoch_to_finalize != state.epoch()) {
+            revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
+        }
         finalizedState = state;
         state = new TokenState(epoch_to_finalize + 1);
         return keccak256(finalizedSerializedTransfers());
@@ -47,7 +49,7 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
      */
     function getFinalizedState() public view override returns (bytes memory) {
         if (address(finalizedState) == address(0)) {
-            revert("No finalized state");
+            revert NoFinalizedState();
         }
 
         return finalizedSerializedTransfers();
