@@ -42,7 +42,8 @@ abstract contract BridgeConnectorBase is IBridgeConnector, Ownable {
         uint256 total_fee = common_part + (gasleftbefore - gasleft()) * tx.gasprice;
 
         unchecked {
-            for (uint256 i = 0; i < addresses.length; i++) {
+            uint256 addressesLength = addresses.length;
+            for (uint256 i = 0; i < addressesLength; i++) {
                 feeToClaim[addresses[i]] += total_fee / addresses.length;
             }
         }

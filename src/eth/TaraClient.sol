@@ -49,7 +49,8 @@ contract TaraClient is IBridgeLightClient {
      */
     function processValidatorChanges(PillarBlock.VoteCountChange[] memory validatorChanges) public {
         unchecked {
-            for (uint256 i = 0; i < validatorChanges.length; i++) {
+            uint256 validatorChangesLength = validatorChanges.length;
+            for (uint256 i = 0; i < validatorChangesLength; i++) {
                 validatorVoteCounts[validatorChanges[i].validator] =
                     Maths.add(validatorVoteCounts[validatorChanges[i].validator], validatorChanges[i].change);
                 totalWeight = Maths.add(totalWeight, validatorChanges[i].change);
@@ -63,7 +64,8 @@ contract TaraClient is IBridgeLightClient {
      * @param lastBlockSigs An array of Signature structs representing the signatures of the last block.
      */
     function finalizeBlocks(PillarBlock.WithChanges[] memory blocks, CompactSignature[] memory lastBlockSigs) public {
-        for (uint256 i = 0; i < blocks.length; i++) {
+        uint256 blocksLength = blocks.length;
+        for (uint256 i = 0; i < blocksLength; i++) {
             bytes32 pbh = PillarBlock.getHash(blocks[i]);
             require(blocks[i].block.prevHash == finalized.blockHash, "block.prevHash != finalized.blockHash");
             require(
@@ -93,7 +95,8 @@ contract TaraClient is IBridgeLightClient {
         view
         returns (uint256 weight)
     {
-        for (uint256 i = 0; i < signatures.length; i++) {
+        uint256 signaturesLength = signatures.length;
+        for (uint256 i = 0; i < signaturesLength; i++) {
             address signer = ECDSA.recover(h, signatures[i].r, signatures[i].vs);
             weight += validatorVoteCounts[signer];
         }

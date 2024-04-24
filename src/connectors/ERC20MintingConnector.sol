@@ -22,7 +22,8 @@ contract ERC20MintingConnector is TokenConnectorBase {
         Transfer[] memory transfers = deserializeTransfers(_state);
         accounts = new address[](transfers.length);
         unchecked {
-            for (uint256 i = 0; i < transfers.length; i++) {
+            uint256 transfersLength = transfers.length;
+            for (uint256 i = 0; i < transfersLength; i++) {
                 toClaim[transfers[i].account] += transfers[i].amount;
                 accounts[i] = transfers[i].account;
             }

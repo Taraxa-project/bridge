@@ -20,7 +20,8 @@ contract TaraConnector is TokenConnectorBase {
     function applyState(bytes calldata _state) internal override returns (address[] memory accounts) {
         Transfer[] memory transfers = deserializeTransfers(_state);
         accounts = new address[](transfers.length);
-        for (uint256 i = 0; i < transfers.length; i++) {
+        uint256 transfersLength = transfers.length;
+        for (uint256 i = 0; i < transfersLength; i++) {
             toClaim[transfers[i].account] += transfers[i].amount;
             // payable(transfers[i].account).transfer(transfers[i].amount);
             accounts[i] = transfers[i].account;

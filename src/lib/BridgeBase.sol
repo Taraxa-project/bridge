@@ -46,8 +46,8 @@ abstract contract BridgeBase {
         );
         require(state_with_proof.state.epoch == appliedEpoch + 1, "Epochs should be processed sequentially");
         uint256 common = (gasleftbefore - gasleft()) * tx.gasprice;
-
-        for (uint256 i = 0; i < state_with_proof.state_hashes.length; i++) {
+        uint256 stateHashLength = state_with_proof.state_hashes.length;
+        for (uint256 i = 0; i < stateHashLength; i++) {
             gasleftbefore = gasleft();
             require(
                 localAddress[state_with_proof.state_hashes[i].contractAddress] != address(0),
@@ -83,7 +83,9 @@ abstract contract BridgeBase {
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](
                 tokenAddresses.length
             );
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+
+        uint256 tokenAddressesLength = tokenAddresses.length;
+        for (uint256 i = 0; i < tokenAddressesLength; i++) {
             hashes[i] = SharedStructs.ContractStateHash(
                 tokenAddresses[i], connectors[tokenAddresses[i]].finalize(finalizedEpoch)
             );
@@ -103,7 +105,8 @@ abstract contract BridgeBase {
             tokenAddresses.length
         );
         unchecked {
-            for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            uint256 tokenAddressesLength = tokenAddresses.length;
+            for (uint256 i = 0; i < tokenAddressesLength; i++) {
                 bytes memory state = connectors[tokenAddresses[i]].getFinalizedState();
                 ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));
                 ret.state.states[i] = SharedStructs.StateWithAddress(tokenAddresses[i], state);
