@@ -30,11 +30,13 @@ contract EthDeployer is Script {
             block: PillarBlock.FinalizationData({period: 0, stateRoot: 0x0, bridgeRoot: 0x0, prevHash: 0x0}),
             validatorChanges: changes
         });
-        TaraClient client = new TaraClient(genesis, 3, 100);
+        uint256 finalizationInterval = 100;
+        TaraClient client = new TaraClient(genesis, 3, finalizationInterval);
 
         EthBridge bridge = new EthBridge{value: 2 ether}(
             TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),
-            IBridgeLightClient(client)
+            IBridgeLightClient(client),
+            finalizationInterval
         );
 
         console.log("Bridge address: %s", address(bridge));

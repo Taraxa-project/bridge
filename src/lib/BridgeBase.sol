@@ -2,23 +2,37 @@
 
 pragma solidity ^0.8.17;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "../lib/SharedStructs.sol";
 import "../lib/ILightClient.sol";
 import "../connectors/IBridgeConnector.sol";
 import "forge-std/console.sol";
 
-abstract contract BridgeBase {
+abstract contract BridgeBase is Ownable {
     IBridgeLightClient public lightClient;
 
     address[] public tokenAddresses;
     mapping(address => IBridgeConnector) public connectors;
     mapping(address => address) public localAddress;
-    uint256 finalizedEpoch;
-    uint256 appliedEpoch;
-    bytes32 bridgeRoot;
+    uint256 public finalizedEpoch;
+    uint256 public appliedEpoch;
+    uint256 public finalizationInterval;
+    uint256 public lastFinalizedBlock;
+    bytes32 public bridgeRoot;
 
-    constructor(IBridgeLightClient light_client) {
+    constructor(IBridgeLightClient light_client, uint256 _finalizationInterval) Ownable() {
         lightClient = light_client;
+        finalizationInterval = _finalizationInterval;
+    }
+
+    /**
+     * @dev Sets the finalization interval.
+     * @param _finalizationInterval The finalization interval to be set.
+     * @notice Only the owner can call this function.
+     */
+    function setFinalizationInterval(uint256 _finalizationInterval) public onlyOwner {
+        finalizationInterval = _finalizationInterval;
     }
 
     /**
@@ -77,7 +91,10 @@ abstract contract BridgeBase {
      */
 
     function finalizeEpoch() public {
-        // TODO: should be called at least every N blocks?
+        if (block.number - lastFinalizedBlock < finalizationInterval) {
+            revert("Not enough blocks passed");
+        }
+        lastFinalizedBlock = block.number;
         finalizedEpoch++;
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](
                 tokenAddresses.length

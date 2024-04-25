@@ -7,7 +7,10 @@ import "../lib/Constants.sol";
 import "../lib/BridgeBase.sol";
 
 contract TaraBridge is BridgeBase {
-    constructor(address tara_address_on_eth, IBridgeLightClient light_client) payable BridgeBase(light_client) {
+    constructor(address tara_address_on_eth, IBridgeLightClient light_client, uint256 finalizationInterval)
+        payable
+        BridgeBase(light_client, finalizationInterval)
+    {
         connectors[Constants.TARA_PLACEHOLDER] = new TaraConnector{
             value: msg.value
         }(address(this), tara_address_on_eth);

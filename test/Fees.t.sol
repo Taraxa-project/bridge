@@ -19,20 +19,23 @@ contract FeesTest is Test {
     EthBridge ethBridge;
 
     address caller = vm.addr(0x1234);
+    uint256 constant FINALIZATION_INTERVAL = 100;
 
     function setUp() public {
         payable(caller).transfer(100 ether);
         taraLightClient = new BridgeLightClientMock();
         ethLightClient = new BridgeLightClientMock();
         ethTaraToken = new TestERC20("TARA");
-        taraBridge = new TaraBridge{value: 2 ether}(address(ethTaraToken), ethLightClient);
-        ethBridge = new EthBridge{value: 2 ether}(IERC20MintableBurnable(address(ethTaraToken)), taraLightClient);
+        taraBridge = new TaraBridge{value: 2 ether}(address(ethTaraToken), ethLightClient, FINALIZATION_INTERVAL);
+        ethBridge =
+        new EthBridge{value: 2 ether}(IERC20MintableBurnable(address(ethTaraToken)), taraLightClient, FINALIZATION_INTERVAL);
     }
 
     // define it to not fail on incoming transfers
     receive() external payable {}
 
     function test_toEthFees() public {
+        vm.roll(FINALIZATION_INTERVAL);
         vm.txGasPrice(1000);
         uint256 value = 1 ether;
         TaraConnector taraBridgeToken = TaraConnector(address(taraBridge.connectors(Constants.TARA_PLACEHOLDER)));

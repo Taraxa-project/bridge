@@ -19,6 +19,8 @@ contract TaraDeployer is Script {
     uint256 constant SYNC_COMMITTEE_SIZE = 512;
     uint64 constant BLSPUBLICKEY_LENGTH = 48;
 
+    uint256 constant FINALIZATION_INTERVAL = 100;
+
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address deployerAddress = vm.envAddress("DEPLOYMENT_ADDRESS");
@@ -57,7 +59,8 @@ contract TaraDeployer is Script {
 
         TaraBridge taraBridge = new TaraBridge{value: 2 ether}(
             taraAddress,
-            IBridgeLightClient(address(client))
+            IBridgeLightClient(address(client)),
+            FINALIZATION_INTERVAL
         );
 
         console.log("TARA Bridge address: %s", address(taraBridge));
