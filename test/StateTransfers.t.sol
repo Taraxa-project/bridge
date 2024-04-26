@@ -6,7 +6,9 @@ import "../src/tara/TaraBridge.sol";
 import "../src/tara/TaraConnector.sol";
 import "../src/eth/EthBridge.sol";
 import "../src/lib/TestERC20.sol";
-import {StateNotMatchingBridgeRoot, NotSuccessiveEpochs} from "../src/errors/BridgeBaseErrors.sol";
+import {
+    StateNotMatchingBridgeRoot, NotSuccessiveEpochs, NotEnoughBlocksPassed
+} from "../src/errors/BridgeBaseErrors.sol";
 import "../src/connectors/ERC20LockingConnector.sol";
 import "../src/connectors/ERC20MintingConnector.sol";
 import "./BridgeLightClientMock.sol";
@@ -49,7 +51,11 @@ contract StateTransfersTest is Test {
 
         // vm.roll(FINALIZATION_INTERVAL);
 
-        vm.expectRevert("Not enough blocks passed");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                NotEnoughBlocksPassed.selector, taraBridge.lastFinalizedBlock(), FINALIZATION_INTERVAL
+            )
+        );
         taraBridge.finalizeEpoch();
     }
 

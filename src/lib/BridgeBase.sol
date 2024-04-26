@@ -9,6 +9,7 @@ import "../lib/ILightClient.sol";
 import {
     StateNotMatchingBridgeRoot,
     NotSuccessiveEpochs,
+    NotEnoughBlocksPassed,
     UnregisteredContract,
     InvalidStateHash,
     UnmatchingContractAddresses
@@ -107,7 +108,10 @@ abstract contract BridgeBase is Ownable {
 
     function finalizeEpoch() public {
         if (block.number - lastFinalizedBlock < finalizationInterval) {
-            revert("Not enough blocks passed");
+            revert NotEnoughBlocksPassed({
+                lastFinalizedBlock: lastFinalizedBlock,
+                finalizationInterval: finalizationInterval
+            });
         }
         lastFinalizedBlock = block.number;
         unchecked {
