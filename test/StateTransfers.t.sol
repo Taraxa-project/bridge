@@ -6,7 +6,9 @@ import "../src/tara/TaraBridge.sol";
 import "../src/tara/TaraConnector.sol";
 import "../src/eth/EthBridge.sol";
 import "../src/lib/TestERC20.sol";
-import {StateNotMatchingBridgeRoot, NotSuccessiveEpochs} from "../src/errors/BridgeBaseErrors.sol";
+import {
+    StateNotMatchingBridgeRoot, NotSuccessiveEpochs, NotEnoughBlocksPassed
+} from "../src/errors/BridgeBaseErrors.sol";
 import "../src/connectors/ERC20LockingConnector.sol";
 import "../src/connectors/ERC20MintingConnector.sol";
 import "./BridgeLightClientMock.sol";
@@ -20,6 +22,7 @@ contract StateTransfersTest is Test {
     EthBridge ethBridge;
 
     address caller = address(bytes20(sha256(hex"1234")));
+    uint256 constant FINALIZATION_INTERVAL = 100;
 
     function setUp() public {
         payable(caller).transfer(100 ether);
@@ -28,21 +31,40 @@ contract StateTransfersTest is Test {
         ethTaraToken = new TestERC20("TARA");
         taraBridge = new TaraBridge{value: 2 ether}(
             address(ethTaraToken),
-            ethLightClient
+            ethLightClient,
+            FINALIZATION_INTERVAL
         );
         ethBridge = new EthBridge{value: 2 ether}(
             IERC20MintableBurnable(address(ethTaraToken)),
-            taraLightClient
+            taraLightClient,
+            FINALIZATION_INTERVAL
         );
     }
 
     // define it to not fail on incoming transfers
     receive() external payable {}
 
+    function test_fail_toEth_on_not_enough_blocks_passed() public {
+        uint256 value = 1 ether;
+        TaraConnector taraBridgeToken = TaraConnector(address(taraBridge.connectors(Constants.TARA_PLACEHOLDER)));
+        taraBridgeToken.lock{value: value}();
+
+        // vm.roll(FINALIZATION_INTERVAL);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                NotEnoughBlocksPassed.selector, taraBridge.lastFinalizedBlock(), FINALIZATION_INTERVAL
+            )
+        );
+        taraBridge.finalizeEpoch();
+    }
+
     function test_toEth() public {
         uint256 value = 1 ether;
         TaraConnector taraBridgeToken = TaraConnector(address(taraBridge.connectors(Constants.TARA_PLACEHOLDER)));
         taraBridgeToken.lock{value: value}();
+
+        vm.roll(FINALIZATION_INTERVAL);
 
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
@@ -63,6 +85,8 @@ contract StateTransfersTest is Test {
         ethTaraToken.approve(address(ethTaraConnector), value);
         ethTaraConnector.burn(value);
 
+        vm.roll(FINALIZATION_INTERVAL);
+
         ethBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = ethBridge.getStateWithProof();
         ethLightClient.setBridgeRoot(state);
@@ -81,6 +105,8 @@ contract StateTransfersTest is Test {
         uint256 value = 1 ether;
         TaraConnector taraConnector = TaraConnector(address(taraBridge.connectors(Constants.TARA_PLACEHOLDER)));
         taraConnector.lock{value: value}();
+
+        vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         state.state.states[0] = SharedStructs.StateWithAddress(address(0), abi.encode(1));
@@ -99,6 +125,8 @@ contract StateTransfersTest is Test {
         uint256 value = 1 ether;
         TaraConnector taraConnector = TaraConnector(address(taraBridge.connectors(Constants.TARA_PLACEHOLDER)));
         taraConnector.lock{value: value}();
+
+        vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         ethLightClient.setBridgeRoot(state);
@@ -118,7 +146,9 @@ contract StateTransfersTest is Test {
         uint256 value = 1 ether;
         TaraConnector taraConnector = TaraConnector(address(taraBridge.connectors(Constants.TARA_PLACEHOLDER)));
         taraConnector.lock{value: value}();
+        vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
+        vm.roll(2 * FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         assertEq(state.state.states.length, 1);
@@ -130,9 +160,11 @@ contract StateTransfersTest is Test {
         uint256 value = 1 ether;
         TaraConnector taraConnector = TaraConnector(address(taraBridge.connectors(Constants.TARA_PLACEHOLDER)));
         taraConnector.lock{value: value}();
+        vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state1 = taraBridge.getStateWithProof();
         taraConnector.lock{value: value}();
+        vm.roll(2 * FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         assertFalse(state.state.epoch == state1.state.epoch);
@@ -166,6 +198,7 @@ contract StateTransfersTest is Test {
             vm.prank(addr);
             taraConnector.lock{value: value}();
         }
+        vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         taraLightClient.setBridgeRoot(state);
@@ -200,6 +233,7 @@ contract StateTransfersTest is Test {
         taraTestToken.mintTo(address(this), 10 ether);
         taraTestToken.approve(address(taraTestTokenConnector), 1 ether);
         taraTestTokenConnector.lock(1 ether);
+        vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         assertEq(state.state.epoch, 1, "epoch");
@@ -228,6 +262,7 @@ contract StateTransfersTest is Test {
             TaraConnector(address(taraBridge.connectors(Constants.TARA_PLACEHOLDER)));
         taraBridgeTokenConnector.lock{value: value}();
 
+        vm.roll(2 * FINALIZATION_INTERVAL);
         vm.prank(caller);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
@@ -270,6 +305,7 @@ contract StateTransfersTest is Test {
         ethTaraTokenConnector.burn(value);
         uint256 taraBalanceBefore = address(this).balance;
 
+        vm.roll(3 * FINALIZATION_INTERVAL);
         ethBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = ethBridge.getStateWithProof();
         assertEq(state.state.epoch, 1, "epoch");

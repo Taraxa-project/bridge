@@ -55,9 +55,12 @@ contract TaraDeployer is Script {
         address taraAddress = vm.envAddress("ETH_TARA_ADDRESS");
         console.log("ETH address: %s", taraAddress);
 
+        uint256 finalizationInterval = 100;
+
         TaraBridge taraBridge = new TaraBridge{value: 2 ether}(
             taraAddress,
-            IBridgeLightClient(address(client))
+            IBridgeLightClient(address(client)),
+            finalizationInterval
         );
 
         console.log("TARA Bridge address: %s", address(taraBridge));

@@ -32,11 +32,13 @@ contract EthDeployer is Script {
             }),
             validatorChanges: changes
         });
-        TaraClient client = new TaraClient(genesis, 3, 100);
+        uint256 finalizationInterval = 100;
+        TaraClient client = new TaraClient(genesis, 3, finalizationInterval);
 
         EthBridge bridge = new EthBridge{value: 2 ether}(
-            TestERC20(0x3E02bDF20b8aFb2fF8EA73ef5419679722955074),
-            IBridgeLightClient(client)
+            TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),
+            IBridgeLightClient(client),
+            finalizationInterval
         );
 
         console.log("Bridge address: %s", address(bridge));
