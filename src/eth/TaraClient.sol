@@ -7,7 +7,6 @@ import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../error
 import "../lib/ILightClient.sol";
 import "../lib/PillarBlock.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "forge-std/console.sol";
 
 contract TaraClient is IBridgeLightClient {
     PillarBlock.FinalizedBlock public finalized;
@@ -70,8 +69,6 @@ contract TaraClient is IBridgeLightClient {
         for (uint256 i = 0; i < blocksLength; i++) {
             bytes32 pbh = PillarBlock.getHash(blocks[i]);
             if (blocks[i].block.prevHash != finalized.blockHash) {
-                console.logBytes32(finalized.blockHash);
-                console.logBytes32(blocks[i].block.prevHash);
                 revert HashesNotMatching({expected: finalized.blockHash, actual: blocks[i].block.prevHash});
             }
             if (blocks[i].block.period != (finalized.block.period + pillarBlockInterval)) {
