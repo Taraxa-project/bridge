@@ -4,6 +4,3 @@
 [submodule "lib/beacon-light-client"]
 	path = lib/beacon-light-client
 	url = https://github.com/Taraxa-project/beacon-light-client
-[submodule "lib/openzeppelin-contracts"]
-	path = lib/openzeppelin-contracts
-	url = https://github.com/openzeppelin/openzeppelin-contracts
