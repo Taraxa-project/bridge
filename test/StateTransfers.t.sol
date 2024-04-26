@@ -6,6 +6,7 @@ import "../src/tara/TaraBridge.sol";
 import "../src/tara/TaraConnector.sol";
 import "../src/eth/EthBridge.sol";
 import "../src/lib/TestERC20.sol";
+import {StateNotMatchingBridgeRoot, NotSuccessiveEpochs} from "../src/errors/BridgeBaseErrors.sol";
 import "../src/connectors/ERC20LockingConnector.sol";
 import "../src/connectors/ERC20MintingConnector.sol";
 import "./BridgeLightClientMock.sol";
@@ -103,7 +104,14 @@ contract StateTransfersTest is Test {
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         state.state.states[0] = SharedStructs.StateWithAddress(address(0), abi.encode(1));
-        vm.expectRevert("State does not match bridge root");
+
+        bytes32 root = SharedStructs.getBridgeRoot(state.state.epoch, state.state_hashes);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                StateNotMatchingBridgeRoot.selector, root, ethBridge.lightClient().getFinalizedBridgeRoot()
+            )
+        );
         ethBridge.applyState(state);
     }
 
@@ -117,7 +125,14 @@ contract StateTransfersTest is Test {
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         ethLightClient.setBridgeRoot(state);
         state.state.epoch = 2;
-        vm.expectRevert("State does not match bridge root");
+
+        bytes32 root = SharedStructs.getBridgeRoot(state.state.epoch, state.state_hashes);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                StateNotMatchingBridgeRoot.selector, root, ethBridge.lightClient().getFinalizedBridgeRoot()
+            )
+        );
         ethBridge.applyState(state);
     }
 
@@ -158,7 +173,10 @@ contract StateTransfersTest is Test {
         assertEq(state.state.states.length, 1);
         assertEq(state.state.states[0].contractAddress, Constants.TARA_PLACEHOLDER);
         taraLightClient.setBridgeRoot(state);
-        vm.expectRevert("Epochs should be processed sequentially");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(NotSuccessiveEpochs.selector, taraBridge.appliedEpoch(), state.state.epoch)
+        );
         ethBridge.applyState(state);
     }
 

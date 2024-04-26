@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.17;
 
-import "../lib/SharedStructs.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "forge-std/console.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./TokenConnectorBase.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../lib/SharedStructs.sol";
+import {InsufficientFunds, NoClaimAvailable, TransferFailed} from "../errors/ConnectorErrors.sol";
 
 contract ERC20LockingConnector is TokenConnectorBase {
     constructor(address bridge, IERC20 token, address token_on_other_network)
@@ -23,9 +23,12 @@ contract ERC20LockingConnector is TokenConnectorBase {
     function applyState(bytes calldata _state) internal override returns (address[] memory accounts) {
         Transfer[] memory transfers = deserializeTransfers(_state);
         accounts = new address[](transfers.length);
-        for (uint256 i = 0; i < transfers.length; i++) {
-            toClaim[transfers[i].account] += transfers[i].amount;
-            accounts[i] = transfers[i].account;
+        unchecked {
+            uint256 transfersLength = transfers.length;
+            for (uint256 i = 0; i < transfersLength; i++) {
+                toClaim[transfers[i].account] += transfers[i].amount;
+                accounts[i] = transfers[i].account;
+            }
         }
     }
 
@@ -44,9 +47,16 @@ contract ERC20LockingConnector is TokenConnectorBase {
      * @notice The caller must send enough Ether to cover the fees.
      */
     function claim() public payable override {
-        require(msg.value >= feeToClaim[msg.sender], "ERC20LockingConnector: insufficient funds to pay fee");
-        require(toClaim[msg.sender] > 0, "ERC20LockingConnector: nothing to claim");
-        IERC20(token).transfer(msg.sender, toClaim[msg.sender]);
+        if (msg.value < feeToClaim[msg.sender]) {
+            revert InsufficientFunds({expected: feeToClaim[msg.sender], actual: msg.value});
+        }
+        if (toClaim[msg.sender] == 0) {
+            revert NoClaimAvailable();
+        }
+        (bool transferSuccess) = IERC20(token).transfer(msg.sender, toClaim[msg.sender]);
+        if (!transferSuccess) {
+            revert TransferFailed({recipient: msg.sender, amount: toClaim[msg.sender]});
+        }
         toClaim[msg.sender] = 0;
     }
 }

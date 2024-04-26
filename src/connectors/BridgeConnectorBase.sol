@@ -3,6 +3,7 @@
 pragma solidity ^0.8.17;
 
 import "./IBridgeConnector.sol";
+import {InsufficientFunds, RefundFailed} from "../errors/ConnectorErrors.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "forge-std/console.sol";
 
@@ -10,7 +11,9 @@ abstract contract BridgeConnectorBase is IBridgeConnector, Ownable {
     mapping(address => uint256) public feeToClaim;
 
     constructor(address bridge) payable Ownable() {
-        require(msg.value >= 2 ether, "BridgeConnectorBase: insufficient funds");
+        if (msg.value < 2 ether) {
+            revert InsufficientFunds({expected: 2 ether, actual: msg.value});
+        }
         _transferOwnership(bridge);
     }
 
@@ -20,7 +23,10 @@ abstract contract BridgeConnectorBase is IBridgeConnector, Ownable {
      * @param amount The amount to be refunded.
      */
     function refund(address payable receiver, uint256 amount) public override onlyOwner {
-        receiver.transfer(amount);
+        (bool refundSuccess,) = receiver.call{value: amount}("");
+        if (!refundSuccess) {
+            revert RefundFailed({recipient: receiver, amount: amount});
+        }
     }
 
     function applyState(bytes calldata) internal virtual returns (address[] memory);
@@ -40,8 +46,11 @@ abstract contract BridgeConnectorBase is IBridgeConnector, Ownable {
         address[] memory addresses = applyState(_state);
         uint256 total_fee = common_part + (gasleftbefore - gasleft()) * tx.gasprice;
 
-        for (uint256 i = 0; i < addresses.length; i++) {
-            feeToClaim[addresses[i]] += total_fee / addresses.length;
+        unchecked {
+            uint256 addressesLength = addresses.length;
+            for (uint256 i = 0; i < addressesLength; i++) {
+                feeToClaim[addresses[i]] += total_fee / addresses.length;
+            }
         }
         refund(refund_receiver, total_fee);
     }

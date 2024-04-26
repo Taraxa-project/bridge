@@ -10,7 +10,7 @@ struct Transfer {
 }
 
 contract TokenState {
-    uint256 public epoch;
+    uint256 public immutable epoch;
     address[] accounts;
     mapping(address => uint256) balances; // position = 2
 
@@ -26,8 +26,9 @@ contract TokenState {
     }
 
     function getTransfers() public view returns (Transfer[] memory) {
-        Transfer[] memory transfers = new Transfer[](accounts.length);
-        for (uint256 i = 0; i < accounts.length; i++) {
+        uint256 accountsLength = accounts.length;
+        Transfer[] memory transfers = new Transfer[](accountsLength);
+        for (uint256 i = 0; i < accountsLength; i++) {
             Transfer memory transfer = Transfer(accounts[i], uint96(balances[accounts[i]]));
             transfers[i] = transfer;
         }
