@@ -38,7 +38,7 @@ contract TaraDeployer is Script {
         bytes memory _current_sync_committee_aggregated_pubkey = vm.envBytes("AGGREGATED_PUBLIC_KEY");
         bytes32 _genesis_validators_root = 0x9143aa7c615a7f7115e2b6aac319c03529df8242ae705fba9df39b79c59fa8b1;
 
-        BeaconLightClient client = new BeaconLightClient(
+        BeaconLightClient beaconClient = new BeaconLightClient(
             _slot,
             _proposer_index,
             _parent_root,
@@ -50,29 +50,28 @@ contract TaraDeployer is Script {
             _genesis_validators_root
         );
 
-        console.log("Client address: %s", address(client));
+        console.log("Beacon Client address: %s", address(beaconClient));
+
+        address ethBridgeAddress = vm.envAddress("ETH_BRIDGE_ADDRESS");
+        EthClient ethClient = new EthClient(
+            beaconClient,
+            ethBridgeAddress
+        );
+
+        console.log("Client wrapper address: %s", address(ethClient));
 
         address taraAddress = vm.envAddress("ETH_TARA_ADDRESS");
-        console.log("ETH address: %s", taraAddress);
+        console.log("ETH TARA address: %s", taraAddress);
 
         uint256 finalizationInterval = 100;
 
         TaraBridge taraBridge = new TaraBridge{value: 2 ether}(
             taraAddress,
-            IBridgeLightClient(address(client)),
+            IBridgeLightClient(address(ethClient)),
             finalizationInterval
         );
 
         console.log("TARA Bridge address: %s", address(taraBridge));
-
-        address _eth_bridge_address = vm.envAddress("ETH_BRIDGE_ADDRESS");
-
-        EthClient wrapper = new EthClient(
-            client,
-            _eth_bridge_address
-        );
-
-        console.log("Wrapper address: %s", address(wrapper));
 
         vm.stopBroadcast();
     }

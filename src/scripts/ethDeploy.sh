@@ -42,4 +42,4 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo "$ethBridge" >> deployment-eth.json
+echo "$ethBridge" >> deployment-eth.log

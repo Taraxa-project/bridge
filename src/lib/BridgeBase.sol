@@ -44,6 +44,20 @@ abstract contract BridgeBase is Ownable {
     }
 
     /**
+     * @return An array of addresses of the registered tokens.
+     */
+    function registeredTokens() public view returns (address[] memory) {
+        return tokenAddresses;
+    }
+
+    /**
+     * @return The bridge root as a bytes32 value.
+     */
+    function getBridgeRoot() public view returns (bytes32) {
+        return bridgeRoot;
+    }
+
+    /**
      * @dev Registers a contract with the EthBridge by providing a connector contract.
      * @param connector The address of the connector contract.
      */
