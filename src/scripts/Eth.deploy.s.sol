@@ -16,7 +16,7 @@ contract EthDeployer is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         address taraAddress = vm.envAddress("ETH_TARA_ADDRESS");
-        console.log("TARA address: %s", taraAddress);
+        console.log("ETH TARA address: %s", taraAddress);
 
         PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](3);
         changes[0] = PillarBlock.VoteCountChange({validator: 0xFe3d5E3B9c2080bF338638Fd831a35A4B4344a2C, change: 100});
@@ -34,6 +34,8 @@ contract EthDeployer is Script {
         });
         uint256 finalizationInterval = 100;
         TaraClient client = new TaraClient(genesis, 3, finalizationInterval);
+
+        console.log("Tara Client address: %s", address(client));
 
         EthBridge bridge = new EthBridge{value: 2 ether}(
             TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),

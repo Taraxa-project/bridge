@@ -31,13 +31,14 @@ echo "Deploying BeaconLightClient contract"
 # Run the deployment script for TaraClient
 res=$(forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy)
 
+echo "$res"  >> deployment-tara.log
+
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for TaraClient"
   exit 1
 fi
 
 
-echo "$res" >> deployment-eth.json
 
 # TBD: leaving this for future implementation or reference
 # echo "Getting Storage proof for the last finalized ETH bridge root epoch"
