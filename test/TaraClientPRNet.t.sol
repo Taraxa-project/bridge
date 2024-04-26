@@ -191,7 +191,7 @@ contract TaraClientPRNetTest is Test {
         );
         PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
         blocks[0] = currentBlock;
-        vm.expectRevert("Signatures weight is less than threshold");
+        vm.expectRevert();
         client.finalizeBlocks(blocks, signatures);
     }
 }

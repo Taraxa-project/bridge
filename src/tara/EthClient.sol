@@ -2,13 +2,14 @@
 pragma solidity ^0.8.17;
 
 import "../lib/ILightClient.sol";
+import {InvalidBridgeRoot} from "../errors/BridgeBaseErrors.sol";
 import "beacon-light-client/src/BeaconLightClient.sol";
 import "beacon-light-client/src/trie/StorageProof.sol";
 
 contract EthClient is IBridgeLightClient {
-    BeaconLightClient public client;
-    address ethBridgeAddress;
-    bytes32 bridgeRootKey;
+    BeaconLightClient public immutable client;
+    address public immutable ethBridgeAddress;
+    bytes32 public bridgeRootKey;
 
     bytes32 bridgeRoot;
 
@@ -39,7 +40,9 @@ contract EthClient is IBridgeLightClient {
      */
 
     function processBridgeRoot(bytes[] memory account_proof, bytes[] memory storage_proof) external {
-        require(bridgeRoot.length == 32, "invalid bridge root(length)");
+        if (bridgeRoot.length != 32) {
+            revert InvalidBridgeRoot(bridgeRoot);
+        }
         bytes32 stateRoot = client.merkle_root();
         bytes memory br = StorageProof.verify(stateRoot, ethBridgeAddress, account_proof, bridgeRootKey, storage_proof);
         bridgeRoot = bytes32(br);
