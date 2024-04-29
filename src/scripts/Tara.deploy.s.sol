@@ -32,6 +32,7 @@ contract TaraDeployer is Script {
         uint256 _block_number = vm.envUint("BLOCK_NUMBER");
         bytes32 _merkle_root = vm.envBytes32("MERKLE_ROOT");
         bytes32 _sync_root = vm.envBytes32("SYNC_COMMITTEE_ROOT");
+        console.log("Period: %s", _slot / 32 / 256);
 
         bytes32 _genesis_validators_root = 0x9143aa7c615a7f7115e2b6aac319c03529df8242ae705fba9df39b79c59fa8b1;
 
@@ -48,22 +49,6 @@ contract TaraDeployer is Script {
         );
 
         console.log("Client address: %s", address(client));
-
-        address taraAddress = vm.envAddress("ETH_TARA_ADDRESS");
-        console.log("ETH address: %s", taraAddress);
-
-        TaraBridge taraBridge = new TaraBridge{value: 2 ether}(
-            taraAddress,
-            IBridgeLightClient(address(client))
-        );
-
-        console.log("TARA Bridge address: %s", address(taraBridge));
-
-        address _eth_bridge_address = vm.envAddress("ETH_BRIDGE_ADDRESS");
-
-        EthClient wrapper = new EthClient(client, _eth_bridge_address);
-
-        console.log("Wrapper address: %s", address(wrapper));
 
         vm.stopBroadcast();
     }
