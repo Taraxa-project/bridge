@@ -2,7 +2,6 @@ import os
 import requests
 from eth_utils import decode_hex
 import hashlib
-from typing import List
 
 from eth2spec.utils.ssz.ssz_typing import (
      Container, Vector, Bytes48 )
