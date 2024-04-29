@@ -32,6 +32,7 @@ contract TaraDeployer is Script {
         uint256 _block_number = vm.envUint("BLOCK_NUMBER");
         bytes32 _merkle_root = vm.envBytes32("MERKLE_ROOT");
         bytes32 _sync_root = vm.envBytes32("SYNC_COMMITTEE_ROOT");
+        console.log("Period: %s", _slot / 32 / 256);
 
         bytes32 _genesis_validators_root = 0x9143aa7c615a7f7115e2b6aac319c03529df8242ae705fba9df39b79c59fa8b1;
 

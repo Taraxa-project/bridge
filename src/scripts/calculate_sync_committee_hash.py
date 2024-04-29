@@ -7,7 +7,7 @@ from typing import List
 from eth2spec.utils.ssz.ssz_typing import (
      Container, Vector, Bytes48 )
 
-PERIOD = 182 #UPDATE THIS
+PERIOD = 188 #UPDATE THIS
 url = f'https://beacon-pr-2618.prnet.taraxa.io/eth/v1/beacon/light_client/updates?start_period={PERIOD}&count=1'
 
 SYNC_COMMITTEE_SIZE = 512  # Example size, adjust as per your specs
@@ -20,26 +20,34 @@ class SyncCommittee(Container):
 def hash_tree_root(sync_committee: 'SyncCommittee') -> bytes:
     # Convert public keys into a Merkle tree and compute root
     pubkeys_leaves = []
+    i = 0
     for pubkey in sync_committee.pubkeys:
         assert len(pubkey) == BLSPUBLICKEY_LENGTH, "!key"
-        pubkeys_leaves.append(hashlib.sha256(pubkey + bytes(16)).digest())
+        hash = hashlib.sha256(pubkey + bytes(16)).digest()
+        #print("key" + str(i))
+        #print(hash.hex())
+        pubkeys_leaves.append(hash)
+        i+=1
     pubkeys_root = merkle_root(pubkeys_leaves)
+    #print("merkle_root")
+    #print(pubkeys_root.hex())
 
     # Hash the aggregate public key
     assert len(sync_committee.aggregate_pubkey) == BLSPUBLICKEY_LENGTH, "!agg_key"
     aggregate_pubkey_root = hashlib.sha256(sync_committee.aggregate_pubkey + bytes(16)).digest()
+    #print("aggregate_pubkey_root")
+    #print(aggregate_pubkey_root.hex())
 
     # Hash the nodes of the Merkle tree
     return hash_node(pubkeys_root, aggregate_pubkey_root)
 
 def get_power_of_two_ceil(n):
-    if n == 0:
-        return 0
-    n -= 1
-    shift = 1
-    while (n + 1) >> shift:
-        shift <<= 1
-    return 1 << shift
+    if n <= 1:
+        return 1
+    elif n == 2:
+        return 2
+    else:
+        return 2 * get_power_of_two_ceil((n + 1) >> 1)
 
 def merkle_root(leaves: list) -> bytes:
     len_leaves = len(leaves)
