@@ -3,6 +3,7 @@
 pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
+import {InsufficientFunds} from "../errors/ConnectorErrors.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./TokenConnectorBase.sol";
 import "./IERC20MintableBurnable.sol";
@@ -21,9 +22,12 @@ contract ERC20MintingConnector is TokenConnectorBase {
     function applyState(bytes calldata _state) internal override returns (address[] memory accounts) {
         Transfer[] memory transfers = deserializeTransfers(_state);
         accounts = new address[](transfers.length);
-        for (uint256 i = 0; i < transfers.length; i++) {
-            toClaim[transfers[i].account] += transfers[i].amount;
-            accounts[i] = transfers[i].account;
+        unchecked {
+            uint256 transfersLength = transfers.length;
+            for (uint256 i = 0; i < transfersLength; i++) {
+                toClaim[transfers[i].account] += transfers[i].amount;
+                accounts[i] = transfers[i].account;
+            }
         }
     }
 
@@ -42,7 +46,9 @@ contract ERC20MintingConnector is TokenConnectorBase {
      * @notice The caller must send enough Ether to cover the fees.
      */
     function claim() public payable override {
-        require(msg.value >= feeToClaim[msg.sender], "ERC20MintingConnector: insufficient funds to pay fee");
+        if (msg.value < feeToClaim[msg.sender]) {
+            revert InsufficientFunds({expected: feeToClaim[msg.sender], actual: msg.value});
+        }
         uint256 amount = toClaim[msg.sender];
         toClaim[msg.sender] = 0;
         IERC20MintableBurnable(token).mintTo(msg.sender, amount);
