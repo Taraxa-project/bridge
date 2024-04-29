@@ -1,24 +1,40 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+import "@openzeppelin/access/OwnableUpgradeable.sol";
+
 import "../lib/ILightClient.sol";
 import {InvalidBridgeRoot} from "../errors/BridgeBaseErrors.sol";
 import "beacon-light-client/src/BeaconLightClient.sol";
 import "beacon-light-client/src/trie/StorageProof.sol";
 
-contract EthClient is IBridgeLightClient {
-    BeaconLightClient public immutable client;
-    address public immutable ethBridgeAddress;
+contract EthClient is IBridgeLightClient, OwnableUpgradeable {
+    BeaconLightClient public client;
+    address public ethBridgeAddress;
     bytes32 public bridgeRootKey;
 
     bytes32 bridgeRoot;
 
     uint256 refund;
 
-    constructor(BeaconLightClient _client, address _eth_bridge_address) {
+    /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
+    /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
+    uint256[49] __gap;
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// Events
+    event Initialized(address indexed client, address indexed ethBridgeAddress);
+    event BridgeRootProcessed(bytes32 indexed bridgeRoot);
+
+    function initialize(BeaconLightClient _client, address _eth_bridge_address) public initializer {
         bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000006;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
+        emit Initialized(address(_client), _eth_bridge_address);
     }
 
     /**
@@ -46,6 +62,7 @@ contract EthClient is IBridgeLightClient {
         bytes32 stateRoot = client.merkle_root();
         bytes memory br = StorageProof.verify(stateRoot, ethBridgeAddress, account_proof, bridgeRootKey, storage_proof);
         bridgeRoot = bytes32(br);
+        emit BridgeRootProcessed(bridgeRoot);
     }
 
     /**

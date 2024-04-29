@@ -2,6 +2,9 @@
 
 pragma solidity ^0.8.17;
 
+import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+
 import {InvalidEpoch, NoFinalizedState} from "../errors/ConnectorErrors.sol";
 import "../lib/SharedStructs.sol";
 import "../lib/Constants.sol";
@@ -9,16 +12,38 @@ import "./BridgeConnectorBase.sol";
 import "./TokenState.sol";
 
 abstract contract TokenConnectorBase is BridgeConnectorBase {
-    address public immutable token;
-    address public immutable otherNetworkAddress;
-    TokenState state;
-    TokenState finalizedState;
-    mapping(address => uint256) public toClaim;
+    address public token; // slot 1 as slot 0 is used by BridgeConnectorBase
+    address public otherNetworkAddress; // slot 2
+    TokenState public state; // slot 3
+    TokenState public finalizedState; // slot 4
+    mapping(address => uint256) public toClaim; // slot 5
 
-    constructor(address bridge, address _token, address token_on_other_network) payable BridgeConnectorBase(bridge) {
+    /// Events
+    event Finalized(uint256 indexed epoch);
+    event Initialized(address indexed token, address indexed otherNetworkAddress, address indexed tokenState);
+    event StateApplied(bytes state);
+    event ClaimAccrued(address indexed account, uint256 value);
+    event Claimed(address indexed account, uint256 value);
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function TokenConnectorBase_init(address bridge, address _token, address token_on_other_network)
+        public
+        payable
+        initializer
+    {
+        __TokenConnectorBase_init(bridge, _token, token_on_other_network);
+    }
+
+    function __TokenConnectorBase_init(address bridge, address _token, address token_on_other_network) internal {
+        __BridgeConnectorBase_init(bridge);
         otherNetworkAddress = token_on_other_network;
         token = _token;
         state = new TokenState(1);
+        emit Initialized(_token, token_on_other_network, address(state));
     }
 
     function epoch() public view returns (uint256) {
@@ -40,6 +65,7 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
         }
         finalizedState = state;
         state = new TokenState(epoch_to_finalize + 1);
+        emit Finalized(epoch_to_finalize);
         return keccak256(finalizedSerializedTransfers());
     }
 

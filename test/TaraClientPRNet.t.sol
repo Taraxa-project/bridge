@@ -3,7 +3,6 @@ pragma solidity ^0.8.17;
 
 import {Test, console} from "forge-std/Test.sol";
 import "../src/eth/TaraClient.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./Utils.sol";
 
 /**
@@ -50,7 +49,8 @@ contract TaraClientPRNetTest is Test {
             initial
         );
         assertEq(PillarBlock.getHash(currentBlock), 0x659f33d940342ccbb534a745e93b3cc0d44f09f8b5f9db7d8c9ede2d047b4522);
-        client = new TaraClient(currentBlock, PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL);
+        client = new TaraClient();
+        client.initialize(currentBlock, PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL);
         assertEq(client.validatorVoteCounts(0xFe3d5E3B9c2080bF338638Fd831a35A4B4344a2C), 100);
         assertEq(client.validatorVoteCounts(0x515C990Ef87668E57A290F650b4C39c343d73d9a), 100);
         assertEq(client.validatorVoteCounts(0x3E62C62Ac89c71412CA68688530D112433FEC78C), 100);

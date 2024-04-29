@@ -8,6 +8,9 @@ import {TaraClient, PillarBlock} from "../eth/TaraClient.sol";
 import {TestERC20} from "../lib/TestERC20.sol";
 import {IBridgeLightClient} from "../lib/ILightClient.sol";
 
+import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/Defender.sol";
+import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 contract EthDeployer is Script {
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");

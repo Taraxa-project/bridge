@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 import "../lib/SharedStructs.sol";
 import "../lib/ILightClient.sol";
@@ -12,13 +12,14 @@ import {
     NotEnoughBlocksPassed,
     UnregisteredContract,
     InvalidStateHash,
-    UnmatchingContractAddresses
+    UnmatchingContractAddresses,
+    ZeroAddressCannotBeRegistered
 } from "../errors/BridgeBaseErrors.sol";
 import "../connectors/IBridgeConnector.sol";
 import "forge-std/console.sol";
 
-abstract contract BridgeBase is Ownable {
-    IBridgeLightClient public immutable lightClient;
+abstract contract BridgeBase is OwnableUpgradeable {
+    IBridgeLightClient public lightClient;
 
     address[] public tokenAddresses;
     mapping(address => IBridgeConnector) public connectors;
@@ -29,7 +30,29 @@ abstract contract BridgeBase is Ownable {
     uint256 public lastFinalizedBlock;
     bytes32 public bridgeRoot;
 
-    constructor(IBridgeLightClient light_client, uint256 _finalizationInterval) Ownable() {
+    /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
+    /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
+    uint256[49] __gap;
+
+    /// Events
+    event StateApplied(bytes indexed state, address indexed receiver, address indexed connector, uint256 refund);
+    event Finalized(uint256 indexed epoch, bytes32 bridgeRoot);
+    event ConnectorRegistered(address indexed connector);
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function __BridgeBase_init(IBridgeLightClient light_client, uint256 _finalizationInterval) public initializer {
+        __BridgeBase_init_unchained(light_client, _finalizationInterval);
+    }
+
+    function __BridgeBase_init_unchained(IBridgeLightClient light_client, uint256 _finalizationInterval)
+        internal
+        onlyInitializing
+    {
+        __Ownable_init();
         lightClient = light_client;
         finalizationInterval = _finalizationInterval;
     }
@@ -62,9 +85,16 @@ abstract contract BridgeBase is Ownable {
      * @param connector The address of the connector contract.
      */
     function registerContract(IBridgeConnector connector) public {
-        connectors[connector.getContractAddress()] = connector;
+        address contractAddress = connector.getContractAddress();
+
+        if (contractAddress == address(0)) {
+            revert ZeroAddressCannotBeRegistered();
+        }
+
+        connectors[contractAddress] = connector;
         localAddress[connector.getBridgedContractAddress()] = connector.getContractAddress();
-        tokenAddresses.push(connector.getContractAddress());
+        tokenAddresses.push(contractAddress);
+        emit ConnectorRegistered(contractAddress);
     }
 
     /**
@@ -107,10 +137,15 @@ abstract contract BridgeBase is Ownable {
                 });
             }
             uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
+            uint256 refund = (used + common / state_with_proof.state_hashes.length);
             connectors[localAddress[state_with_proof.state_hashes[i].contractAddress]].applyStateWithRefund(
+                state_with_proof.state.states[i].state, payable(msg.sender), refund
+            );
+            emit StateApplied(
                 state_with_proof.state.states[i].state,
-                payable(msg.sender),
-                (used + common / state_with_proof.state_hashes.length)
+                msg.sender,
+                localAddress[state_with_proof.state_hashes[i].contractAddress],
+                refund
             );
         }
         appliedEpoch++;
@@ -142,6 +177,7 @@ abstract contract BridgeBase is Ownable {
             );
         }
         bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, hashes);
+        emit Finalized(finalizedEpoch, bridgeRoot);
     }
 
     /**
