@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/token/ERC20/IERC20Upgradeable.sol";
 import {InsufficientFunds, NoClaimAvailable, RefundFailed} from "../errors/ConnectorErrors.sol";
 import "../connectors/TokenState.sol";
 import "../lib/SharedStructs.sol";

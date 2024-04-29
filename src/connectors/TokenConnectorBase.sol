@@ -30,9 +30,11 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
         _disableInitializers();
     }
 
+    // @dev this contract must be able to receive ether to cover fees
+    receive() external payable {}
+
     function TokenConnectorBase_init(address bridge, address _token, address token_on_other_network)
         public
-        payable
         initializer
     {
         __TokenConnectorBase_init(bridge, _token, token_on_other_network);

@@ -30,7 +30,7 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable {
     }
 
     function __BridgeConnectorBase_init_unchained(address bridge) internal onlyInitializing {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
         if (msg.value < 2 ether) {
             revert InsufficientFunds({expected: 2 ether, actual: msg.value});
         }

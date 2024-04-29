@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/access/OwnableUpgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 import "../lib/ILightClient.sol";
 import {InvalidBridgeRoot} from "../errors/BridgeBaseErrors.sol";
@@ -54,7 +54,6 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
      * @param account_proof The account proofs for the bridge root.
      * @param storage_proof The storage proofs for the bridge root.
      */
-
     function processBridgeRoot(bytes[] memory account_proof, bytes[] memory storage_proof) external {
         if (bridgeRoot.length != 32) {
             revert InvalidBridgeRoot(bridgeRoot);

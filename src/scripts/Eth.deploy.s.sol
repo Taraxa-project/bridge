@@ -12,6 +12,8 @@ import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/D
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract EthDeployer is Script {
+    function setUp() public {}
+
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address deployerAddress = vm.envAddress("DEPLOYMENT_ADDRESS");
@@ -36,17 +38,71 @@ contract EthDeployer is Script {
             validatorChanges: changes
         });
         uint256 finalizationInterval = 100;
-        TaraClient client = new TaraClient(genesis, 3, finalizationInterval);
 
-        console.log("Tara Client address: %s", address(client));
+        ApprovalProcessResponse memory upgradeApprovalProcess = Defender.getUpgradeApprovalProcess();
 
-        EthBridge bridge = new EthBridge{value: 2 ether}(
-            TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),
-            IBridgeLightClient(client),
-            finalizationInterval
+        if (upgradeApprovalProcess.via == address(0)) {
+            revert(
+                string.concat(
+                    "Upgrade approval process with id ",
+                    upgradeApprovalProcess.approvalProcessId,
+                    " has no assigned address"
+                )
+            );
+        }
+
+        Options memory opts;
+        opts.defender.useDefenderDeploy = true;
+
+        address taraClientProxy = Upgrades.deployUUPSProxy(
+            "TaraClient.sol",
+            abi.encodeCall(TaraClient.initialize, (genesis, 3, finalizationInterval, upgradeApprovalProcess.via)),
+            opts
         );
 
-        console.log("Bridge address: %s", address(bridge));
+        console.log("Deployed TaraClient proxy to address", taraClientProxy);
+
+        address ethBridgeProxy = Upgrades.deployUUPSProxy(
+            "EthBridge.sol",
+            abi.encodeCall(
+                EthBridge.initialize,
+                (
+                    TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),
+                    IBridgeLightClient(client),
+                    finalizationInterval,
+                    upgradeApprovalProcess.via
+                )
+            ),
+            opts
+        );
+
+        console.log("Deployed EthBridge proxy to address", ethBridgeProxy);
+
+        address mintingConnectorProxy = Upgrades.deployUUPSProxy(
+            "ERC20MintingConnector.sol",
+            abi.encodeCall(
+                ERC20MintingConnector.initialize,
+                (
+                    address(ethBridgeProxy),
+                    TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),
+                    0xe01095F5f61211b2daF395E947C3dA78D7a431Ab,
+                    upgradeApprovalProcess.via
+                )
+            ),
+            opts
+        );
+
+        console.log("Deployed ERC20MintingConnector proxy to address", mintingConnectorProxy);
+
+        // Fund the MintingConnector with 2 ETH
+        (bool success,) = payable(mintingConnectorProxy).call{value: 2 ether}("");
+        if (!success) {
+            revert("Failed to fund the MintingConnector");
+        }
+
+        // Add the connector to the bridge
+        EthBridge bridge = EthBridge(ethBridgeProxy);
+        bridge.registerContract(mintingConnectorProxy);
 
         vm.stopBroadcast();
     }

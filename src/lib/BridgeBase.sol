@@ -52,7 +52,7 @@ abstract contract BridgeBase is OwnableUpgradeable {
         internal
         onlyInitializing
     {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
         lightClient = light_client;
         finalizationInterval = _finalizationInterval;
     }
@@ -101,7 +101,6 @@ abstract contract BridgeBase is OwnableUpgradeable {
      * @dev Applies the given state with proof to the contracts.
      * @param state_with_proof The state with proof to be applied.
      */
-
     function applyState(SharedStructs.StateWithProof calldata state_with_proof) public {
         uint256 gasleftbefore = gasleft();
         // get bridge root from light client and compare it (it should be proved there)
@@ -154,7 +153,6 @@ abstract contract BridgeBase is OwnableUpgradeable {
     /**
      * @dev Finalizes the current epoch.
      */
-
     function finalizeEpoch() public {
         if (block.number - lastFinalizedBlock < finalizationInterval) {
             revert NotEnoughBlocksPassed({
@@ -166,9 +164,7 @@ abstract contract BridgeBase is OwnableUpgradeable {
         unchecked {
             finalizedEpoch++;
         }
-        SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](
-                tokenAddresses.length
-            );
+        SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
 
         uint256 tokenAddressesLength = tokenAddresses.length;
         for (uint256 i = 0; i < tokenAddressesLength; i++) {
@@ -185,12 +181,8 @@ abstract contract BridgeBase is OwnableUpgradeable {
      */
     function getStateWithProof() public view returns (SharedStructs.StateWithProof memory ret) {
         ret.state.epoch = finalizedEpoch;
-        ret.state.states = new SharedStructs.StateWithAddress[](
-            tokenAddresses.length
-        );
-        ret.state_hashes = new SharedStructs.ContractStateHash[](
-            tokenAddresses.length
-        );
+        ret.state.states = new SharedStructs.StateWithAddress[](tokenAddresses.length);
+        ret.state_hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
         unchecked {
             uint256 tokenAddressesLength = tokenAddresses.length;
             for (uint256 i = 0; i < tokenAddressesLength; i++) {

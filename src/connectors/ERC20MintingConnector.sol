@@ -18,7 +18,6 @@ contract ERC20MintingConnector is TokenConnectorBase {
 
     function initialize(address bridge, IERC20MintableBurnable tokenAddress, address token_on_other_network)
         public
-        payable
         initializer
     {
         TokenConnectorBase_init(bridge, address(tokenAddress), token_on_other_network);

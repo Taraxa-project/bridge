@@ -5,7 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import "../src/eth/TaraClient.sol";
 import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../src/errors/ClientErrors.sol";
 
-import "@openzeppelin/utils/cryptography/ECDSAUpgradeable.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./Utils.sol";
 
 /**
@@ -206,7 +206,7 @@ contract TaraClientTest is Test {
         assertEq(decoded.signature.vs, 0x2d41a09821dc4eba64811327013062e9c71d97383211b43bc5e82773f93ecb37);
 
         address recovered_signer =
-            ECDSAUpgradeable.recover(PillarBlock.getHash(decoded.vote), decoded.signature.r, decoded.signature.vs);
+            ECDSA.recover(PillarBlock.getHash(decoded.vote), decoded.signature.r, decoded.signature.vs);
         assertEq(recovered_signer, signer);
     }
 

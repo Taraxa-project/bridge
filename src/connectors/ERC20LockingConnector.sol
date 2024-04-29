@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.17;
 
-import "openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./TokenConnectorBase.sol";
 import "../lib/SharedStructs.sol";
@@ -17,7 +17,7 @@ contract ERC20LockingConnector is TokenConnectorBase {
     /// Events
     event Locked(address indexed account, uint256 value);
 
-    function initialize(address bridge, IERC20Upgradeable tokenAddress, address token_on_other_network)
+    function initialize(address bridge, IERC20 tokenAddress, address token_on_other_network)
         public
         payable
         initializer
@@ -51,7 +51,7 @@ contract ERC20LockingConnector is TokenConnectorBase {
      * @param value The amount of tokens to lock.
      */
     function lock(uint256 value) public {
-        IERC20Upgradeable(token).transferFrom(msg.sender, address(this), value);
+        IERC20(token).transferFrom(msg.sender, address(this), value);
         state.addAmount(msg.sender, value);
         emit Locked(msg.sender, value);
     }
@@ -67,7 +67,7 @@ contract ERC20LockingConnector is TokenConnectorBase {
         if (toClaim[msg.sender] == 0) {
             revert NoClaimAvailable();
         }
-        (bool transferSuccess) = IERC20Upgradeable(token).transfer(msg.sender, toClaim[msg.sender]);
+        (bool transferSuccess) = IERC20(token).transfer(msg.sender, toClaim[msg.sender]);
         if (!transferSuccess) {
             revert TransferFailed({recipient: msg.sender, amount: toClaim[msg.sender]});
         }

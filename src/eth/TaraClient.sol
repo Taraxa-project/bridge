@@ -3,7 +3,7 @@
 pragma solidity ^0.8.17;
 
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import "openzeppelin-contracts-upgradeable/contracts/utils/cryptography/ECDSAUpgradeable.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "../lib/Maths.sol";
 import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../errors/ClientErrors.sol";
@@ -138,7 +138,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     {
         uint256 signaturesLength = signatures.length;
         for (uint256 i = 0; i < signaturesLength; i++) {
-            address signer = ECDSAUpgradeable.recover(h, signatures[i].r, signatures[i].vs);
+            address signer = ECDSA.recover(h, signatures[i].r, signatures[i].vs);
             weight += validatorVoteCounts[signer];
         }
     }

@@ -17,34 +17,24 @@ contract EthBridge is BridgeBase {
     }
 
     /// Events
-    event Initialized(
-        address indexed tara,
-        address indexed light_client,
-        address indexed mintingConnector,
-        uint256 finalizationInterval
-    );
+    event Initialized(address indexed tara, address indexed light_client, uint256 finalizationInterval);
 
-    function initialize(
-        IERC20MintableBurnable tara,
-        IBridgeLightClient light_client,
-        ERC20MintingConnector mintingConnector,
-        uint256 finalizationInterval
-    ) public payable initializer {
-        __initialize_EthBridge_unchained(tara, light_client, mintingConnector, finalizationInterval);
+    function initialize(IERC20MintableBurnable tara, IBridgeLightClient light_client, uint256 finalizationInterval)
+        public
+        initializer
+    {
+        __initialize_EthBridge_unchained(tara, light_client, finalizationInterval);
     }
 
     function __initialize_EthBridge_unchained(
         IERC20MintableBurnable tara,
         IBridgeLightClient light_client,
-        ERC20MintingConnector mintingConnector,
         uint256 finalizationInterval
     ) internal initializer {
         __BridgeBase_init(light_client, finalizationInterval);
-
-        connectors[address(tara)] = mintingConnector;
         localAddress[Constants.TARA_PLACEHOLDER] = address(tara);
         tokenAddresses.push(address(tara));
 
-        emit Initialized(address(tara), address(light_client), address(mintingConnector), finalizationInterval);
+        emit Initialized(address(tara), address(light_client), finalizationInterval);
     }
 }
