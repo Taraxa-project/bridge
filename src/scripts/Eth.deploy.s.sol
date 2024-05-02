@@ -3,13 +3,15 @@ pragma solidity ^0.8.17;
 
 import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
+import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/Defender.sol";
+import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import {EthBridge} from "../eth/EthBridge.sol";
 import {TaraClient, PillarBlock} from "../eth/TaraClient.sol";
 import {TestERC20} from "../lib/TestERC20.sol";
 import {IBridgeLightClient} from "../lib/ILightClient.sol";
-
-import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/Defender.sol";
-import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {ERC20MintingConnector} from "../connectors/ERC20MintingConnector.sol";
+import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 
 contract EthDeployer is Script {
     function setUp() public {}
@@ -55,9 +57,7 @@ contract EthDeployer is Script {
         opts.defender.useDefenderDeploy = true;
 
         address taraClientProxy = Upgrades.deployUUPSProxy(
-            "TaraClient.sol",
-            abi.encodeCall(TaraClient.initialize, (genesis, 3, finalizationInterval, upgradeApprovalProcess.via)),
-            opts
+            "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (genesis, 3, finalizationInterval)), opts
         );
 
         console.log("Deployed TaraClient proxy to address", taraClientProxy);
@@ -68,9 +68,8 @@ contract EthDeployer is Script {
                 EthBridge.initialize,
                 (
                     TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),
-                    IBridgeLightClient(client),
-                    finalizationInterval,
-                    upgradeApprovalProcess.via
+                    IBridgeLightClient(taraClientProxy),
+                    finalizationInterval
                 )
             ),
             opts
@@ -85,8 +84,7 @@ contract EthDeployer is Script {
                 (
                     address(ethBridgeProxy),
                     TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),
-                    0xe01095F5f61211b2daF395E947C3dA78D7a431Ab,
-                    upgradeApprovalProcess.via
+                    0xe01095F5f61211b2daF395E947C3dA78D7a431Ab
                 )
             ),
             opts
@@ -102,7 +100,7 @@ contract EthDeployer is Script {
 
         // Add the connector to the bridge
         EthBridge bridge = EthBridge(ethBridgeProxy);
-        bridge.registerContract(mintingConnectorProxy);
+        bridge.registerContract(IBridgeConnector(mintingConnectorProxy));
 
         vm.stopBroadcast();
     }

@@ -6,6 +6,9 @@ import "beacon-light-client/src/BeaconLightClient.sol";
 import "beacon-light-client/src/BeaconChain.sol";
 
 import {Script} from "forge-std/Script.sol";
+import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/Defender.sol";
+import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import {EthBridge} from "../eth/EthBridge.sol";
 import {TaraClient, PillarBlock} from "../eth/TaraClient.sol";
 import {TestERC20} from "../lib/TestERC20.sol";
@@ -15,6 +18,8 @@ import {TaraBridge} from "../tara/TaraBridge.sol";
 
 contract TaraDeployer is Script {
     using Bytes for bytes;
+
+    function setUp() public {}
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
@@ -51,10 +56,7 @@ contract TaraDeployer is Script {
         console.log("Beacon Client address: %s", address(beaconClient));
 
         address ethBridgeAddress = vm.envAddress("ETH_BRIDGE_ADDRESS");
-        EthClient ethClient = new EthClient(
-            beaconClient,
-            ethBridgeAddress
-        );
+        EthClient ethClient = new EthClient(beaconClient, ethBridgeAddress);
 
         console.log("Client wrapper address: %s", address(ethClient));
 
@@ -63,11 +65,8 @@ contract TaraDeployer is Script {
 
         uint256 finalizationInterval = 100;
 
-        TaraBridge taraBridge = new TaraBridge{value: 2 ether}(
-            taraAddress,
-            IBridgeLightClient(address(ethClient)),
-            finalizationInterval
-        );
+        TaraBridge taraBridge =
+            new TaraBridge{value: 2 ether}(taraAddress, IBridgeLightClient(address(ethClient)), finalizationInterval);
 
         console.log("TARA Bridge address: %s", address(taraBridge));
 
