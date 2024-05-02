@@ -15,6 +15,7 @@ import {TestERC20} from "../lib/TestERC20.sol";
 import {IBridgeLightClient} from "../lib/ILightClient.sol";
 import {EthClient} from "../tara/EthClient.sol";
 import {TaraBridge} from "../tara/TaraBridge.sol";
+import {TaraConnector} from "../tara/TaraConnector.sol";
 
 contract TaraDeployer is Script {
     using Bytes for bytes;
@@ -55,20 +56,62 @@ contract TaraDeployer is Script {
 
         console.log("Beacon Client address: %s", address(beaconClient));
 
-        address ethBridgeAddress = vm.envAddress("ETH_BRIDGE_ADDRESS");
-        EthClient ethClient = new EthClient(beaconClient, ethBridgeAddress);
+        ApprovalProcessResponse memory upgradeApprovalProcess = Defender.getUpgradeApprovalProcess();
 
-        console.log("Client wrapper address: %s", address(ethClient));
+        if (upgradeApprovalProcess.via == address(0)) {
+            revert(
+                string.concat(
+                    "Upgrade approval process with id ",
+                    upgradeApprovalProcess.approvalProcessId,
+                    " has no assigned address"
+                )
+            );
+        }
+
+        Options memory opts;
+        opts.defender.useDefenderDeploy = true;
+
+        address ethBridgeAddress = vm.envAddress("ETH_BRIDGE_ADDRESS");
+        address ethClientProxy = Upgrades.deployUUPSProxy(
+            "EthClient.sol", abi.encodeCall(EthClient.initialize, (beaconClient, ethBridgeAddress)), opts
+        );
+
+        console.log("Deployed EthClient proxy to address", ethClientProxy);
 
         address taraAddress = vm.envAddress("ETH_TARA_ADDRESS");
         console.log("ETH TARA address: %s", taraAddress);
 
         uint256 finalizationInterval = 100;
 
-        TaraBridge taraBridge =
-            new TaraBridge{value: 2 ether}(taraAddress, IBridgeLightClient(address(ethClient)), finalizationInterval);
+        address taraBrigdeProxy = Upgrades.deployUUPSProxy(
+            "TaraBridge.sol",
+            abi.encodeCall(
+                TaraBridge.initialize, (taraAddress, IBridgeLightClient(address(ethClientProxy)), finalizationInterval)
+            ),
+            opts
+        );
 
-        console.log("TARA Bridge address: %s", address(taraBridge));
+        console.log("Deployed TaraBridge proxy to address", taraBrigdeProxy);
+
+        address taraConnectorProxy = Upgrades.deployUUPSProxy(
+            "TaraConnector.sol", abi.encodeCall(TaraConnector.initialize, (taraBrigdeProxy, taraAddress)), opts
+        );
+
+        // Fund TaraConnector with 2 ETH
+        (bool success,) = payable(taraConnectorProxy).call{value: 2 ether}("");
+
+        if (!success) {
+            revert("Failed to fund the TaraConnector");
+        }
+
+        console.log("Deployed TaraConnector proxy to address", taraConnectorProxy);
+
+        TaraBridge taraBridge = TaraBridge(taraBrigdeProxy);
+
+        // Initialize TaraConnector
+        taraBridge.initTaraConnector(TaraConnector(payable(taraConnectorProxy)));
+
+        console.log("TaraBridge initialized");
 
         vm.stopBroadcast();
     }

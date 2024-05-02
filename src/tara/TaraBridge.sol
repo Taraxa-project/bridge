@@ -30,4 +30,10 @@ contract TaraBridge is BridgeBase {
         tokenAddresses.push(Constants.TARA_PLACEHOLDER);
         emit Initialized(tara_address_on_eth, address(light_client), finalizationInterval);
     }
+
+    function initTaraConnector(TaraConnector taraConnector) public onlyOwner {
+        connectors[Constants.TARA_PLACEHOLDER] = taraConnector;
+        localAddress[address(taraConnector)] = Constants.TARA_PLACEHOLDER;
+        tokenAddresses.push(Constants.TARA_PLACEHOLDER);
+    }
 }
