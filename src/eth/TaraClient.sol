@@ -21,11 +21,6 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
     uint256[49] __gap;
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     /// Events
     event Initialized(PillarBlock.FinalizedBlock finalized, uint256 threshold, uint256 pillarBlockInterval);
     event ThresholdChanged(uint256 threshold);
@@ -44,6 +39,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
         uint256 _threshold,
         uint256 _pillarBlockInterval
     ) internal onlyInitializing {
+        __Ownable_init(msg.sender);
         finalized = PillarBlock.FinalizedBlock(PillarBlock.getHash(_genesisBlock), _genesisBlock.block, block.number);
         processValidatorChanges(_genesisBlock.validatorChanges);
         threshold = _threshold;

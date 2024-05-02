@@ -21,11 +21,6 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
     uint256[49] __gap;
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     /// Events
     event Initialized(address indexed client, address indexed ethBridgeAddress);
     event BridgeRootProcessed(bytes32 indexed bridgeRoot);

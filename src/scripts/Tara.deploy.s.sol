@@ -16,6 +16,7 @@ import {IBridgeLightClient} from "../lib/ILightClient.sol";
 import {EthClient} from "../tara/EthClient.sol";
 import {TaraBridge} from "../tara/TaraBridge.sol";
 import {TaraConnector} from "../tara/TaraConnector.sol";
+import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 
 contract TaraDeployer is Script {
     using Bytes for bytes;
@@ -109,7 +110,7 @@ contract TaraDeployer is Script {
         TaraBridge taraBridge = TaraBridge(taraBrigdeProxy);
 
         // Initialize TaraConnector
-        taraBridge.initTaraConnector(TaraConnector(payable(taraConnectorProxy)));
+        taraBridge.registerContract(IBridgeConnector(taraConnectorProxy));
 
         console.log("TaraBridge initialized");
 

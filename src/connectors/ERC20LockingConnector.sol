@@ -9,11 +9,6 @@ import "../lib/SharedStructs.sol";
 import {InsufficientFunds, NoClaimAvailable, TransferFailed} from "../errors/ConnectorErrors.sol";
 
 contract ERC20LockingConnector is TokenConnectorBase {
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     /// Events
     event Locked(address indexed account, uint256 value);
 

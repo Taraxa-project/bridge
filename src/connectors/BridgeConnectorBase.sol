@@ -20,22 +20,17 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable {
     event Refunded(address indexed receiver, uint256 amount);
     event StateApplied(bytes indexed state, address indexed receiver, uint256 amount);
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
+    receive() external payable {
+        emit Funded(msg.sender, address(this), msg.value);
     }
 
-    function __BridgeConnectorBase_init(address bridge) public payable onlyInitializing {
+    function __BridgeConnectorBase_init(address bridge) public onlyInitializing {
         __BridgeConnectorBase_init_unchained(bridge);
     }
 
     function __BridgeConnectorBase_init_unchained(address bridge) internal onlyInitializing {
         __Ownable_init(msg.sender);
-        if (msg.value < 2 ether) {
-            revert InsufficientFunds({expected: 2 ether, actual: msg.value});
-        }
         _transferOwnership(bridge);
-        emit Funded(msg.sender, address(this), msg.value);
     }
 
     /**

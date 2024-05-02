@@ -8,11 +8,6 @@ import "./TokenConnectorBase.sol";
 import "./IERC20MintableBurnable.sol";
 
 contract ERC20MintingConnector is TokenConnectorBase {
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     /// Events
     event Burned(address indexed account, uint256 value);
 

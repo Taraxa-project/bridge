@@ -3,21 +3,19 @@ pragma solidity ^0.8.17;
 
 import {InsufficientFunds, NoClaimAvailable, RefundFailed} from "../errors/ConnectorErrors.sol";
 import "../connectors/TokenState.sol";
+import "./TaraBridge.sol";
 import "../lib/SharedStructs.sol";
 import "../connectors/TokenConnectorBase.sol";
+import "../lib/Constants.sol";
 
 contract TaraConnector is TokenConnectorBase {
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     /// Events
     event Locked(address indexed account, uint256 value);
     event AppliedState(bytes state);
 
-    function initialize(address bridge, address tara_addresss_on_eth) public payable initializer {
-        __TokenConnectorBase_init(bridge, address(0), tara_addresss_on_eth);
+    function initialize(address bridge, address tara_addresss_on_eth) public initializer {
+        __TokenConnectorBase_init(bridge, address(Constants.TARA_PLACEHOLDER), tara_addresss_on_eth);
+        TaraBridge taraBrigde = TaraBridge(bridge);
     }
 
     /**

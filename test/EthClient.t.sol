@@ -17,8 +17,11 @@ contract LightClientMock {
 }
 
 contract EthClientMock is EthClient {
-    constructor(BeaconLightClient _client, address _eth_bridge_address) EthClient(_client, _eth_bridge_address) {
+    function initializeIt(BeaconLightClient _client, address _eth_bridge_address) public initializer {
         bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000000;
+        ethBridgeAddress = _eth_bridge_address;
+        client = _client;
+        emit Initialized(address(_client), _eth_bridge_address);
     }
 }
 
@@ -28,10 +31,8 @@ contract EthClientTest is Test {
 
     function setUp() public {
         address ethBridgeAddress = 0x47A5339E575aC525b1278eA1F0bCE3A092384416;
-        client = new EthClientMock(
-            BeaconLightClient(address(lightClient)),
-            ethBridgeAddress
-        );
+        client = new EthClientMock();
+        client.initializeIt(BeaconLightClient(address(lightClient)), ethBridgeAddress);
     }
 
     function test_merkleRoot() public {

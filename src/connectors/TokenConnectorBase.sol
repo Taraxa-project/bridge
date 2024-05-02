@@ -25,22 +25,17 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     event ClaimAccrued(address indexed account, uint256 value);
     event Claimed(address indexed account, uint256 value);
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
-    // @dev this contract must be able to receive ether to cover fees
-    receive() external payable {}
-
     function TokenConnectorBase_init(address bridge, address _token, address token_on_other_network)
         public
-        initializer
+        onlyInitializing
     {
         __TokenConnectorBase_init(bridge, _token, token_on_other_network);
     }
 
-    function __TokenConnectorBase_init(address bridge, address _token, address token_on_other_network) internal {
+    function __TokenConnectorBase_init(address bridge, address _token, address token_on_other_network)
+        internal
+        onlyInitializing
+    {
         __BridgeConnectorBase_init(bridge);
         otherNetworkAddress = token_on_other_network;
         token = _token;

@@ -23,7 +23,10 @@ contract TaraClientTest is Test {
     uint256 constant PILLAR_BLOCK_INTERVAL = 100;
     uint32 constant PILLAR_BLOCK_THRESHOLD = 50;
 
+    address caller = address(bytes20(sha256(hex"1234")));
+
     function setUp() public {
+        vm.startBroadcast(caller);
         PillarBlock.VoteCountChange[] memory initial = new PillarBlock.VoteCountChange[](10);
         for (uint256 i = 0; i < initial.length; i++) {
             bytes32 pk = keccak256(abi.encodePacked(i));
@@ -35,6 +38,7 @@ contract TaraClientTest is Test {
         client.initialize(currentBlock, PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL);
         currentBlock.block.period += PILLAR_BLOCK_INTERVAL;
         currentBlock.block.prevHash = client.getFinalized().blockHash;
+        vm.stopBroadcast();
     }
 
     function getVoteCountChanges() internal pure returns (PillarBlock.VoteCountChange[] memory) {
@@ -146,6 +150,8 @@ contract TaraClientTest is Test {
             bytes32 pk = keccak256(abi.encodePacked(i));
             changes[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 10);
         }
+        console.log(client.owner());
+        vm.prank(caller);
         client.setThreshold(1);
         client.processValidatorChanges(changes);
     }

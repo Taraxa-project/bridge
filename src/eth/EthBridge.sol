@@ -11,11 +11,6 @@ import "../lib/Constants.sol";
 import "../lib/BridgeBase.sol";
 
 contract EthBridge is BridgeBase {
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     /// Events
     event Initialized(address indexed tara, address indexed light_client, uint256 finalizationInterval);
 
@@ -30,11 +25,8 @@ contract EthBridge is BridgeBase {
         IERC20MintableBurnable tara,
         IBridgeLightClient light_client,
         uint256 finalizationInterval
-    ) internal initializer {
+    ) internal onlyInitializing {
         __BridgeBase_init(light_client, finalizationInterval);
-        localAddress[Constants.TARA_PLACEHOLDER] = address(tara);
-        tokenAddresses.push(address(tara));
-
         emit Initialized(address(tara), address(light_client), finalizationInterval);
     }
 }
