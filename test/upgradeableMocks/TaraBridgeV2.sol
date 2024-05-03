@@ -6,6 +6,7 @@ import "../../src/lib/ILightClient.sol";
 import "../../src/lib/Constants.sol";
 import "../../src/lib/BridgeBase.sol";
 
+/// @custom:oz-upgrades-from TaraBridge
 contract TaraBridgeV2 is BridgeBase {
     uint256 public newValue;
     /// Events
