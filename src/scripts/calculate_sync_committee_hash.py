@@ -6,8 +6,10 @@ import hashlib
 from eth2spec.utils.ssz.ssz_typing import (
      Container, Vector, Bytes48 )
 
-PERIOD = 188 #UPDATE THIS
+PERIOD = 190 #UPDATE THIS
 url = f'https://beacon-pr-2618.prnet.taraxa.io/eth/v1/beacon/light_client/updates?start_period={PERIOD}&count=1'
+committee_url = f'https://beacon-pr-2618.prnet.taraxa.io/eth/v1/beacon/light_client/updates?start_period={PERIOD -1}&count=1'
+
 
 SYNC_COMMITTEE_SIZE = 512  # Example size, adjust as per your specs
 BLSPUBLICKEY_LENGTH = 48  # Length of a BLS public key in bytes
@@ -74,7 +76,7 @@ def hash_node(left: bytes, right: bytes) -> bytes:
     return hashlib.sha256(left + right).digest()
 
 
-response = requests.get(url)
+response = requests.get(committee_url)
 data = response.json()
 data = data[0]
 
@@ -82,6 +84,10 @@ sync_committee_pubkeys = data['data']['next_sync_committee']['pubkeys']
 agg_pk = data['data']['next_sync_committee']['aggregate_pubkey']
 
 sync_committee = SyncCommittee(pubkeys=[decode_hex(pubkey) for pubkey in sync_committee_pubkeys], aggregate_pubkey=decode_hex(agg_pk))
+
+response = requests.get(url)
+data = response.json()
+data = data[0]
 
 # Set path to .env file
 env_file_path = os.path.join(os.getcwd(), '.env')  # Change as necessary
