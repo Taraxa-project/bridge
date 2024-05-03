@@ -27,6 +27,7 @@ contract EthBridge is BridgeBase {
         uint256 finalizationInterval
     ) internal onlyInitializing {
         __BridgeBase_init(light_client, finalizationInterval);
+        localAddress[Constants.TARA_PLACEHOLDER] = address(tara);
         emit Initialized(address(tara), address(light_client), finalizationInterval);
     }
 }

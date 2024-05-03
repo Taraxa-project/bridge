@@ -6,7 +6,6 @@ import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.s
 
 import "./IBridgeConnector.sol";
 import {InsufficientFunds, RefundFailed} from "../errors/ConnectorErrors.sol";
-import "forge-std/console.sol";
 
 abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable {
     mapping(address => uint256) public feeToClaim; // will always be in slot 0

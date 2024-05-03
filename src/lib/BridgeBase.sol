@@ -16,7 +16,6 @@ import {
     ZeroAddressCannotBeRegistered
 } from "../errors/BridgeBaseErrors.sol";
 import "../connectors/IBridgeConnector.sol";
-import "forge-std/console.sol";
 
 abstract contract BridgeBase is OwnableUpgradeable {
     IBridgeLightClient public lightClient;
@@ -92,11 +91,8 @@ abstract contract BridgeBase is OwnableUpgradeable {
             revert ZeroAddressCannotBeRegistered();
         }
 
-        console.log("Registering contract %s", contractAddress);
         connectors[contractAddress] = connector;
-        console.log("Registering local address %s", connector.getBridgedContractAddress());
         localAddress[connector.getBridgedContractAddress()] = connector.getContractAddress();
-        console.log("Registering token address %s", contractAddress);
         tokenAddresses.push(contractAddress);
         emit ConnectorRegistered(contractAddress);
     }
@@ -124,7 +120,6 @@ abstract contract BridgeBase is OwnableUpgradeable {
         uint256 stateHashLength = state_with_proof.state_hashes.length;
         for (uint256 i = 0; i < stateHashLength;) {
             gasleftbefore = gasleft();
-            console.log("Applying state for %s", state_with_proof.state_hashes[i].contractAddress);
             if (localAddress[state_with_proof.state_hashes[i].contractAddress] == address(0)) {
                 revert UnregisteredContract({contractAddress: state_with_proof.state_hashes[i].contractAddress});
             }
