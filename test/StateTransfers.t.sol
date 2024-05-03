@@ -261,8 +261,14 @@ contract StateTransfersTest is Test {
         ethTestTokenConnector.initialize(address(ethBridge), ethTestToken, address(taraTestToken));
 
         // fund connectors
-        payable(address(taraTestTokenConnector)).call{value: 2 ether}("");
-        payable(address(ethTestTokenConnector)).call{value: 2 ether}("");
+        (bool success,) = payable(address(taraTestTokenConnector)).call{value: 2 ether}("");
+        if (!success) {
+            revert("Failed to fund tara connector");
+        }
+        (bool success2,) = payable(address(ethTestTokenConnector)).call{value: 2 ether}("");
+        if (!success2) {
+            revert("Failed to fund eth connector");
+        }
 
         taraBridge.registerContract(taraTestTokenConnector);
         ethBridge.registerContract(ethTestTokenConnector);

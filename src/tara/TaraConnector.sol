@@ -15,7 +15,6 @@ contract TaraConnector is TokenConnectorBase {
 
     function initialize(address bridge, address tara_addresss_on_eth) public initializer {
         __TokenConnectorBase_init(bridge, address(Constants.TARA_PLACEHOLDER), tara_addresss_on_eth);
-        TaraBridge taraBrigde = TaraBridge(bridge);
     }
 
     /**
