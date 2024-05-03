@@ -3,11 +3,12 @@
 pragma solidity ^0.8.17;
 
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./IBridgeConnector.sol";
 import {InsufficientFunds, RefundFailed} from "../errors/ConnectorErrors.sol";
 
-abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable {
+abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, UUPSUpgradeable {
     mapping(address => uint256) public feeToClaim; // will always be in slot 0
 
     /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
@@ -28,9 +29,12 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable {
     }
 
     function __BridgeConnectorBase_init_unchained(address bridge) internal onlyInitializing {
+        __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
         _transferOwnership(bridge);
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     /**
      * @dev Refunds the specified amount to the given receiver.

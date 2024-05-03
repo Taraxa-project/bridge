@@ -3,6 +3,7 @@
 pragma solidity ^0.8.17;
 
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import "../lib/SharedStructs.sol";
 import "../lib/ILightClient.sol";
@@ -17,7 +18,7 @@ import {
 } from "../errors/BridgeBaseErrors.sol";
 import "../connectors/IBridgeConnector.sol";
 
-abstract contract BridgeBase is OwnableUpgradeable {
+abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     IBridgeLightClient public lightClient;
 
     address[] public tokenAddresses;
@@ -49,10 +50,13 @@ abstract contract BridgeBase is OwnableUpgradeable {
         internal
         onlyInitializing
     {
-        // __Ownable_init(msg.sender);
+        __UUPSUpgradeable_init();
+        __Ownable_init(msg.sender);
         lightClient = light_client;
         finalizationInterval = _finalizationInterval;
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     /**
      * @dev Sets the finalization interval.
