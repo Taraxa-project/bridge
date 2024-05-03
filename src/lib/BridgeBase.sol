@@ -170,7 +170,6 @@ abstract contract BridgeBase is OwnableUpgradeable {
         uint256 tokenAddressesLength = tokenAddresses.length;
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
         for (uint256 i = 0; i < tokenAddressesLength;) {
-            console.log("Finalizing %s", tokenAddresses[i]);
             hashes[i] = SharedStructs.ContractStateHash(
                 tokenAddresses[i], connectors[tokenAddresses[i]].finalize(finalizedEpoch)
             );
