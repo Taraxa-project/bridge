@@ -7,8 +7,25 @@ echo "#    AFTER ETH DEPLOYMENT       #"
 echo "#                               #"
 echo "#################################"
 
+echo ""
 
 source .env
+
+# Check if python3 is installed
+if ! command -v python3 &> /dev/null
+then
+    echo "python3 could not be found, please install python3."
+    exit 1
+fi
+
+# Create a new virtual environment for Python
+python3 -m venv .venv
+
+# Activate the virtual environment
+source .venv/bin/activate
+
+pip3 install -r requirements.txt
+
 
 echo "RPC: $RPC_FICUS_PRNET"
 # Check if the RPC_URL and PRIVATE_KEY are set
@@ -38,6 +55,8 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# Deactivate the virtual environment before exiting
+deactivate
 
 
 # TBD: leaving this for future implementation or reference
