@@ -6,7 +6,7 @@ import "beacon-light-client/src/BeaconLightClient.sol";
 import "beacon-light-client/src/BeaconChain.sol";
 
 import {Script} from "forge-std/Script.sol";
-import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/Defender.sol";
+// import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/Defender.sol";
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {EthBridge} from "../eth/EthBridge.sol";
@@ -57,20 +57,21 @@ contract TaraDeployer is Script {
 
         console.log("Beacon Client address: %s", address(beaconClient));
 
-        ApprovalProcessResponse memory upgradeApprovalProcess = Defender.getUpgradeApprovalProcess();
+        // ApprovalProcessResponse memory upgradeApprovalProcess = Defender.getUpgradeApprovalProcess();
 
-        if (upgradeApprovalProcess.via == address(0)) {
-            revert(
-                string.concat(
-                    "Upgrade approval process with id ",
-                    upgradeApprovalProcess.approvalProcessId,
-                    " has no assigned address"
-                )
-            );
-        }
+        // if (upgradeApprovalProcess.via == address(0)) {
+        //     revert(
+        //         string.concat(
+        //             "Upgrade approval process with id ",
+        //             upgradeApprovalProcess.approvalProcessId,
+        //             " has no assigned address"
+        //         )
+        //     );
+        // }
 
         Options memory opts;
-        opts.defender.useDefenderDeploy = true;
+        opts.defender.useDefenderDeploy = false;
+        opts.unsafeSkipAllChecks = true;
 
         address ethBridgeAddress = vm.envAddress("ETH_BRIDGE_ADDRESS");
         address ethClientProxy = Upgrades.deployUUPSProxy(

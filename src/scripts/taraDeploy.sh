@@ -46,7 +46,7 @@ fi
 echo "Deploying BeaconLightClient contract"
 
 # Run the deployment script for TaraClient
-res=$(forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy)
+res=$(forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy --slow)
 
 echo "$res"  >> deployment-tara.log
 
