@@ -16,6 +16,12 @@ RPC https://holesky.drpc.org
 
 ## Steps to deploy the bridge
 
+### Get the last known working foundry niglty build that works with Taraxa networks - we're working on this and hope to have a more stable solution soon
+
+```bash
+    make get-foundry
+```
+
 ### 1. Get Holesky ETH
 
 [Holesky Faucet](https://stakely.io/en/faucet/ethereum-holesky-testnet-eth)
@@ -64,8 +70,9 @@ This will deploy the TARA side of the bridge and output the contract addresses. 
 ```bash
     == Logs ==
   Deployer address: 0x602EFf175fcC46936563BB7A9C4F257De2fc5421
-  Client address: 0x83BA75e668B479376973F4C7B0D240E4b5B25237
-  ETH address: 0x3E02bDF20b8aFb2fF8EA73ef5419679722955074
-  TARA Bridge address: 0x98edEa58C0500287B973348ec315f3d26D0e189A
+  BeaconLightClient address: 0x58B72519c404b3Bf8e2F3105Fd4A8d38beAC0b76
+  ETHClient address: 0x686244563F8785C383da55df9872b23be3f9acf8
+  TARABridge address: 0x07fdD5b6fe9BD40d5ECDb90A6b039B4A24b929DA
+  TaraConnector address: 0x9E2762b1ef4F7Cc00BE66e024D5Db5E8dfB0BD6C
   Wrapper address: 0xa0ACAa383Aa22Eb0C93b115344C05409BBBE68d6
 ```
