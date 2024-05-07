@@ -74,5 +74,4 @@ This will deploy the TARA side of the bridge and output the contract addresses. 
   ETHClient address: 0x686244563F8785C383da55df9872b23be3f9acf8
   TARABridge address: 0x07fdD5b6fe9BD40d5ECDb90A6b039B4A24b929DA
   TaraConnector address: 0x9E2762b1ef4F7Cc00BE66e024D5Db5E8dfB0BD6C
-  Wrapper address: 0xa0ACAa383Aa22Eb0C93b115344C05409BBBE68d6
 ```
