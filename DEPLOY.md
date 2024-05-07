@@ -62,7 +62,7 @@ This will deploy the ETH side of the bridge and output the contract addresses. H
 This will deploy the TARA side of the bridge and output the contract addresses. However, for some reason, sometimes it does error out. In that case, you can deploy the contracts manually via:
 
 ```bash
-    forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --via-ir --rpc-url https://rpc-pr-2618.prnet.taraxa.io --legacy --broadcast
+    forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url  https://rpc-pr-2618.prnet.taraxa.io --legacy --broadcast --slow
 ```
 
 #### 3.1 Tara Deployment
