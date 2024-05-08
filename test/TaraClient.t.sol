@@ -171,15 +171,6 @@ contract TaraClientTest is Test {
         );
 
         bytes memory bb = abi.encode(b);
-        console.log("hex encoded ", utils.bytesToHex(bb));
-        console.log(
-            "hello: ",
-            utils.bytesToHex(
-                abi.encode(
-                    hex"f9aad20feab5c2c3f0d9655fe22e65288d04b8faa925db55dc2d6b0390e8d1192ff5b95dcc5dad1ea0e0e3e96af4c569a76aad5b083dc91e53f4874ee5170d861c"
-                )
-            )
-        );
         PillarBlock.WithChanges memory bcb = PillarBlock.fromBytes(bb);
         bytes memory bb2 = abi.encode(bcb);
         assertEq(bb, bb2);

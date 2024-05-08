@@ -3,22 +3,36 @@
 pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
+import "forge-std/console.sol";
+import {StateIsNotEmpty} from "../errors/ConnectorErrors.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 struct Transfer {
     address account;
     uint256 amount;
 }
 
-contract TokenState {
-    uint256 public immutable epoch;
+contract TokenState is Ownable {
+    uint256 public epoch;
     address[] accounts;
     mapping(address => uint256) balances; // position = 2
 
-    constructor(uint256 _epoch) {
+    constructor(uint256 _epoch) Ownable() {
         epoch = _epoch;
     }
 
-    function addAmount(address account, uint256 amount) public {
+    function empty() public view returns (bool) {
+        return accounts.length == 0;
+    }
+
+    function increaseEpoch() public onlyOwner {
+        if (!empty()) {
+            revert StateIsNotEmpty();
+        }
+        epoch = epoch + 1;
+    }
+
+    function addAmount(address account, uint256 amount) public onlyOwner {
         if (balances[account] == 0) {
             accounts.push(account);
         }
