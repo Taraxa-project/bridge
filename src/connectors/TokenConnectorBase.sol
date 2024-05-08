@@ -18,7 +18,7 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     constructor(address bridge, address _token, address token_on_other_network) payable BridgeConnectorBase(bridge) {
         otherNetworkAddress = token_on_other_network;
         token = _token;
-        state = new TokenState(1);
+        state = new TokenState(0);
     }
 
     function epoch() public view returns (uint256) {
@@ -30,13 +30,22 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     }
 
     function finalizedSerializedTransfers() internal view returns (bytes memory) {
-        Transfer[] memory transfers = finalizedState.getTransfers();
-        return abi.encode(transfers);
+        return abi.encode(finalizedState.getTransfers());
+    }
+
+    function isStateEmpty() external view override returns (bool) {
+        return state.empty();
     }
 
     function finalize(uint256 epoch_to_finalize) public override onlyOwner returns (bytes32) {
         if (epoch_to_finalize != state.epoch()) {
             revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
+        }
+
+        if (state.empty() && address(finalizedState) != address(0) && finalizedState.empty()) {
+            state.increaseEpoch();
+            finalizedState.increaseEpoch();
+            return Constants.EMPTY_HASH;
         }
         finalizedState = state;
         state = new TokenState(epoch_to_finalize + 1);

@@ -27,8 +27,9 @@ contract FeesTest is Test {
         ethLightClient = new BridgeLightClientMock();
         ethTaraToken = new TestERC20("TARA");
         taraBridge = new TaraBridge{value: 2 ether}(address(ethTaraToken), ethLightClient, FINALIZATION_INTERVAL);
-        ethBridge =
-        new EthBridge{value: 2 ether}(IERC20MintableBurnable(address(ethTaraToken)), taraLightClient, FINALIZATION_INTERVAL);
+        ethBridge = new EthBridge{value: 2 ether}(
+            IERC20MintableBurnable(address(ethTaraToken)), taraLightClient, FINALIZATION_INTERVAL
+        );
     }
 
     // define it to not fail on incoming transfers

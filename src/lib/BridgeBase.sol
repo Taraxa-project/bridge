@@ -5,6 +5,7 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../lib/SharedStructs.sol";
+import "../lib/Constants.sol";
 import "../lib/ILightClient.sol";
 import {
     StateNotMatchingBridgeRoot,
@@ -14,6 +15,7 @@ import {
     InvalidStateHash,
     UnmatchingContractAddresses
 } from "../errors/BridgeBaseErrors.sol";
+import {NoFinalizedState} from "../errors/ConnectorErrors.sol";
 import "../connectors/IBridgeConnector.sol";
 import "forge-std/console.sol";
 
@@ -71,7 +73,6 @@ abstract contract BridgeBase is Ownable {
      * @dev Applies the given state with proof to the contracts.
      * @param state_with_proof The state with proof to be applied.
      */
-
     function applyState(SharedStructs.StateWithProof calldata state_with_proof) public {
         uint256 gasleftbefore = gasleft();
         // get bridge root from light client and compare it (it should be proved there)
@@ -116,10 +117,19 @@ abstract contract BridgeBase is Ownable {
         appliedEpoch++;
     }
 
+    function shouldFinalizeEpoch() public view returns (bool) {
+        bool shouldFinalize = false;
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            if (!connectors[tokenAddresses[i]].isStateEmpty()) {
+                shouldFinalize = true;
+            }
+        }
+        return shouldFinalize;
+    }
+
     /**
      * @dev Finalizes the current epoch.
      */
-
     function finalizeEpoch() public {
         if (block.number - lastFinalizedBlock < finalizationInterval) {
             revert NotEnoughBlocksPassed({
@@ -127,19 +137,20 @@ abstract contract BridgeBase is Ownable {
                 finalizationInterval: finalizationInterval
             });
         }
-        lastFinalizedBlock = block.number;
-        unchecked {
-            finalizedEpoch++;
-        }
-        SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](
-                tokenAddresses.length
-            );
+        SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
 
-        uint256 tokenAddressesLength = tokenAddresses.length;
-        for (uint256 i = 0; i < tokenAddressesLength; i++) {
+        if (!shouldFinalizeEpoch()) {
+            console.log("No need to finalize");
+            return;
+        }
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
             hashes[i] = SharedStructs.ContractStateHash(
                 tokenAddresses[i], connectors[tokenAddresses[i]].finalize(finalizedEpoch)
             );
+        }
+        lastFinalizedBlock = block.number;
+        unchecked {
+            finalizedEpoch++;
         }
         bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, hashes);
     }
@@ -149,12 +160,8 @@ abstract contract BridgeBase is Ownable {
      */
     function getStateWithProof() public view returns (SharedStructs.StateWithProof memory ret) {
         ret.state.epoch = finalizedEpoch;
-        ret.state.states = new SharedStructs.StateWithAddress[](
-            tokenAddresses.length
-        );
-        ret.state_hashes = new SharedStructs.ContractStateHash[](
-            tokenAddresses.length
-        );
+        ret.state.states = new SharedStructs.StateWithAddress[](tokenAddresses.length);
+        ret.state_hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
         unchecked {
             uint256 tokenAddressesLength = tokenAddresses.length;
             for (uint256 i = 0; i < tokenAddressesLength; i++) {

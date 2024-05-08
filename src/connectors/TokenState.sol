@@ -3,6 +3,8 @@
 pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
+import "forge-std/console.sol";
+import {StateIsNotEmpty} from "../errors/ConnectorErrors.sol";
 
 struct Transfer {
     address account;
@@ -10,12 +12,23 @@ struct Transfer {
 }
 
 contract TokenState {
-    uint256 public immutable epoch;
+    uint256 public epoch;
     address[] accounts;
     mapping(address => uint256) balances; // position = 2
 
     constructor(uint256 _epoch) {
         epoch = _epoch;
+    }
+
+    function empty() public view returns (bool) {
+        return accounts.length == 0;
+    }
+
+    function increaseEpoch() public {
+        if (!empty()) {
+            revert StateIsNotEmpty();
+        }
+        epoch = epoch + 1;
     }
 
     function addAmount(address account, uint256 amount) public {
