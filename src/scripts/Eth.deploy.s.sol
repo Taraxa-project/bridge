@@ -65,11 +65,7 @@ contract EthDeployer is Script {
             "EthBridge.sol",
             abi.encodeCall(
                 EthBridge.initialize,
-                (
-                    TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),
-                    IBridgeLightClient(taraClientProxy),
-                    finalizationInterval
-                )
+                (TestERC20(taraAddress), IBridgeLightClient(taraClientProxy), finalizationInterval)
             ),
             opts
         );
@@ -79,12 +75,7 @@ contract EthDeployer is Script {
         address mintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
             abi.encodeCall(
-                ERC20MintingConnector.initialize,
-                (
-                    address(ethBridgeProxy),
-                    TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab),
-                    0xe01095F5f61211b2daF395E947C3dA78D7a431Ab
-                )
+                ERC20MintingConnector.initialize, (address(ethBridgeProxy), TestERC20(taraAddress), taraAddress)
             ),
             opts
         );
