@@ -32,7 +32,7 @@ contract EthDeployer is Script {
         PillarBlock.WithChanges memory genesis = PillarBlock.WithChanges({
             block: PillarBlock.FinalizationData({
                 period: 100,
-                stateRoot: 0xdd93c3928aaf9528d522cf19298a1769bce38424391b7fbb9dc4b4b9713ab278,
+                stateRoot: 0x575d2ca3bbbcddf93eee5e4b1deff3191ea780b12778b2cbe4660c3a4cccbcd0,
                 bridgeRoot: 0x0,
                 prevHash: 0x0
             }),
