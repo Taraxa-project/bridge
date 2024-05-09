@@ -38,7 +38,6 @@ contract EthClient is IBridgeLightClient {
      * @param account_proof The account proofs for the bridge root.
      * @param storage_proof The storage proofs for the bridge root.
      */
-
     function processBridgeRoot(bytes[] memory account_proof, bytes[] memory storage_proof) external {
         if (bridgeRoot.length != 32) {
             revert InvalidBridgeRoot(bridgeRoot);
