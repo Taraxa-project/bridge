@@ -39,17 +39,17 @@ There are two scripts to do this:
 This will deploy the ETH side of the bridge and output the contract addresses. However, for some reason, sometimes it does error out. In that case, you can deploy the contracts manually via:
 
 ```bash
-    forge script scripts/Eth.deploy.sol:EthDeployer --via-ir --rpc-url https://holesky.drpc.org  --broadcast --legacy
+    forge script scripts/Eth.deploy.sol:EthDeployer --via-ir --rpc-url https://holesky.drpc.org  --broadcast --slow
 ```
 
 #### 2.1 Holesky Deployment
 
 ```bash
-    Deployer address: 0x602EFf175fcC46936563BB7A9C4F257De2fc5421
-    TARA address: 0x3E02bDF20b8aFb2fF8EA73ef5419679722955074
-    Bridge address: 0x5D126cB4E9f78145881762e2f62e5ce1C35B787f
-    ERC20MintingConnector: https://holesky.etherscan.io/address/0xD4fa020c9318d5fc1F57b1551C9f507a967dEa61
-    TaraClient: https://holesky.etherscan.io/address/0xA14bd7A4b016Eb315656Dfbd7BB7f97Af67ed1d6
+  Deployer address: 0x602EFf175fcC46936563BB7A9C4F257De2fc5421
+  ETH TARA address: 0xe01095F5f61211b2daF395E947C3dA78D7a431Ab
+  TaraClient proxy address: 0xB3ea5642F0fd47Fa8Adc1f7D6504c3e402Ed9a17
+  EthBridge proxy address: 0x507B9Bf416a04BCEe3c281E0d1836BA4B86B7801
+  ERC20MintingConnector proxy address:  0x1e5de589C38d610E3E776a8Bbaa55d864efc9e99
 
 ```
 

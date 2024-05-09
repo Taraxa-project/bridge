@@ -3,7 +3,6 @@ pragma solidity ^0.8.17;
 
 import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
-import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/Defender.sol";
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {EthBridge} from "../eth/EthBridge.sol";
@@ -41,20 +40,20 @@ contract EthDeployer is Script {
         });
         uint256 finalizationInterval = 100;
 
-        ApprovalProcessResponse memory upgradeApprovalProcess = Defender.getUpgradeApprovalProcess();
+        // ApprovalProcessResponse memory upgradeApprovalProcess = Defender.getUpgradeApprovalProcess();
 
-        if (upgradeApprovalProcess.via == address(0)) {
-            revert(
-                string.concat(
-                    "Upgrade approval process with id ",
-                    upgradeApprovalProcess.approvalProcessId,
-                    " has no assigned address"
-                )
-            );
-        }
+        // if (upgradeApprovalProcess.via == address(0)) {
+        //     revert(
+        //         string.concat(
+        //             "Upgrade approval process with id ",
+        //             upgradeApprovalProcess.approvalProcessId,
+        //             " has no assigned address"
+        //         )
+        //     );
+        // }
 
         Options memory opts;
-        opts.defender.useDefenderDeploy = true;
+        opts.defender.useDefenderDeploy = false;
 
         address taraClientProxy = Upgrades.deployUUPSProxy(
             "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (genesis, 3, finalizationInterval)), opts

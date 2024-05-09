@@ -2,7 +2,6 @@
 pragma solidity ^0.8.17;
 
 import {InsufficientFunds, NoClaimAvailable, RefundFailed} from "../errors/ConnectorErrors.sol";
-import "../connectors/TokenState.sol";
 import "./TaraBridge.sol";
 import "../lib/SharedStructs.sol";
 import "../connectors/TokenConnectorBase.sol";
