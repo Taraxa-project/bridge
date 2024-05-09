@@ -15,9 +15,7 @@ contract TaraClient is IBridgeLightClient {
     uint256 public threshold;
     uint256 public immutable pillarBlockInterval;
 
-    constructor(PillarBlock.WithChanges memory _genesisBlock, uint256 _threshold, uint256 _pillarBlockInterval) {
-        finalized = PillarBlock.FinalizedBlock(PillarBlock.getHash(_genesisBlock), _genesisBlock.block, block.number);
-        processValidatorChanges(_genesisBlock.validatorChanges);
+    constructor(uint256 _threshold, uint256 _pillarBlockInterval) {
         threshold = _threshold;
         pillarBlockInterval = _pillarBlockInterval;
     }
@@ -48,7 +46,7 @@ contract TaraClient is IBridgeLightClient {
      * @param validatorChanges An array of VoteCountChange structs representing the changes in validator vote counts.
      *  optimize for gas cost!!
      */
-    function processValidatorChanges(PillarBlock.VoteCountChange[] memory validatorChanges) public {
+    function processValidatorChanges(PillarBlock.VoteCountChange[] memory validatorChanges) internal {
         unchecked {
             uint256 validatorChangesLength = validatorChanges.length;
             for (uint256 i = 0; i < validatorChangesLength; i++) {
@@ -71,7 +69,8 @@ contract TaraClient is IBridgeLightClient {
             if (blocks[i].block.prevHash != finalized.blockHash) {
                 revert HashesNotMatching({expected: finalized.blockHash, actual: blocks[i].block.prevHash});
             }
-            if (blocks[i].block.period != (finalized.block.period + pillarBlockInterval)) {
+            if (finalized.block.period != 0 && blocks[i].block.period != (finalized.block.period + pillarBlockInterval))
+            {
                 revert InvalidBlockInterval({
                     expected: finalized.block.period + pillarBlockInterval,
                     actual: blocks[i].block.period
@@ -80,8 +79,8 @@ contract TaraClient is IBridgeLightClient {
 
             // this should be processed before the signatures verification to have a proper weights
             processValidatorChanges(blocks[i].validatorChanges);
-            // verify signatures only for the last block
-            if (i == (blocks.length - 1)) {
+            // skip verification for the first(genesis) block. And verify signatures only for the last block in the batch
+            if (finalized.block.period != 0 && i == (blocks.length - 1)) {
                 uint256 weight =
                     getSignaturesWeight(PillarBlock.getVoteHash(blocks[i].block.period, pbh), lastBlockSigs);
                 if (weight < threshold) {
