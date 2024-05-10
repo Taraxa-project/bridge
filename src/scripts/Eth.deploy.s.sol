@@ -7,6 +7,7 @@ import {EthBridge} from "../eth/EthBridge.sol";
 import {TaraClient, PillarBlock} from "../eth/TaraClient.sol";
 import {TestERC20} from "../lib/TestERC20.sol";
 import {IBridgeLightClient} from "../lib/ILightClient.sol";
+import "../lib/Constants.sol";
 
 contract EthDeployer is Script {
     function run() public {
@@ -18,10 +19,10 @@ contract EthDeployer is Script {
         address taraAddress = vm.envAddress("ETH_TARA_ADDRESS");
         console.log("ETH TARA address: %s", taraAddress);
 
-        PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](3);
-        changes[0] = PillarBlock.VoteCountChange({validator: 0xFe3d5E3B9c2080bF338638Fd831a35A4B4344a2C, change: 100});
-        changes[1] = PillarBlock.VoteCountChange({validator: 0x515C990Ef87668E57A290F650b4C39c343d73d9a, change: 100});
-        changes[2] = PillarBlock.VoteCountChange({validator: 0x3E62C62Ac89c71412CA68688530D112433FEC78C, change: 100});
+        // PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](3);
+        // changes[0] = PillarBlock.VoteCountChange({validator: 0xFe3d5E3B9c2080bF338638Fd831a35A4B4344a2C, change: 100});
+        // changes[1] = PillarBlock.VoteCountChange({validator: 0x515C990Ef87668E57A290F650b4C39c343d73d9a, change: 100});
+        // changes[2] = PillarBlock.VoteCountChange({validator: 0x3E62C62Ac89c71412CA68688530D112433FEC78C, change: 100});
 
         // PillarBlock.WithChanges memory genesis = PillarBlock.WithChanges({
         //     block: PillarBlock.FinalizationData({
@@ -37,7 +38,7 @@ contract EthDeployer is Script {
 
         console.log("Tara Client address: %s", address(client));
 
-        EthBridge bridge = new EthBridge{value: 2 ether}(
+        EthBridge bridge = new EthBridge{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}(
             TestERC20(0xe01095F5f61211b2daF395E947C3dA78D7a431Ab), IBridgeLightClient(client), finalizationInterval
         );
 
