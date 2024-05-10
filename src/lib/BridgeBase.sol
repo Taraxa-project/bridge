@@ -6,6 +6,7 @@ import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.s
 import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import "../lib/SharedStructs.sol";
+import "../lib/Constants.sol";
 import "../lib/ILightClient.sol";
 import {
     StateNotMatchingBridgeRoot,
@@ -16,6 +17,7 @@ import {
     UnmatchingContractAddresses,
     ZeroAddressCannotBeRegistered
 } from "../errors/BridgeBaseErrors.sol";
+import {NoFinalizedState} from "../errors/ConnectorErrors.sol";
 import "../connectors/IBridgeConnector.sol";
 
 abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
@@ -157,6 +159,16 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         appliedEpoch++;
     }
 
+    function shouldFinalizeEpoch() public view returns (bool) {
+        bool shouldFinalize = false;
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            if (!connectors[tokenAddresses[i]].isStateEmpty()) {
+                shouldFinalize = true;
+            }
+        }
+        return shouldFinalize;
+    }
+
     /**
      * @dev Finalizes the current epoch.
      */
@@ -167,19 +179,23 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
                 finalizationInterval: finalizationInterval
             });
         }
-        lastFinalizedBlock = block.number;
-        unchecked {
-            finalizedEpoch++;
-        }
-        uint256 tokenAddressesLength = tokenAddresses.length;
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
-        for (uint256 i = 0; i < tokenAddressesLength;) {
+
+        if (!shouldFinalizeEpoch()) {
+            // console.log("No need to finalize");
+            return;
+        }
+        for (uint256 i = 0; i < tokenAddresses.length;) {
             hashes[i] = SharedStructs.ContractStateHash(
                 tokenAddresses[i], connectors[tokenAddresses[i]].finalize(finalizedEpoch)
             );
             unchecked {
                 ++i;
             }
+        }
+        lastFinalizedBlock = block.number;
+        unchecked {
+            finalizedEpoch++;
         }
         bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, hashes);
         emit Finalized(finalizedEpoch, bridgeRoot);

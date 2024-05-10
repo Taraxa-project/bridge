@@ -22,29 +22,20 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     uint256[49] __gap;
 
     /// Events
-    event Initialized(PillarBlock.FinalizedBlock finalized, uint256 threshold, uint256 pillarBlockInterval);
+    event Initialized(uint256 threshold, uint256 pillarBlockInterval);
     event ThresholdChanged(uint256 threshold);
     event ValidatorWeightChanged(address indexed validator, uint256 weight);
     event BlockFinalized(PillarBlock.FinalizedBlock finalized);
 
-    function initialize(PillarBlock.WithChanges memory _genesisBlock, uint256 _threshold, uint256 _pillarBlockInterval)
-        public
-        initializer
-    {
-        __TaraClient_init_unchained(_genesisBlock, _threshold, _pillarBlockInterval);
+    function initialize(uint256 _threshold, uint256 _pillarBlockInterval) public initializer {
+        __TaraClient_init_unchained(_threshold, _pillarBlockInterval);
     }
 
-    function __TaraClient_init_unchained(
-        PillarBlock.WithChanges memory _genesisBlock,
-        uint256 _threshold,
-        uint256 _pillarBlockInterval
-    ) internal onlyInitializing {
+    function __TaraClient_init_unchained(uint256 _threshold, uint256 _pillarBlockInterval) internal onlyInitializing {
         __Ownable_init(msg.sender);
-        finalized = PillarBlock.FinalizedBlock(PillarBlock.getHash(_genesisBlock), _genesisBlock.block, block.number);
-        processValidatorChanges(_genesisBlock.validatorChanges);
         threshold = _threshold;
         pillarBlockInterval = _pillarBlockInterval;
-        emit Initialized(finalized, threshold, pillarBlockInterval);
+        emit Initialized(threshold, pillarBlockInterval);
     }
 
     function getFinalized() public view returns (PillarBlock.FinalizedBlock memory) {
@@ -99,7 +90,8 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
             if (blocks[i].block.prevHash != finalized.blockHash) {
                 revert HashesNotMatching({expected: finalized.blockHash, actual: blocks[i].block.prevHash});
             }
-            if (blocks[i].block.period != (finalized.block.period + pillarBlockInterval)) {
+            if (finalized.block.period != 0 && blocks[i].block.period != (finalized.block.period + pillarBlockInterval))
+            {
                 revert InvalidBlockInterval({
                     expected: finalized.block.period + pillarBlockInterval,
                     actual: blocks[i].block.period
@@ -108,8 +100,8 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
 
             // this should be processed before the signatures verification to have a proper weights
             processValidatorChanges(blocks[i].validatorChanges);
-            // verify signatures only for the last block
-            if (i == (blocks.length - 1)) {
+            // skip verification for the first(genesis) block. And verify signatures only for the last block in the batch
+            if (finalized.block.period != 0 && i == (blocks.length - 1)) {
                 uint256 weight =
                     getSignaturesWeight(PillarBlock.getVoteHash(blocks[i].block.period, pbh), lastBlockSigs);
                 if (weight < threshold) {

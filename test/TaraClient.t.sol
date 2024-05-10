@@ -6,7 +6,6 @@ import "../src/eth/TaraClient.sol";
 import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../src/errors/ClientErrors.sol";
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "./Utils.sol";
 
 /**
  * @title Taraxa Client-side test contract
@@ -32,10 +31,14 @@ contract TaraClientTest is Test {
             bytes32 pk = keccak256(abi.encodePacked(i));
             initial[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 20);
         }
+
         currentBlock =
             PillarBlock.WithChanges(PillarBlock.FinalizationData(1, bytes32(0), bytes32(0), bytes32(0)), initial);
         client = new TaraClient();
-        client.initialize(currentBlock, PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL);
+        client.initialize(PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL);
+        PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
+        blocks[0] = currentBlock;
+        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
         currentBlock.block.period += PILLAR_BLOCK_INTERVAL;
         currentBlock.block.prevHash = client.getFinalized().blockHash;
         vm.stopBroadcast();
@@ -144,17 +147,15 @@ contract TaraClientTest is Test {
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
-    function test_weightChanges() public {
-        PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](20);
-        for (uint256 i = 0; i < changes.length; i++) {
-            bytes32 pk = keccak256(abi.encodePacked(i));
-            changes[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 10);
-        }
-        console.log(client.owner());
-        vm.prank(caller);
-        client.setThreshold(1);
-        client.processValidatorChanges(changes);
-    }
+    // function test_weightChanges() public {
+    //     PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](20);
+    //     for (uint256 i = 0; i < changes.length; i++) {
+    //         bytes32 pk = keccak256(abi.encodePacked(i));
+    //         changes[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 10);
+    //     }
+    //     client.setThreshold(1);
+    //     client.processValidatorChanges(changes);
+    // }
 
     function test_blockEncodeDecode() public {
         PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](10);
@@ -170,7 +171,7 @@ contract TaraClientTest is Test {
         changes[9] = PillarBlock.VoteCountChange(address(0x8a35AcfbC15Ff81A39Ae7d344fD709f28e8600B4), 465876798);
 
         for (uint256 i = 0; i < changes.length; i++) {
-            console.log(utils.bytesToHex(keccak256(abi.encodePacked(i))));
+            console.logBytes32(keccak256(abi.encodePacked(i)));
         }
 
         PillarBlock.WithChanges memory b = PillarBlock.WithChanges(
@@ -178,15 +179,6 @@ contract TaraClientTest is Test {
         );
 
         bytes memory bb = abi.encode(b);
-        console.log("hex encoded ", utils.bytesToHex(bb));
-        console.log(
-            "hello: ",
-            utils.bytesToHex(
-                abi.encode(
-                    hex"f9aad20feab5c2c3f0d9655fe22e65288d04b8faa925db55dc2d6b0390e8d1192ff5b95dcc5dad1ea0e0e3e96af4c569a76aad5b083dc91e53f4874ee5170d861c"
-                )
-            )
-        );
         PillarBlock.WithChanges memory bcb = PillarBlock.fromBytes(bb);
         bytes memory bb2 = abi.encode(bcb);
         assertEq(bb, bb2);

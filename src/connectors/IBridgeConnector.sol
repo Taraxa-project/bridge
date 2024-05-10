@@ -8,15 +8,19 @@ import "../lib/SharedStructs.sol";
  * @title IBridgeConnector
  * @dev Interface for bridgeable contracts.
  */
-
 interface IBridgeConnector {
     /**
-     * @dev Finalizes the bridge operation and returns a bytes32 value hash
+     * @dev Finalizes the bridge operation and returns a bytes32 value hash.
      * @param epoch The epoch to be finalized
-     * @return hash of the finalized state
+     * @return finalizedHash of the finalized state
      */
-    function finalize(uint256 epoch) external returns (bytes32);
+    function finalize(uint256 epoch) external returns (bytes32 finalizedHash);
 
+    /**
+     * @dev Checks if the state is empty.
+     * @return true if the state is empty, false otherwise
+     */
+    function isStateEmpty() external view returns (bool);
     /**
      * @dev Retrieves the finalized state of the bridgeable contract.
      * @return A bytes serialized finalized state

@@ -17,6 +17,8 @@ docs/
 
 # python venv
 venv/
+.venv
+pyvenv.cfg
 src/scripts/bin
 src/scripts/include
 src/scripts/lib

@@ -180,12 +180,16 @@ contract StateTransfersTest is Test {
         taraConnector.lock{value: value}();
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
+        uint256 finalizedEpoch = taraBridge.getStateWithProof().state.epoch;
+        assertEq(finalizedEpoch, 1);
         vm.roll(2 * FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
+        // check that we are not finalizing empty epoch
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        assertEq(state.state.epoch, finalizedEpoch);
         assertEq(state.state.states.length, 1);
+        assertEq(state.state.epoch, 1);
         assertEq(state.state.states[0].contractAddress, Constants.TARA_PLACEHOLDER);
-        assertEq(state.state.states[0].state, abi.encode(new Transfer[](0)));
     }
 
     function test_futureEpoch() public {

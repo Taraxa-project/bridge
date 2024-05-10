@@ -7,3 +7,4 @@ error TransferFailed(address recipient, uint256 amount);
 error RefundFailed(address recipient, uint256 amount);
 error InvalidEpoch(uint256 expected, uint256 actual);
 error NoFinalizedState();
+error StateIsNotEmpty();
