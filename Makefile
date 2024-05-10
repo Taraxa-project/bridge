@@ -19,7 +19,7 @@ update:; forge update
 
 build:; forge build --via-ir
 
-test :; forge test --via-ir
+test :; forge test --via-ir --force
 
 snapshot :; forge snapshot
 
