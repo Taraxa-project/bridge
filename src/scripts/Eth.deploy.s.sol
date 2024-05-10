@@ -26,11 +26,11 @@ contract EthDeployer is Script {
 
         console.log("Tara Client address: %s", address(client));
 
-        EthBridge bridge = new EthBridge{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}(
+        EthBridge bridge = new EthBridge{value: 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT}(
             TestERC20(taraAddressOnEth), ethAddressOnTara, IBridgeLightClient(client), finalizationInterval
         );
 
-        console.log("Bridge address: %s", address(bridge));
+        console.log("Eth Bridge address: %s", address(bridge));
 
         vm.stopBroadcast();
     }

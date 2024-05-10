@@ -62,7 +62,7 @@ contract TaraDeployer is Script {
         console.log("ETH_ADDRESS_ON_TARA: %s", ethAddressOnTara);
 
         uint256 finalizationInterval = 100;
-        TaraBridge taraBridge = new TaraBridge{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}(
+        TaraBridge taraBridge = new TaraBridge{value: 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT}(
             TestERC20(ethAddressOnTara), taraAddressOnEth, IBridgeLightClient(address(ethClient)), finalizationInterval
         );
 

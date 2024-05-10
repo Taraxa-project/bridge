@@ -2,8 +2,8 @@
 
 echo "#################################"
 echo "#                               #"
-echo "#          RUN   THIS           #"
-echo "#            FIRST              #"
+echo "#        RUN THIS AFTER         #"
+echo "#    THE TOKENS DEPLOYMENT      #"
 echo "#                               #"
 echo "#################################"
 
@@ -18,28 +18,22 @@ fi
 
 echo "Deploying TaraClient contract"
 
-# Deploy the Tara token to Holesky using forge create
-res=$(forge create --via-ir --constructor-args "Taraxa" "TARA" --rpc-url $RPC_HOLESKY --private-key $PRIVATE_KEY src/lib/TestERC20.sol:TestERC20)
-
-if [ $? -ne 0 ]; then
-  echo "Error deploying Tara token"
-  exit 1
-fi
-
-# Extract the address of the deployed contract
-taraAddress=$(echo "$res" | grep "Deployed to:" | awk '{print $3}')
-
-echo "Deployed to: $taraAddress"
-
-echo "TARA_ADDRESS_ON_ETH=$taraAddress" >> .env
-
 echo "Running deployment script for TaraClient & EthBridge"
 
-ethBridge=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast --legacy)
+res=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast --legacy)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for EthBridge"
   exit 1
 fi
 
-echo "$ethBridge" >> deployment-eth.log
+# Extract the address of the deployed contract
+ethBridge=$(echo "$res" | grep "Eth Bridge address:" | awk '{print $4}')
+echo "Eth bridge contract deployed to: $ethBridge"
+echo "ETH_BRIDGE_ADDRESS=$ethBridge" >> .env
+
+taraClientOnEth=$(echo "$res" | grep "Tara Client address:" | awk '{print $4}')
+echo "Tara client contract deployed to: $taraClientOnEth"
+echo "TARA_CLIENT=$taraClientOnEth" >> .env
+
+echo "$res" >> deployment-eth.log
