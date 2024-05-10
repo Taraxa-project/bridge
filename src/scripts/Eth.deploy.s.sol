@@ -29,15 +29,6 @@ contract EthDeployer is Script {
         changes[1] = PillarBlock.VoteCountChange({validator: 0x515C990Ef87668E57A290F650b4C39c343d73d9a, change: 100});
         changes[2] = PillarBlock.VoteCountChange({validator: 0x3E62C62Ac89c71412CA68688530D112433FEC78C, change: 100});
 
-        PillarBlock.WithChanges memory genesis = PillarBlock.WithChanges({
-            block: PillarBlock.FinalizationData({
-                period: 100,
-                stateRoot: 0x575d2ca3bbbcddf93eee5e4b1deff3191ea780b12778b2cbe4660c3a4cccbcd0,
-                bridgeRoot: 0x0,
-                prevHash: 0x0
-            }),
-            validatorChanges: changes
-        });
         uint256 finalizationInterval = 100;
 
         // ApprovalProcessResponse memory upgradeApprovalProcess = Defender.getUpgradeApprovalProcess();
@@ -56,7 +47,7 @@ contract EthDeployer is Script {
         opts.defender.useDefenderDeploy = false;
 
         address taraClientProxy = Upgrades.deployUUPSProxy(
-            "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (genesis, 3, finalizationInterval)), opts
+            "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (3, finalizationInterval)), opts
         );
 
         console.log("Deployed TaraClient proxy to address", taraClientProxy);

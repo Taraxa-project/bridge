@@ -2,10 +2,11 @@
 
 pragma solidity ^0.8.17;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "../lib/SharedStructs.sol";
 import "forge-std/console.sol";
 import {StateIsNotEmpty} from "../errors/ConnectorErrors.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 struct Transfer {
     address account;
@@ -21,7 +22,7 @@ contract TokenState is Ownable {
     event TransferAdded(address indexed account, address indexed tokenState, uint256 indexed amount);
     event Initialized(uint256 indexed epoch);
 
-    constructor(uint256 _epoch) Ownable() {
+    constructor(uint256 _epoch) Ownable(msg.sender) {
         epoch = _epoch;
         emit Initialized(_epoch);
     }

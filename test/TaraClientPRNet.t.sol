@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
 import {Test, console} from "forge-std/Test.sol";
 import "../src/eth/TaraClient.sol";
-import "./Utils.sol";
-
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 /**
  * @title Test that Tara client accepts blocks from the PRNet
