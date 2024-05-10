@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../lib/SharedStructs.sol";
 import "../lib/Constants.sol";
-import "../lib/ILightClient.sol";
+import "../lib/IBridgeLightClient.sol";
 import {
     StateNotMatchingBridgeRoot,
     NotSuccessiveEpochs,

@@ -7,10 +7,10 @@ import "../connectors/TokenState.sol";
 import "../lib/SharedStructs.sol";
 import "../connectors/TokenConnectorBase.sol";
 
-contract TaraConnector is TokenConnectorBase {
-    constructor(address bridge, address tara_addresss_on_eth)
+contract NativeConnector is TokenConnectorBase {
+    constructor(address bridge, address token_on_other_network)
         payable
-        TokenConnectorBase(bridge, address(0), tara_addresss_on_eth)
+        TokenConnectorBase(bridge, Constants.NATIVE_TOKEN_ADDRESS, token_on_other_network)
     {}
 
     /**
@@ -24,7 +24,6 @@ contract TaraConnector is TokenConnectorBase {
         uint256 transfersLength = transfers.length;
         for (uint256 i = 0; i < transfersLength; i++) {
             toClaim[transfers[i].account] += transfers[i].amount;
-            // payable(transfers[i].account).transfer(transfers[i].amount);
             accounts[i] = transfers[i].account;
         }
     }

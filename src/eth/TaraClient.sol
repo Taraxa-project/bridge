@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 
 import "../lib/Maths.sol";
 import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../errors/ClientErrors.sol";
-import "../lib/ILightClient.sol";
+import "../lib/IBridgeLightClient.sol";
 import "../lib/PillarBlock.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 

@@ -31,7 +31,7 @@ taraAddress=$(echo "$res" | grep "Deployed to:" | awk '{print $3}')
 
 echo "Deployed to: $taraAddress"
 
-echo "ETH_TARA_ADDRESS=$taraAddress" >> .env
+echo "TARA_ADDRESS_ON_ETH=$taraAddress" >> .env
 
 echo "Running deployment script for TaraClient & EthBridge"
 
