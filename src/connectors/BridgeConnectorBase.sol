@@ -5,14 +5,14 @@ pragma solidity ^0.8.17;
 import "./IBridgeConnector.sol";
 import {InsufficientFunds, RefundFailed} from "../errors/ConnectorErrors.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "forge-std/console.sol";
+import "../lib/Constants.sol";
 
 abstract contract BridgeConnectorBase is IBridgeConnector, Ownable {
     mapping(address => uint256) public feeToClaim;
 
     constructor(address bridge) payable Ownable() {
-        if (msg.value < 2 ether) {
-            revert InsufficientFunds({expected: 2 ether, actual: msg.value});
+        if (msg.value < Constants.MINIMUM_CONNECTOR_DEPOSIT) {
+            revert InsufficientFunds({expected: Constants.MINIMUM_CONNECTOR_DEPOSIT, actual: msg.value});
         }
         _transferOwnership(bridge);
     }

@@ -3,7 +3,6 @@
 pragma solidity ^0.8.17;
 
 import "../lib/SharedStructs.sol";
-import "forge-std/console.sol";
 import {StateIsNotEmpty} from "../errors/ConnectorErrors.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 

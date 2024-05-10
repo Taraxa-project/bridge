@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "../lib/ILightClient.sol";
+import "../lib/IBridgeLightClient.sol";
 import {InvalidBridgeRoot} from "../errors/BridgeBaseErrors.sol";
 import "beacon-light-client/src/BeaconLightClient.sol";
 import "beacon-light-client/src/trie/StorageProof.sol";
