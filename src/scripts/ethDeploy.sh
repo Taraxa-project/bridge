@@ -11,16 +11,23 @@ source .env
 
 echo "RPC: $RPC_HOLESKY"
 # Check if the RPC_URL and PRIVATE_KEY are set
-if [ -z "$RPC_HOLESKY" ] || [ -z "$PRIVATE_KEY" ]; then
-  echo "Please set the RPC_HOLESKY and PRIVATE_KEY in the .env file"
+if [ -z "$RPC_HOLESKY" ] || [ -z "$PRIVATE_KEY" ] || [ -z "$TARA_ADDRESS_ON_ETH" ]|| [ -z "$ETH_ADDRESS_ON_TARA" ]; then
+  echo "Please set the RPC_HOLESKY, TARA_ADDRESS_ON_ETH, ETH_ADDRESS_ON_TARA and PRIVATE_KEY in the .env file"
   exit 1
 fi
 
 echo "Deploying TaraClient contract"
 
-echo "Running deployment script for TaraClient & EthBridge"
+echo "Running deployment script for TaraClient & EthBridge >> Checking DRY RUN"
 
-ethBridge=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast --slow)
+forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --slow --force
+
+if [ $? -ne 0 ]; then
+  echo "Error running DRY RUN for EthBridge"
+  exit 1
+fi
+
+res=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast --slow --force)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for EthBridge"

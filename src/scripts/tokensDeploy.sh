@@ -14,7 +14,8 @@ echo "Tara RPC: $RPC_FICUS_PRNET"
 
 # # Deploy the Tara token to Holesky using forge create
 export SYMBOL="TARA"
-res=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast --legacy)
+export NAME="Taraxa"
+res=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast --legacy --force --slow)
 
 if [ $? -ne 0 ]; then
   echo "Error deploying Tara token"
@@ -30,7 +31,8 @@ echo "TARA_ADDRESS_ON_ETH=$taraAddress" >> .env
 
 # Deploy the Eth token to Taraxa using forge create
 export SYMBOL="ETH"
-res=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy)
+export NAME="Ethereum"
+res=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy --force --slow)
 
 if [ $? -ne 0 ]; then
   echo "Maybe Eth token deployment failed. Check the receipt"

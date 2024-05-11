@@ -35,7 +35,10 @@ contract TokenDeployer is Script {
         TestERC20 te = TestERC20(tokenProxy);
 
         // call symbol to check if the token was deployed successfully
-        console.log("Token Symbol: %s", te.symbol());
+        string memory tokenSymbol = te.symbol();
+        string memory tokenName = te.name();
+        require(keccak256(abi.encodePacked(tokenSymbol)) == keccak256(abi.encodePacked(symbol)), "Symbol mismatch");
+        require(keccak256(abi.encodePacked(tokenName)) == keccak256(abi.encodePacked(name)), "Name mismatch");
         console.log("Deployed to: %s", address(te));
         vm.stopBroadcast();
     }

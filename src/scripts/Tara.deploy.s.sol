@@ -5,6 +5,7 @@ import "forge-std/console.sol";
 import "beacon-light-client/src/BeaconLightClient.sol";
 import "beacon-light-client/src/BeaconChain.sol";
 
+import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
 // import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/Defender.sol";
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
@@ -20,6 +21,8 @@ import {NativeConnector} from "../connectors/NativeConnector.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 import {ERC20MintingConnector} from "../connectors/ERC20MintingConnector.sol";
 
+bytes32 constant GENERAL_BRIDGE_ROOT_KEY = 0x0000000000000000000000000000000000000000000000000000000000000006;
+
 contract TaraDeployer is Script {
     using Bytes for bytes;
 
@@ -29,6 +32,17 @@ contract TaraDeployer is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address deployerAddress = vm.envAddress("DEPLOYMENT_ADDRESS");
         console.log("Deployer address: %s", deployerAddress);
+
+        if (vm.envUint("PRIVATE_KEY") == 0) {
+            console.log("Skipping deployment because PRIVATE_KEY is not set");
+            return;
+        }
+        // check if balance is at least 2 * MINIMUM_CONNECTOR_DEPOSIT
+        if (address(deployerAddress).balance < 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT) {
+            console.log("Skipping deployment because balance is less than 2 * MINIMUM_CONNECTOR_DEPOSIT");
+            return;
+        }
+
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy BeaconLightClient
@@ -80,6 +94,21 @@ contract TaraDeployer is Script {
             "EthClient.sol", abi.encodeCall(EthClient.initialize, (beaconClient, ethBridgeAddress)), opts
         );
 
+        // check getters
+        EthClient ethClient = EthClient(ethClientProxy);
+
+        bytes32 bridgeRootKeyFromClient = ethClient.bridgeRootKey();
+        console.logBytes32(bridgeRootKeyFromClient);
+        require(bridgeRootKeyFromClient == GENERAL_BRIDGE_ROOT_KEY, "Bridge root key mismatch");
+
+        address ethBrigdeAddressFromClient = ethClient.ethBridgeAddress();
+        console.log("EthBridge address from client: %s", ethBrigdeAddressFromClient);
+        require(ethBrigdeAddressFromClient == ethBridgeAddress, "EthBridge address mismatch");
+
+        BeaconLightClient blcFromClient = ethClient.client();
+        console.log("Client address from client: %s", address(blcFromClient));
+        require(address(blcFromClient) == address(beaconClient), "Client address mismatch");
+
         console.log("Deployed EthClient proxy to address", ethClientProxy);
 
         address taraAddressOnEth = vm.envAddress("TARA_ADDRESS_ON_ETH");
@@ -98,11 +127,26 @@ contract TaraDeployer is Script {
             opts
         );
 
+        // check getters
+        TaraBridge taraBridge = TaraBridge(taraBrigdeProxy);
+        uint256 finalizationIntervalFromBridge = taraBridge.finalizationInterval();
+        console.log("Finalization interval from bridge: %s", finalizationIntervalFromBridge);
+        require(finalizationIntervalFromBridge == finalizationInterval, "Finalization interval mismatch");
+
         console.log("Deployed TaraBridge proxy to address", taraBrigdeProxy);
 
         address taraConnectorProxy = Upgrades.deployUUPSProxy(
             "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (taraBrigdeProxy, taraAddressOnEth)), opts
         );
+
+        // check getters
+        NativeConnector taraConnector = NativeConnector(payable(taraConnectorProxy));
+        uint256 epoch = taraConnector.epoch();
+        console.log("Epoch: %d", epoch);
+        require(epoch == 0, "Epoch mismatch");
+        address token = taraConnector.token();
+        console.log("Token: %s", token);
+        require(token == Constants.NATIVE_TOKEN_ADDRESS, "Token address mismatch");
 
         // Fund TaraConnector with 2 ETH
         (bool success,) = payable(taraConnectorProxy).call{value: 2 ether}("");
@@ -112,9 +156,6 @@ contract TaraDeployer is Script {
         }
 
         console.log("Deployed TaraConnector proxy to address", taraConnectorProxy);
-
-        TaraBridge taraBridge = TaraBridge(taraBrigdeProxy);
-
         // Initialize TaraConnector
         taraBridge.registerContract(IBridgeConnector(taraConnectorProxy));
 
@@ -127,12 +168,21 @@ contract TaraDeployer is Script {
             opts
         );
 
+        // check getters
+        ERC20MintingConnector ethMintingConnector = ERC20MintingConnector(payable(ethMintingConnectorProxy));
+        uint256 epoch2 = ethMintingConnector.epoch();
+        console.log("Epoch: %d", epoch);
+        require(epoch2 == 0, "Epoch mismatch");
+        address token2 = ethMintingConnector.token();
+        console.log("Token: %s", token2);
+        require(token2 == ethAddressOnTara, "Token address mismatch");
+
         console.log("Deployed ERC20MintingConnector proxy to address", ethMintingConnectorProxy);
 
         // Fund TaraConnector with 2 ETH
         (bool success2,) = payable(ethMintingConnectorProxy).call{value: 2 ether}("");
 
-        if (!success) {
+        if (!success2) {
             revert("Failed to fund the ethMintingConnectorProxy");
         }
 

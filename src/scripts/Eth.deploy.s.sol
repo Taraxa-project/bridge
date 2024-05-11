@@ -27,7 +27,7 @@ contract EthDeployer is Script {
             return;
         }
         // check if balance is at least 2 * MINIMUM_CONNECTOR_DEPOSIT
-        if (address(this).balance < 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT) {
+        if (address(deployerAddress).balance < 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT) {
             console.log("Skipping deployment because balance is less than 2 * MINIMUM_CONNECTOR_DEPOSIT");
             return;
         }
@@ -48,6 +48,15 @@ contract EthDeployer is Script {
             "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (3, finalizationInterval)), opts
         );
 
+        // check getters
+        TaraClient taraClient = TaraClient(taraClientProxy);
+        uint256 finalizationIntervalFromClient = taraClient.pillarBlockInterval();
+        console.log("Finalization interval from client: %d", finalizationIntervalFromClient);
+        require(finalizationIntervalFromClient == finalizationInterval, "Finalization interval mismatch");
+        uint256 threshold = taraClient.threshold();
+        console.log("Threshold: %d", threshold);
+        require(threshold == 3, "Threshold mismatch");
+
         console.log("Deployed TaraClient proxy to address", taraClientProxy);
 
         address ethBridgeProxy = Upgrades.deployUUPSProxy(
@@ -59,6 +68,12 @@ contract EthDeployer is Script {
             opts
         );
 
+        // check getters
+        EthBridge ethBridge = EthBridge(ethBridgeProxy);
+        uint256 finalizationIntervalFromBridge = ethBridge.finalizationInterval();
+        console.log("Finalization interval from bridge: %d", finalizationIntervalFromBridge);
+        require(finalizationIntervalFromBridge == finalizationInterval, "Finalization interval mismatch");
+
         console.log("Deployed EthBridge proxy to address", ethBridgeProxy);
 
         address mintingConnectorProxy = Upgrades.deployUUPSProxy(
@@ -69,6 +84,15 @@ contract EthDeployer is Script {
             ),
             opts
         );
+
+        // check getters
+        ERC20MintingConnector mintingConnector = ERC20MintingConnector(payable(mintingConnectorProxy));
+        address tokenAddress = mintingConnector.token();
+        console.log("Token address: %s", tokenAddress);
+        require(tokenAddress == taraAddressOnEth, "Token address mismatch");
+        address otherNetworkAddress = mintingConnector.otherNetworkAddress();
+        console.log("otherNetworkAddress address: %s", otherNetworkAddress);
+        require(otherNetworkAddress == Constants.NATIVE_TOKEN_ADDRESS, "Tara Address on ETH address mismatch");
 
         console.log("Deployed ERC20MintingConnector proxy to address", mintingConnectorProxy);
 
@@ -87,6 +111,14 @@ contract EthDeployer is Script {
             "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (address(bridge), ethAddressOnTara)), opts
         );
 
+        // check getters
+        NativeConnector nativeConnector = NativeConnector(payable(nativeConnectorProxy));
+        uint256 epoch = nativeConnector.epoch();
+        console.log("Epoch: %d", epoch);
+        require(epoch == 0, "Epoch mismatch");
+        address token = nativeConnector.token();
+        console.log("Token: %s", token);
+        require(token == Constants.NATIVE_TOKEN_ADDRESS, "Token address mismatch");
         // Fund the MintingConnector with 2 ETH
         (bool success2,) = payable(nativeConnectorProxy).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success2) {
