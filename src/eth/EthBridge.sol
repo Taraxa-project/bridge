@@ -14,18 +14,15 @@ contract EthBridge is BridgeBase {
     /// Events
     event Initialized(address indexed tara, address indexed light_client, uint256 finalizationInterval);
 
-    function initialize(
-        IERC20MintableBurnable tara,
-        address eth_address_on_tara,
-        IBridgeLightClient light_client,
-        uint256 finalizationInterval
-    ) public initializer {
+    function initialize(IERC20MintableBurnable tara, IBridgeLightClient light_client, uint256 finalizationInterval)
+        public
+        initializer
+    {
         __initialize_EthBridge_unchained(tara, light_client, finalizationInterval);
     }
 
     function __initialize_EthBridge_unchained(
         IERC20MintableBurnable tara,
-        address eth_address_on_tara,
         IBridgeLightClient light_client,
         uint256 finalizationInterval
     ) internal onlyInitializing {

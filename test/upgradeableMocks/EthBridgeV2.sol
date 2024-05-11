@@ -3,7 +3,7 @@
 pragma solidity ^0.8.17;
 
 import "../../src/lib/SharedStructs.sol";
-import "../../src/lib/ILightClient.sol";
+import "../../src/lib/IBridgeLightClient.sol";
 import "../../src/connectors/IBridgeConnector.sol";
 import "../../src/connectors/ERC20MintingConnector.sol";
 import "../../src/lib/TestERC20.sol";
@@ -35,7 +35,6 @@ contract EthBridgeV2 is BridgeBase {
         uint256 finalizationInterval
     ) internal onlyInitializing {
         __BridgeBase_init(light_client, finalizationInterval);
-        localAddress[Constants.TARA_PLACEHOLDER] = address(tara);
         emit Initialized(address(tara), address(light_client), finalizationInterval);
     }
 

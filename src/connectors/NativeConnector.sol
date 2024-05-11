@@ -2,12 +2,11 @@
 pragma solidity ^0.8.17;
 
 import {InsufficientFunds, NoClaimAvailable, RefundFailed} from "../errors/ConnectorErrors.sol";
-import "./TaraBridge.sol";
 import "../lib/SharedStructs.sol";
 import "../connectors/TokenConnectorBase.sol";
 import "../lib/Constants.sol";
 
-contract TaraConnector is TokenConnectorBase {
+contract NativeConnector is TokenConnectorBase {
     /// Events
     event Locked(address indexed account, uint256 value);
     event AppliedState(bytes state);

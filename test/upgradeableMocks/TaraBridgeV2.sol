@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "../../src/tara/TaraConnector.sol";
-import "../../src/lib/ILightClient.sol";
+import "../../src/lib/IBridgeLightClient.sol";
 import "../../src/lib/Constants.sol";
 import "../../src/lib/BridgeBase.sol";
 

@@ -11,13 +11,11 @@ contract TaraBridge is BridgeBase {
     /// Events
     event Initialized(address indexed tara, address indexed light_client, uint256 finalizationInterval);
 
-    function initialize(
-        IERC20MintableBurnable eth,
-        address tara_address_on_eth,
-        IBridgeLightClient light_client,
-        uint256 finalizationInterval
-    ) public initializer {
+    function initialize(IERC20MintableBurnable tara, IBridgeLightClient light_client, uint256 finalizationInterval)
+        public
+        initializer
+    {
         __BridgeBase_init(light_client, finalizationInterval);
-        emit Initialized(tara_address_on_eth, address(light_client), finalizationInterval);
+        emit Initialized(address(tara), address(light_client), finalizationInterval);
     }
 }

@@ -16,7 +16,9 @@ import {TestERC20} from "../lib/TestERC20.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 import {EthClient} from "../tara/EthClient.sol";
 import {TaraBridge} from "../tara/TaraBridge.sol";
+import {NativeConnector} from "../connectors/NativeConnector.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
+import {ERC20MintingConnector} from "../connectors/ERC20MintingConnector.sol";
 
 contract TaraDeployer is Script {
     using Bytes for bytes;
@@ -90,7 +92,8 @@ contract TaraDeployer is Script {
         address taraBrigdeProxy = Upgrades.deployUUPSProxy(
             "TaraBridge.sol",
             abi.encodeCall(
-                TaraBridge.initialize, (taraAddress, IBridgeLightClient(address(ethClientProxy)), finalizationInterval)
+                TaraBridge.initialize,
+                (TestERC20(ethAddressOnTara), IBridgeLightClient(address(ethClientProxy)), finalizationInterval)
             ),
             opts
         );
@@ -98,7 +101,7 @@ contract TaraDeployer is Script {
         console.log("Deployed TaraBridge proxy to address", taraBrigdeProxy);
 
         address taraConnectorProxy = Upgrades.deployUUPSProxy(
-            "TaraConnector.sol", abi.encodeCall(TaraConnector.initialize, (taraBrigdeProxy, taraAddress)), opts
+            "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (taraBrigdeProxy, taraAddressOnEth)), opts
         );
 
         // Fund TaraConnector with 2 ETH
@@ -114,6 +117,29 @@ contract TaraDeployer is Script {
 
         // Initialize TaraConnector
         taraBridge.registerContract(IBridgeConnector(taraConnectorProxy));
+
+        address ethMintingConnectorProxy = Upgrades.deployUUPSProxy(
+            "ERC20MintingConnector.sol",
+            abi.encodeCall(
+                ERC20MintingConnector.initialize,
+                (address(taraBrigdeProxy), TestERC20(ethAddressOnTara), Constants.NATIVE_TOKEN_ADDRESS)
+            ),
+            opts
+        );
+
+        console.log("Deployed ERC20MintingConnector proxy to address", ethMintingConnectorProxy);
+
+        // Fund TaraConnector with 2 ETH
+        (bool success2,) = payable(ethMintingConnectorProxy).call{value: 2 ether}("");
+
+        if (!success) {
+            revert("Failed to fund the ethMintingConnectorProxy");
+        }
+
+        console.log("Deployed ethMintingConnectorProxy proxy to address", ethMintingConnectorProxy);
+
+        // Initialize EthMintingConnectorProxy
+        taraBridge.registerContract(IBridgeConnector(ethMintingConnectorProxy));
 
         console.log("TaraBridge initialized");
 

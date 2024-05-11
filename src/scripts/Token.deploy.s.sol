@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
 import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
 import {EthBridge} from "../eth/EthBridge.sol";
@@ -12,13 +14,29 @@ import "../lib/Constants.sol";
 contract TokenDeployer is Script {
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        if (vm.envUint("PRIVATE_KEY") == 0) {
+            console.log("Skipping deployment because PRIVATE_KEY is not set");
+            return;
+        }
         address deployerAddress = vm.envAddress("DEPLOYMENT_ADDRESS");
         string memory symbol = vm.envString("SYMBOL");
+        string memory name = vm.envString("NAME");
         console.log("Symbol: %s", symbol);
+        console.log("Name: %s", name);
         console.log("Deployer address: %s", deployerAddress);
         vm.startBroadcast(deployerPrivateKey);
-        TestERC20 te = new TestERC20(symbol);
-        console.log("Deployed to:", address(te));
+
+        Options memory opts;
+        opts.defender.useDefenderDeploy = false;
+
+        address tokenProxy =
+            Upgrades.deployUUPSProxy("TestERC20.sol", abi.encodeCall(TestERC20.initialize, (name, symbol)), opts);
+
+        TestERC20 te = TestERC20(tokenProxy);
+
+        // call symbol to check if the token was deployed successfully
+        console.log("Token Symbol: %s", te.symbol());
+        console.log("Deployed to: %s", address(te));
         vm.stopBroadcast();
     }
 }
