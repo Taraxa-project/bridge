@@ -28,6 +28,14 @@ RPC https://holesky.drpc.org
 
 The sample deployment address used is `0x602EFf175fcC46936563BB7A9C4F257De2fc5421`.
 
+### 2. Deploy ETH & TARA tokens on both sides
+
+```bash
+    make tokens-deploy
+```
+
+For more details check the [Tokens deployment script](./src/scripts/tokensDeploy.sh) or the [Forge script](./src/scripts/Token.deploy.s.sol).
+
 ### 2. Deploy the ETH side of the bridge & TARA token
 
 There are two scripts to do this:
@@ -36,20 +44,30 @@ There are two scripts to do this:
     make eth-deploy
 ```
 
-This will deploy the ETH side of the bridge and output the contract addresses. However, for some reason, sometimes it does error out. In that case, you can deploy the contracts manually via:
+This will deploy the ETH side of the bridge and output the contract addresses.
+
+The latest token deployment addresses are:
 
 ```bash
-    forge script scripts/Eth.deploy.sol:EthDeployer --via-ir --rpc-url https://holesky.drpc.org  --broadcast --slow
+  ETH token address on Taraxa PRNET 2618:
+  0xcb451533b59783c144466da821901F61d8AEC6b6.
+  Tara token address on ETH Holesky:
+  0x58B72519c404b3Bf8e2F3105Fd4A8d38beAC0b76.
 ```
 
 #### 2.1 Holesky Deployment
 
 ```bash
-  Deployer address: 0x602EFf175fcC46936563BB7A9C4F257De2fc5421
-  ETH TARA address: 0xF998808aA55d2570e979C27Ce47C8018e5fAdbE8
-  TaraClient proxy address: 0x7011596be357c709700710C9960cb366C41A4106
-  EthBridge proxy address: 0xe6A0858eD02EDdfacC84D72cEa2A6510cE22d855
-  ERC20MintingConnector proxy address:  0xcaE2087eF503b000A7B19840a3149B23783df026
+  Deployer address:
+  0x602EFf175fcC46936563BB7A9C4F257De2fc5421
+  TARA token address on Holesky:
+  0x58B72519c404b3Bf8e2F3105Fd4A8d38beAC0b76
+  TaraClient proxy address:
+  0xF7d9b60Bc676cFa90281C8c30798D16c37579aA2
+  EthBridge proxy address:
+  0x2B666e1354159f9128407c4269a8b70d66f4bDe8
+  ERC20MintingConnector proxy address:
+  0xe66cA4F0Fd205A20c577474D8FD3F315f75f6B99
 
 ```
 
@@ -59,19 +77,20 @@ This will deploy the ETH side of the bridge and output the contract addresses. H
     make tara-deploy
 ```
 
-This will deploy the TARA side of the bridge and output the contract addresses. However, for some reason, sometimes it does error out. In that case, you can deploy the contracts manually via:
-
-```bash
-    forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url  https://rpc-pr-2618.prnet.taraxa.io --legacy --broadcast --slow
-```
+This will deploy the TARA side of the bridge and output the contract addresses.
 
 #### 3.1 Tara Deployment
 
 ```bash
     == Logs ==
-  Deployer address: 0x602EFf175fcC46936563BB7A9C4F257De2fc5421
-  BeaconLightClient address: 0x58B72519c404b3Bf8e2F3105Fd4A8d38beAC0b76
-  ETHClient address: 0x686244563F8785C383da55df9872b23be3f9acf8
-  TARABridge address: 0x07fdD5b6fe9BD40d5ECDb90A6b039B4A24b929DA
-  TaraConnector address: 0x9E2762b1ef4F7Cc00BE66e024D5Db5E8dfB0BD6C
+  Deployer address:
+  0x602EFf175fcC46936563BB7A9C4F257De2fc5421
+  BeaconLightClient address:
+  0xE6f0E4A7Ac8F1801FfAf6BF5F658d732388D10Ef
+  ETHClient address:
+  0xE42C12c129ba10C5394d73801840F551AE6a7B1c
+  TARABridge address:
+  0x7E7921cb1440E76c1D4a59F9996e65e9a5B8761c
+  Tara(NativeConnector) address:
+  0x515d5e39a9FfF8dBBD84C8064ea3Bc4ad2610442
 ```
