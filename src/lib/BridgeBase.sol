@@ -7,7 +7,7 @@ import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable
 
 import "../lib/SharedStructs.sol";
 import "../lib/Constants.sol";
-import "../lib/ILightClient.sol";
+import "../lib/IBridgeLightClient.sol";
 import {
     StateNotMatchingBridgeRoot,
     NotSuccessiveEpochs,

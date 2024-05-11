@@ -2,11 +2,11 @@
 pragma solidity ^0.8.17;
 
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-
-import "../lib/ILightClient.sol";
-import {InvalidBridgeRoot} from "../errors/BridgeBaseErrors.sol";
 import "beacon-light-client/src/BeaconLightClient.sol";
 import "beacon-light-client/src/trie/StorageProof.sol";
+
+import {InvalidBridgeRoot} from "../errors/BridgeBaseErrors.sol";
+import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 
 contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     BeaconLightClient public client;

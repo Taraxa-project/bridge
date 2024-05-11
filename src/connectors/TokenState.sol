@@ -5,7 +5,6 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../lib/SharedStructs.sol";
-import "forge-std/console.sol";
 import {StateIsNotEmpty} from "../errors/ConnectorErrors.sol";
 
 struct Transfer {

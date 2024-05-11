@@ -28,6 +28,8 @@ lint :; solhint src/**/*.sol && solhint src/*.sol
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
+tokens-deploy :; bash ./src/scripts/tokensDeploy.sh
+
 eth-deploy :; bash ./src/scripts/ethDeploy.sh
 
 tara-deploy :; bash ./src/scripts/taraDeploy.sh

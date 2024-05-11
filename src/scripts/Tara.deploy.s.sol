@@ -9,13 +9,13 @@ import {Script} from "forge-std/Script.sol";
 // import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/Defender.sol";
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
+import "../lib/Constants.sol";
 import {EthBridge} from "../eth/EthBridge.sol";
 import {TaraClient, PillarBlock} from "../eth/TaraClient.sol";
 import {TestERC20} from "../lib/TestERC20.sol";
-import {IBridgeLightClient} from "../lib/ILightClient.sol";
+import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 import {EthClient} from "../tara/EthClient.sol";
 import {TaraBridge} from "../tara/TaraBridge.sol";
-import {TaraConnector} from "../tara/TaraConnector.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 
 contract TaraDeployer is Script {
@@ -80,8 +80,10 @@ contract TaraDeployer is Script {
 
         console.log("Deployed EthClient proxy to address", ethClientProxy);
 
-        address taraAddress = vm.envAddress("ETH_TARA_ADDRESS");
-        console.log("ETH TARA address: %s", taraAddress);
+        address taraAddressOnEth = vm.envAddress("TARA_ADDRESS_ON_ETH");
+        console.log("TARA_ADDRESS_ON_ETH: %s", taraAddressOnEth);
+        address ethAddressOnTara = vm.envAddress("ETH_ADDRESS_ON_TARA");
+        console.log("ETH_ADDRESS_ON_TARA: %s", ethAddressOnTara);
 
         uint256 finalizationInterval = 100;
 

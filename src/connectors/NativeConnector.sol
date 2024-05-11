@@ -12,8 +12,8 @@ contract TaraConnector is TokenConnectorBase {
     event Locked(address indexed account, uint256 value);
     event AppliedState(bytes state);
 
-    function initialize(address bridge, address tara_addresss_on_eth) public initializer {
-        __TokenConnectorBase_init(bridge, address(Constants.TARA_PLACEHOLDER), tara_addresss_on_eth);
+    function initialize(address bridge, address token_on_other_network) public initializer {
+        __TokenConnectorBase_init(bridge, Constants.NATIVE_TOKEN_ADDRESS, token_on_other_network);
     }
 
     /**
@@ -27,7 +27,6 @@ contract TaraConnector is TokenConnectorBase {
         uint256 transfersLength = transfers.length;
         for (uint256 i = 0; i < transfersLength; i++) {
             toClaim[transfers[i].account] += transfers[i].amount;
-            // payable(transfers[i].account).transfer(transfers[i].amount);
             accounts[i] = transfers[i].account;
             emit ClaimAccrued(transfers[i].account, transfers[i].amount);
         }

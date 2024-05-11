@@ -6,7 +6,7 @@ import hashlib
 from eth2spec.utils.ssz.ssz_typing import (
      Container, Vector, Bytes48 )
 
-PERIOD = 190 #UPDATE THIS
+PERIOD = 197 #UPDATE THIS
 url = f'https://beacon-pr-2618.prnet.taraxa.io/eth/v1/beacon/light_client/updates?start_period={PERIOD}&count=1'
 committee_url = f'https://beacon-pr-2618.prnet.taraxa.io/eth/v1/beacon/light_client/updates?start_period={PERIOD -1}&count=1'
 

@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.17;
 
-import "../lib/SharedStructs.sol";
-import "../lib/ILightClient.sol";
+import "../connectors/NativeConnector.sol";
+import "../lib/IBridgeLightClient.sol";
 import "../connectors/IBridgeConnector.sol";
 import "../connectors/ERC20MintingConnector.sol";
 import "../lib/TestERC20.sol";
@@ -14,20 +14,22 @@ contract EthBridge is BridgeBase {
     /// Events
     event Initialized(address indexed tara, address indexed light_client, uint256 finalizationInterval);
 
-    function initialize(IERC20MintableBurnable tara, IBridgeLightClient light_client, uint256 finalizationInterval)
-        public
-        initializer
-    {
+    function initialize(
+        IERC20MintableBurnable tara,
+        address eth_address_on_tara,
+        IBridgeLightClient light_client,
+        uint256 finalizationInterval
+    ) public initializer {
         __initialize_EthBridge_unchained(tara, light_client, finalizationInterval);
     }
 
     function __initialize_EthBridge_unchained(
         IERC20MintableBurnable tara,
+        address eth_address_on_tara,
         IBridgeLightClient light_client,
         uint256 finalizationInterval
     ) internal onlyInitializing {
         __BridgeBase_init(light_client, finalizationInterval);
-        localAddress[Constants.TARA_PLACEHOLDER] = address(tara);
         emit Initialized(address(tara), address(light_client), finalizationInterval);
     }
 }

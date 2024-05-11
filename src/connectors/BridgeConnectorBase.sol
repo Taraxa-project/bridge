@@ -6,6 +6,7 @@ import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.s
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./IBridgeConnector.sol";
+import "../lib/Constants.sol";
 import {InsufficientFunds, RefundFailed} from "../errors/ConnectorErrors.sol";
 
 abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, UUPSUpgradeable {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import "../src/lib/ILightClient.sol";
+import "../src/lib/IBridgeLightClient.sol";
 import "../src/lib/SharedStructs.sol";
 
 contract BridgeLightClientMock is IBridgeLightClient {

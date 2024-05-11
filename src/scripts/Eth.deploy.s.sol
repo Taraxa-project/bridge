@@ -5,10 +5,11 @@ import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
+import "../lib/Constants.sol";
 import {EthBridge} from "../eth/EthBridge.sol";
 import {TaraClient, PillarBlock} from "../eth/TaraClient.sol";
 import {TestERC20} from "../lib/TestERC20.sol";
-import {IBridgeLightClient} from "../lib/ILightClient.sol";
+import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 import {ERC20MintingConnector} from "../connectors/ERC20MintingConnector.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 
@@ -21,27 +22,12 @@ contract EthDeployer is Script {
         console.log("Deployer address: %s", deployerAddress);
         vm.startBroadcast(deployerPrivateKey);
 
-        address taraAddress = vm.envAddress("ETH_TARA_ADDRESS");
-        console.log("ETH TARA address: %s", taraAddress);
-
-        PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](3);
-        changes[0] = PillarBlock.VoteCountChange({validator: 0xFe3d5E3B9c2080bF338638Fd831a35A4B4344a2C, change: 100});
-        changes[1] = PillarBlock.VoteCountChange({validator: 0x515C990Ef87668E57A290F650b4C39c343d73d9a, change: 100});
-        changes[2] = PillarBlock.VoteCountChange({validator: 0x3E62C62Ac89c71412CA68688530D112433FEC78C, change: 100});
+        address taraAddressOnEth = vm.envAddress("TARA_ADDRESS_ON_ETH");
+        console.log("TARA_ADDRESS_ON_ETH: %s", taraAddressOnEth);
+        address ethAddressOnTara = vm.envAddress("ETH_ADDRESS_ON_TARA");
+        console.log("ETH_ADDRESS_ON_TARA: %s", ethAddressOnTara);
 
         uint256 finalizationInterval = 100;
-
-        // ApprovalProcessResponse memory upgradeApprovalProcess = Defender.getUpgradeApprovalProcess();
-
-        // if (upgradeApprovalProcess.via == address(0)) {
-        //     revert(
-        //         string.concat(
-        //             "Upgrade approval process with id ",
-        //             upgradeApprovalProcess.approvalProcessId,
-        //             " has no assigned address"
-        //         )
-        //     );
-        // }
 
         Options memory opts;
         opts.defender.useDefenderDeploy = false;
@@ -74,7 +60,7 @@ contract EthDeployer is Script {
         console.log("Deployed ERC20MintingConnector proxy to address", mintingConnectorProxy);
 
         // Fund the MintingConnector with 2 ETH
-        (bool success,) = payable(mintingConnectorProxy).call{value: 2 ether}("");
+        (bool success,) = payable(mintingConnectorProxy).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success) {
             revert("Failed to fund the MintingConnector");
         }
@@ -82,7 +68,5 @@ contract EthDeployer is Script {
         // Add the connector to the bridge
         EthBridge bridge = EthBridge(ethBridgeProxy);
         bridge.registerContract(IBridgeConnector(mintingConnectorProxy));
-
-        vm.stopBroadcast();
     }
 }
