@@ -14,6 +14,8 @@ remove :; rm -rf .gitmodules && rm -rf .git/modules/* && rm -rf lib && touch .gi
 
 install :; forge install foundry-rs/forge-std --no-commit && forge install darwinia-network/beacon-light-client --no-commit && forge install OpenZeppelin/openzeppelin-contracts --no-commit
 
+doc :; forge doc --build --out documentation --serve --port 4000 
+
 # Update Dependencies
 update:; forge update
 
