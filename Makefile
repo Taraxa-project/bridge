@@ -34,4 +34,9 @@ eth-deploy :; bash ./src/scripts/ethDeploy.sh
 
 tara-deploy :; bash ./src/scripts/taraDeploy.sh
 
+bridge-deploy :; bash ./src/scripts/deploySymmetricBridge.sh
+
+add-deployment-metadata :; bash ./src/scripts/addToDeployMarkdown.sh
+
 -include ${FCT_PLUGIN_PATH}/makefile-external
+

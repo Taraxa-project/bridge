@@ -67,7 +67,7 @@ blcAddress=$(echo "$res" | grep "BeaconLightClient.sol address:" | awk '{print $
 echo "BeaconLightClient contract deployed to: $blcAddress"
 
 ethClientProxy=$(echo "$res" | grep "EthClient.sol proxy address:" | awk '{print $4}')
-ethClientImpl=$(echo "$res" | grep "EthBridge.sol implementation address:" | awk '{print $4}')
+ethClientImpl=$(echo "$res" | grep "EthClient.sol implementation address:" | awk '{print $4}')
 echo "EthClient contract deployed to: $ethClientProxy"
 
 taraBridgeProxy=$(echo "$res" | grep "TaraBridge.sol proxy address:" | awk '{print $4}')
