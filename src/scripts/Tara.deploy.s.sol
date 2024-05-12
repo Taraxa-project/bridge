@@ -71,7 +71,7 @@ contract TaraDeployer is Script {
             _genesis_validators_root
         );
 
-        console.log("Beacon Client address: %s", address(beaconClient));
+        console.log("BeaconLightClient.sol address: %s", address(beaconClient));
 
         // ApprovalProcessResponse memory upgradeApprovalProcess = Defender.getUpgradeApprovalProcess();
 
@@ -109,7 +109,9 @@ contract TaraDeployer is Script {
         console.log("Client address from client: %s", address(blcFromClient));
         require(address(blcFromClient) == address(beaconClient), "Client address mismatch");
 
-        console.log("Deployed EthClient proxy to address", ethClientProxy);
+        console.log("EthClient.sol proxy address: %s", ethClientProxy);
+        address ethClientImpl = Upgrades.getImplementationAddress(ethClientProxy);
+        console.log("EthClient.sol implementation address: %s", ethClientImpl);
 
         address taraAddressOnEth = vm.envAddress("TARA_ADDRESS_ON_ETH");
         console.log("TARA_ADDRESS_ON_ETH: %s", taraAddressOnEth);
@@ -133,7 +135,9 @@ contract TaraDeployer is Script {
         console.log("Finalization interval from bridge: %s", finalizationIntervalFromBridge);
         require(finalizationIntervalFromBridge == finalizationInterval, "Finalization interval mismatch");
 
-        console.log("Deployed TaraBridge proxy to address", taraBrigdeProxy);
+        console.log("TaraBridge.sol proxy address: %s", taraBrigdeProxy);
+        address taraBridgeImpl = Upgrades.getImplementationAddress(taraBrigdeProxy);
+        console.log("TaraBridge.sol implementation address: %s", taraBridgeImpl);
 
         address taraConnectorProxy = Upgrades.deployUUPSProxy(
             "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (taraBrigdeProxy, taraAddressOnEth)), opts
@@ -155,7 +159,10 @@ contract TaraDeployer is Script {
             revert("Failed to fund the TaraConnector");
         }
 
-        console.log("Deployed TaraConnector proxy to address", taraConnectorProxy);
+        console.log("NativeConnector.sol proxy address: %s", taraConnectorProxy);
+        address taraConnectorImpl = Upgrades.getImplementationAddress(taraConnectorProxy);
+        console.log("NativeConnector.sol implementation address: %s", taraConnectorImpl);
+
         // Initialize TaraConnector
         taraBridge.registerContract(IBridgeConnector(taraConnectorProxy));
 
@@ -177,7 +184,9 @@ contract TaraDeployer is Script {
         console.log("Token: %s", token2);
         require(token2 == ethAddressOnTara, "Token address mismatch");
 
-        console.log("Deployed ERC20MintingConnector proxy to address", ethMintingConnectorProxy);
+        console.log("ERC20MintingConnector.sol proxy address: %s", ethMintingConnectorProxy);
+        address ethMintingConnectorImpl = Upgrades.getImplementationAddress(ethMintingConnectorProxy);
+        console.log("ERC20MintingConnector.sol implementation address: %s", ethMintingConnectorImpl);
 
         // Fund TaraConnector with 2 ETH
         (bool success2,) = payable(ethMintingConnectorProxy).call{value: 2 ether}("");

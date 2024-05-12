@@ -5,7 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import "beacon-light-client/src/trie/StorageProof.sol";
 
 contract StorageOracleTest is Test {
-    function test_verifyStorageProof() public {
+    function test_verifyStorageProof() public pure {
         address account = 0xdB7d6AB1f17c6b31909aE466702703dAEf9269Cf;
         bytes32 stateRoot = 0x328a4bffe51a6928b12fb0336a8aa64c534aa7331fc59bcbe304b4472ca02398;
         bytes[] memory accountProof = new bytes[](2);

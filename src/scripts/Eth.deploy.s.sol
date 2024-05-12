@@ -57,7 +57,9 @@ contract EthDeployer is Script {
         console.log("Threshold: %d", threshold);
         require(threshold == 3, "Threshold mismatch");
 
-        console.log("Deployed TaraClient proxy to address", taraClientProxy);
+        console.log("TaraClient.sol proxy address: %s", taraClientProxy);
+        address taraClientImpl = Upgrades.getImplementationAddress(taraClientProxy);
+        console.log("TaraClient.sol implementation address: %s", taraClientImpl);
 
         address ethBridgeProxy = Upgrades.deployUUPSProxy(
             "EthBridge.sol",
@@ -74,7 +76,9 @@ contract EthDeployer is Script {
         console.log("Finalization interval from bridge: %d", finalizationIntervalFromBridge);
         require(finalizationIntervalFromBridge == finalizationInterval, "Finalization interval mismatch");
 
-        console.log("Deployed EthBridge proxy to address", ethBridgeProxy);
+        console.log("EthBridge.sol proxy address: %s", ethBridgeProxy);
+        address ethBridgeImpl = Upgrades.getImplementationAddress(ethBridgeProxy);
+        console.log("EthBridge.sol implementation address: %s", ethBridgeImpl);
 
         address mintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
@@ -94,7 +98,9 @@ contract EthDeployer is Script {
         console.log("otherNetworkAddress address: %s", otherNetworkAddress);
         require(otherNetworkAddress == Constants.NATIVE_TOKEN_ADDRESS, "Tara Address on ETH address mismatch");
 
-        console.log("Deployed ERC20MintingConnector proxy to address", mintingConnectorProxy);
+        console.log("ERC20MintingConnector.sol proxy address: %s", mintingConnectorProxy);
+        address mintingConnectorImpl = Upgrades.getImplementationAddress(mintingConnectorProxy);
+        console.log("ERC20MintingConnector.sol implementation address: %s", mintingConnectorImpl);
 
         // Fund the MintingConnector with 2 ETH
         (bool success,) = payable(mintingConnectorProxy).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
@@ -126,5 +132,8 @@ contract EthDeployer is Script {
         }
 
         bridge.registerContract(IBridgeConnector(nativeConnectorProxy));
+        console.log("NativeConnector.sol proxy address: %s", nativeConnectorProxy);
+        address nativeConnectorImpl = Upgrades.getImplementationAddress(nativeConnectorProxy);
+        console.log("NativeConnector.sol implementation address: %s", nativeConnectorImpl);
     }
 }

@@ -34,6 +34,10 @@ contract TokenDeployer is Script {
 
         TestERC20 te = TestERC20(tokenProxy);
 
+        console.log("TestERC20 proxy: %s", tokenProxy);
+        address implAddress = Upgrades.getImplementationAddress(tokenProxy);
+        console.log("TestERC20 implementation: %s", implAddress);
+
         // call symbol to check if the token was deployed successfully
         string memory tokenSymbol = te.symbol();
         string memory tokenName = te.name();

@@ -53,7 +53,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run the deployment script for TaraClient
-forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy --slow
+res=$(forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy --slow)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for TaraClient"
@@ -63,25 +63,55 @@ fi
 # Deactivate the virtual environment before exiting
 deactivate
 
+blcAddress=$(echo "$res" | grep "BeaconLightClient.sol address:" | awk '{print $3}')
+echo "BeaconLightClient contract deployed to: $blcAddress"
 
-# TBD: leaving this for future implementation or reference
-# echo "Getting Storage proof for the last finalized ETH bridge root epoch"
+ethClientProxy=$(echo "$res" | grep "EthClient.sol proxy address:" | awk '{print $4}')
+ethClientImpl=$(echo "$res" | grep "EthBridge.sol implementation address:" | awk '{print $4}')
+echo "EthClient contract deployed to: $ethClientProxy"
 
-# proof=$(curl --request POST \
-#   --url https://holesky.drpc.org \
-#   --header 'accept: application/json' \
-#   --header 'content-type: application/json' \
-#   --data '{
-#   "id": 1,
-#   "jsonrpc": "2.0",
-#   "method": "eth_getProof",
-#   "params": [
-#     "0xFF77e5c4C3f91A7d8014a34593c11A6bFC348805", ["0x0000000000000000000000000000000000000000000000000000000000000006"],"latest"
-#   ]}' | jq .result.storageHash)
+taraBridgeProxy=$(echo "$res" | grep "TaraBridge.sol proxy address:" | awk '{print $4}')
+taraBridgeImpl=$(echo "$res" | grep "TaraBridge.sol implementation address:" | awk '{print $4}')
+echo "TaraBridge contract deployed to: $taraBridgeProxy"
 
-# echo "Storage proof: $proof"
+taraConnectorProxy=$(echo "$res" | grep "NativeConnector.sol proxy address:" | awk '{print $4}')
+taraConnectorImpl=$(echo "$res" | grep "NativeConnector.sol implementation address:" | awk '{print $4}')
+echo "TaraConnector contract deployed to: $taraConnectorProxy"
 
-# # Write storage proof to .env var
+ethMintingConnectorProxy=$(echo "$res" | grep "ERC20MintingConnector.sol proxy address:" | awk '{print $4}')
+ethMintingConnectorImpl=$(echo "$res" | grep "ERC20MintingConnector.sol implementation address:" | awk '{print $4}')
+echo "EthMintingConnector contract deployed to: $ethMintingConnectorProxy"
 
-# echo "STORAGE_PROOF=$proof" >> .env
+
+currentTimestamp=$(date +%s)
+deploymentFile=".tara.deployment.$currentTimestamp.json"
+
+echo "{" > $deploymentFile
+echo "  \"taradeploy-$currentTimestamp\": {" >> $deploymentFile
+echo "    \"RPC\": \"$RPC_FICUS_PRNET\"," >> $deploymentFile
+echo "    \"EthClient\": {" >> $deploymentFile
+echo "      \"implAddress\": \"$ethClientImpl\"," >> $deploymentFile
+echo "      \"proxyAddress\": \"$ethClientProxy\"" >> $deploymentFile
+echo "    }," >> $deploymentFile
+echo "    \"TaraBridge\": {" >> $deploymentFile
+echo "      \"implAddress\": \"$taraBridgeImpl\"," >> $deploymentFile
+echo "      \"proxyAddress\": \"$taraBridgeProxy\"" >> $deploymentFile
+echo "    }," >> $deploymentFile
+echo "    \"ERC20MintingConnector\": {" >> $deploymentFile
+echo "      \"implAddress\": \"$ethMintingConnectorImpl\"," >> $deploymentFile
+echo "      \"proxyAddress\": \"$ethMintingConnectorProxy\"" >> $deploymentFile
+echo "    }," >> $deploymentFile
+echo "    \"NativeConnector\": {" >> $deploymentFile
+echo "      \"implAddress\": \"$taraConnectorImpl\"," >> $deploymentFile
+echo "      \"proxyAddress\": \"$taraConnectorProxy\"" >> $deploymentFile
+echo "    }" >> $deploymentFile
+echo "  }" >> $deploymentFile
+echo "}" >> $deploymentFile
+
+echo "##############################################################"
+echo "#                                                            #"
+echo "#    deployment file created: $deploymentFile                #"
+echo "#    Deployment successful                                   #"
+echo "#                                                            #"
+echo "##############################################################"
 

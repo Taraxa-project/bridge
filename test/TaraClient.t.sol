@@ -83,7 +83,7 @@ contract TaraClientTest is Test {
         return totalWeight;
     }
 
-    function test_signatures() public {
+    function test_signatures() public view {
         uint32 signatures_count = 200;
         uint256 weight =
             client.getSignaturesWeight(PillarBlock.getVoteHash(currentBlock), getSignatures(signatures_count));
@@ -157,7 +157,7 @@ contract TaraClientTest is Test {
     //     client.processValidatorChanges(changes);
     // }
 
-    function test_blockEncodeDecode() public {
+    function test_blockEncodeDecode() public view {
         PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](10);
         changes[0] = PillarBlock.VoteCountChange(address(uint160(1)), -1);
         changes[1] = PillarBlock.VoteCountChange(address(uint160(2)), 2);
@@ -185,13 +185,13 @@ contract TaraClientTest is Test {
         assertEq(PillarBlock.getHash(bb), PillarBlock.getHash(bcb));
     }
 
-    function test_voteHash() public {
+    function test_voteHash() public pure {
         PillarBlock.Vote memory vote = PillarBlock.Vote(1, bytes32(0));
         bytes32 hash = PillarBlock.getHash(vote);
         assertEq(hash, keccak256(abi.encodePacked(uint256(1), bytes32(0))));
     }
 
-    function test_decodeRecover() public {
+    function test_decodeRecover() public pure {
         // signer: 3eea25034397b249a3ed8614bb4d0533e5b03594
         // signed: full: bee528553ef2594e5643179d30ea8e0f1c1cdc2ceaf559f7f739d7ba21e1f7772d41a09821dc4eba64811327013062e9c71d97383211b43bc5e82773f93ecb3700 sig: bee528553ef2594e5643179d30ea8e0f1c1cdc2ceaf559f7f739d7ba21e1f7772d41a09821dc4eba64811327013062e9c71d97383211b43bc5e82773f93ecb37
         //
@@ -208,7 +208,7 @@ contract TaraClientTest is Test {
         assertEq(recovered_signer, signer);
     }
 
-    function test_pillarVoteSerialization() public {
+    function test_pillarVoteSerialization() public pure {
         assertEq(
             PillarBlock.getVoteHash(12, bytes32(uint256(34))),
             0x00ec94cd6076f5d010620194cc66952562bc3ba027026bdd156000479a7754b1
