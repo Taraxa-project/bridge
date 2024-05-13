@@ -2,7 +2,8 @@
 
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import "../lib/SharedStructs.sol";
 import "../lib/Constants.sol";
@@ -13,14 +14,14 @@ import {
     NotEnoughBlocksPassed,
     UnregisteredContract,
     InvalidStateHash,
-    UnmatchingContractAddresses
+    UnmatchingContractAddresses,
+    ZeroAddressCannotBeRegistered
 } from "../errors/BridgeBaseErrors.sol";
 import {NoFinalizedState} from "../errors/ConnectorErrors.sol";
 import "../connectors/IBridgeConnector.sol";
-import "forge-std/console.sol";
 
-abstract contract BridgeBase is Ownable {
-    IBridgeLightClient public immutable lightClient;
+abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
+    IBridgeLightClient public lightClient;
 
     address[] public tokenAddresses;
     mapping(address => IBridgeConnector) public connectors;
@@ -31,10 +32,33 @@ abstract contract BridgeBase is Ownable {
     uint256 public lastFinalizedBlock;
     bytes32 public bridgeRoot;
 
-    constructor(IBridgeLightClient light_client, uint256 _finalizationInterval) Ownable() {
+    /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
+    /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
+    uint256[49] __gap;
+
+    /// Events
+    event StateApplied(bytes indexed state, address indexed receiver, address indexed connector, uint256 refund);
+    event Finalized(uint256 indexed epoch, bytes32 bridgeRoot);
+    event ConnectorRegistered(address indexed connector);
+
+    function __BridgeBase_init(IBridgeLightClient light_client, uint256 _finalizationInterval)
+        internal
+        onlyInitializing
+    {
+        __BridgeBase_init_unchained(light_client, _finalizationInterval);
+    }
+
+    function __BridgeBase_init_unchained(IBridgeLightClient light_client, uint256 _finalizationInterval)
+        internal
+        onlyInitializing
+    {
+        __UUPSUpgradeable_init();
+        __Ownable_init(msg.sender);
         lightClient = light_client;
         finalizationInterval = _finalizationInterval;
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     /**
      * @dev Sets the finalization interval.
@@ -64,9 +88,19 @@ abstract contract BridgeBase is Ownable {
      * @param connector The address of the connector contract.
      */
     function registerContract(IBridgeConnector connector) public {
-        connectors[connector.getContractAddress()] = connector;
+        address contractAddress = connector.getContractAddress();
+
+        if (connectors[address(connector)] != IBridgeConnector(address(0))) {
+            return;
+        }
+        if (contractAddress == address(0)) {
+            revert ZeroAddressCannotBeRegistered();
+        }
+
+        connectors[contractAddress] = connector;
         localAddress[connector.getBridgedContractAddress()] = connector.getContractAddress();
-        tokenAddresses.push(connector.getContractAddress());
+        tokenAddresses.push(contractAddress);
+        emit ConnectorRegistered(contractAddress);
     }
 
     /**
@@ -90,7 +124,7 @@ abstract contract BridgeBase is Ownable {
         }
         uint256 common = (gasleftbefore - gasleft()) * tx.gasprice;
         uint256 stateHashLength = state_with_proof.state_hashes.length;
-        for (uint256 i = 0; i < stateHashLength; i++) {
+        for (uint256 i = 0; i < stateHashLength;) {
             gasleftbefore = gasleft();
             if (localAddress[state_with_proof.state_hashes[i].contractAddress] == address(0)) {
                 revert UnregisteredContract({contractAddress: state_with_proof.state_hashes[i].contractAddress});
@@ -108,11 +142,19 @@ abstract contract BridgeBase is Ownable {
                 });
             }
             uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
+            uint256 refund = (used + common / state_with_proof.state_hashes.length);
             connectors[localAddress[state_with_proof.state_hashes[i].contractAddress]].applyStateWithRefund(
-                state_with_proof.state.states[i].state,
-                payable(msg.sender),
-                (used + common / state_with_proof.state_hashes.length)
+                state_with_proof.state.states[i].state, payable(msg.sender), refund
             );
+            emit StateApplied(
+                state_with_proof.state.states[i].state,
+                msg.sender,
+                localAddress[state_with_proof.state_hashes[i].contractAddress],
+                refund
+            );
+            unchecked {
+                ++i;
+            }
         }
         appliedEpoch++;
     }
@@ -140,19 +182,23 @@ abstract contract BridgeBase is Ownable {
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
 
         if (!shouldFinalizeEpoch()) {
-            console.log("No need to finalize");
+            // console.log("No need to finalize");
             return;
         }
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+        for (uint256 i = 0; i < tokenAddresses.length;) {
             hashes[i] = SharedStructs.ContractStateHash(
                 tokenAddresses[i], connectors[tokenAddresses[i]].finalize(finalizedEpoch)
             );
+            unchecked {
+                ++i;
+            }
         }
         lastFinalizedBlock = block.number;
         unchecked {
             finalizedEpoch++;
         }
         bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, hashes);
+        emit Finalized(finalizedEpoch, bridgeRoot);
     }
 
     /**
@@ -162,12 +208,13 @@ abstract contract BridgeBase is Ownable {
         ret.state.epoch = finalizedEpoch;
         ret.state.states = new SharedStructs.StateWithAddress[](tokenAddresses.length);
         ret.state_hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
-        unchecked {
-            uint256 tokenAddressesLength = tokenAddresses.length;
-            for (uint256 i = 0; i < tokenAddressesLength; i++) {
-                bytes memory state = connectors[tokenAddresses[i]].getFinalizedState();
-                ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));
-                ret.state.states[i] = SharedStructs.StateWithAddress(tokenAddresses[i], state);
+        uint256 tokenAddressesLength = tokenAddresses.length;
+        for (uint256 i = 0; i < tokenAddressesLength;) {
+            bytes memory state = connectors[tokenAddresses[i]].getFinalizedState();
+            ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));
+            ret.state.states[i] = SharedStructs.StateWithAddress(tokenAddresses[i], state);
+            unchecked {
+                ++i;
             }
         }
     }

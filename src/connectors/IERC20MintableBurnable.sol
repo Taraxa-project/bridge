@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IERC20MintableBurnable is IERC20 {
     /**
@@ -24,6 +24,5 @@ interface IERC20MintableBurnable is IERC20 {
      * @param account The address from which the tokens will be burnt.
      * @param value The amount of tokens to burn.
      */
-
     function burnFrom(address account, uint256 value) external;
 }

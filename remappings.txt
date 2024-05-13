@@ -1,8 +1,9 @@
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 beacon-light-client/=lib/beacon-light-client/
-create3-deploy/=lib/beacon-light-client/lib/create3-deploy/
 ds-test/=lib/forge-std/lib/ds-test/src/
-erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/
+erc4626-tests/=lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/
 forge-std/=lib/forge-std/src/
+openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/
 openzeppelin-contracts/=lib/openzeppelin-contracts/
-solmate/=lib/beacon-light-client/lib/create3-deploy/lib/solmate/src/
+openzeppelin-foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/
+solidity-stringutils/=lib/openzeppelin-foundry-upgrades/lib/solidity-stringutils/

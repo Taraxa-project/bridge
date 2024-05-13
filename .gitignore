@@ -26,3 +26,5 @@ src/scripts/pyvenv.cfg
 
 # macOS system files 
 */.DS_Store
+
+.venv/

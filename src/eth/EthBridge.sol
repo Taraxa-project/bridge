@@ -11,16 +11,22 @@ import "../lib/Constants.sol";
 import "../lib/BridgeBase.sol";
 
 contract EthBridge is BridgeBase {
-    constructor(
+    /// Events
+    event Initialized(address indexed tara, address indexed light_client, uint256 finalizationInterval);
+
+    function initialize(IERC20MintableBurnable tara, IBridgeLightClient light_client, uint256 finalizationInterval)
+        public
+        initializer
+    {
+        __initialize_EthBridge_unchained(tara, light_client, finalizationInterval);
+    }
+
+    function __initialize_EthBridge_unchained(
         IERC20MintableBurnable tara,
-        address eth_address_on_tara,
         IBridgeLightClient light_client,
         uint256 finalizationInterval
-    ) payable BridgeBase(light_client, finalizationInterval) {
-        registerContract(
-            new ERC20MintingConnector{value: msg.value / 2}(address(this), tara, Constants.NATIVE_TOKEN_ADDRESS)
-        );
-
-        registerContract(new NativeConnector{value: msg.value / 2}(address(this), eth_address_on_tara));
+    ) internal onlyInitializing {
+        __BridgeBase_init(light_client, finalizationInterval);
+        emit Initialized(address(tara), address(light_client), finalizationInterval);
     }
 }

@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {InsufficientFunds, NoClaimAvailable, RefundFailed} from "../errors/ConnectorErrors.sol";
-import "../connectors/TokenState.sol";
 import "../lib/SharedStructs.sol";
 import "../connectors/TokenConnectorBase.sol";
+import "../lib/Constants.sol";
 
 contract NativeConnector is TokenConnectorBase {
-    constructor(address bridge, address token_on_other_network)
-        payable
-        TokenConnectorBase(bridge, Constants.NATIVE_TOKEN_ADDRESS, token_on_other_network)
-    {}
+    /// Events
+    event Locked(address indexed account, uint256 value);
+    event AppliedState(bytes state);
+
+    function initialize(address bridge, address token_on_other_network) public initializer {
+        __TokenConnectorBase_init(bridge, Constants.NATIVE_TOKEN_ADDRESS, token_on_other_network);
+    }
 
     /**
      * @dev Applies the given state transferring TARA to the specified accounts
@@ -25,7 +27,9 @@ contract NativeConnector is TokenConnectorBase {
         for (uint256 i = 0; i < transfersLength; i++) {
             toClaim[transfers[i].account] += transfers[i].amount;
             accounts[i] = transfers[i].account;
+            emit ClaimAccrued(transfers[i].account, transfers[i].amount);
         }
+        emit AppliedState(_state);
     }
 
     /**
@@ -34,6 +38,7 @@ contract NativeConnector is TokenConnectorBase {
      */
     function lock() public payable {
         state.addAmount(msg.sender, msg.value);
+        emit Locked(msg.sender, msg.value);
     }
 
     /**
@@ -53,5 +58,6 @@ contract NativeConnector is TokenConnectorBase {
         if (!success) {
             revert RefundFailed({recipient: msg.sender, amount: fee});
         }
+        emit Claimed(msg.sender, fee);
     }
 }

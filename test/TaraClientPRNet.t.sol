@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
 import {Test, console} from "forge-std/Test.sol";
 import "../src/eth/TaraClient.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 /**
  * @title Test that Tara client accepts blocks from the PRNet
@@ -49,7 +50,8 @@ contract TaraClientPRNetTest is Test {
             initial
         );
         assertEq(PillarBlock.getHash(currentBlock), 0x659f33d940342ccbb534a745e93b3cc0d44f09f8b5f9db7d8c9ede2d047b4522);
-        client = new TaraClient(PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL);
+        client = new TaraClient();
+        client.initialize(PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL);
         PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
         blocks[0] = currentBlock;
         client.finalizeBlocks(blocks, new CompactSignature[](0));

@@ -1,0 +1,21 @@
+
+
+# Contents
+- [StateNotMatchingBridgeRoot](BridgeBaseErrors.sol/error.StateNotMatchingBridgeRoot.md)
+- [NotSuccessiveEpochs](BridgeBaseErrors.sol/error.NotSuccessiveEpochs.md)
+- [NotEnoughBlocksPassed](BridgeBaseErrors.sol/error.NotEnoughBlocksPassed.md)
+- [UnregisteredContract](BridgeBaseErrors.sol/error.UnregisteredContract.md)
+- [InvalidStateHash](BridgeBaseErrors.sol/error.InvalidStateHash.md)
+- [UnmatchingContractAddresses](BridgeBaseErrors.sol/error.UnmatchingContractAddresses.md)
+- [InvalidBridgeRoot](BridgeBaseErrors.sol/error.InvalidBridgeRoot.md)
+- [ZeroAddressCannotBeRegistered](BridgeBaseErrors.sol/error.ZeroAddressCannotBeRegistered.md)
+- [HashesNotMatching](ClientErrors.sol/error.HashesNotMatching.md)
+- [InvalidBlockInterval](ClientErrors.sol/error.InvalidBlockInterval.md)
+- [ThresholdNotMet](ClientErrors.sol/error.ThresholdNotMet.md)
+- [InsufficientFunds](ConnectorErrors.sol/error.InsufficientFunds.md)
+- [NoClaimAvailable](ConnectorErrors.sol/error.NoClaimAvailable.md)
+- [TransferFailed](ConnectorErrors.sol/error.TransferFailed.md)
+- [RefundFailed](ConnectorErrors.sol/error.RefundFailed.md)
+- [InvalidEpoch](ConnectorErrors.sol/error.InvalidEpoch.md)
+- [NoFinalizedState](ConnectorErrors.sol/error.NoFinalizedState.md)
+- [StateIsNotEmpty](ConnectorErrors.sol/error.StateIsNotEmpty.md)

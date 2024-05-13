@@ -2,18 +2,24 @@
 
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./TokenConnectorBase.sol";
 import "../lib/SharedStructs.sol";
 import {InsufficientFunds, NoClaimAvailable, TransferFailed} from "../errors/ConnectorErrors.sol";
 
 contract ERC20LockingConnector is TokenConnectorBase {
-    constructor(address bridge, IERC20 token, address token_on_other_network)
+    /// Events
+    event Locked(address indexed account, uint256 value);
+
+    function initialize(address bridge, IERC20 tokenAddress, address token_on_other_network)
+        public
         payable
-        TokenConnectorBase(bridge, address(token), token_on_other_network)
-    {}
+        initializer
+    {
+        TokenConnectorBase_init(bridge, address(tokenAddress), token_on_other_network);
+        emit Initialized(bridge, address(tokenAddress), token_on_other_network);
+    }
 
     /**
      * @dev Applies the given state to the token contract by transfers.
@@ -28,8 +34,10 @@ contract ERC20LockingConnector is TokenConnectorBase {
             for (uint256 i = 0; i < transfersLength; i++) {
                 toClaim[transfers[i].account] += transfers[i].amount;
                 accounts[i] = transfers[i].account;
+                emit ClaimAccrued(transfers[i].account, transfers[i].amount);
             }
         }
+        emit StateApplied(_state);
     }
 
     /**
@@ -40,6 +48,7 @@ contract ERC20LockingConnector is TokenConnectorBase {
     function lock(uint256 value) public {
         IERC20(token).transferFrom(msg.sender, address(this), value);
         state.addAmount(msg.sender, value);
+        emit Locked(msg.sender, value);
     }
 
     /**
@@ -58,5 +67,6 @@ contract ERC20LockingConnector is TokenConnectorBase {
             revert TransferFailed({recipient: msg.sender, amount: toClaim[msg.sender]});
         }
         toClaim[msg.sender] = 0;
+        emit Claimed(msg.sender, toClaim[msg.sender]);
     }
 }

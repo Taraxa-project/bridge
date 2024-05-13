@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {Test, console} from "forge-std/Test.sol";
 import "../src/tara/TaraBridge.sol";
 import "../src/eth/EthBridge.sol";
 import "../src/lib/TestERC20.sol";
@@ -13,39 +12,13 @@ import "../src/connectors/ERC20LockingConnector.sol";
 import "../src/connectors/ERC20MintingConnector.sol";
 import "./BridgeLightClientMock.sol";
 import "../src/lib/Constants.sol";
+import "./SymmetricTestSetup.t.sol";
 
-contract StateTransfersTest is Test {
-    BridgeLightClientMock taraLightClient;
-    BridgeLightClientMock ethLightClient;
-    TestERC20 taraTokenOnEth;
-    TestERC20 ethTokenOnTara;
-    TaraBridge taraBridge;
-    EthBridge ethBridge;
-
-    address caller = address(bytes20(sha256(hex"1234")));
-    uint256 constant FINALIZATION_INTERVAL = 100;
-
-    function setUp() public {
-        payable(caller).transfer(100 ether);
-        taraLightClient = new BridgeLightClientMock();
-        ethLightClient = new BridgeLightClientMock();
-        taraTokenOnEth = new TestERC20("TARA");
-        ethTokenOnTara = new TestERC20("ETH");
-        taraBridge = new TaraBridge{value: 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT}(
-            ethTokenOnTara, address(taraTokenOnEth), ethLightClient, FINALIZATION_INTERVAL
-        );
-        ethBridge = new EthBridge{value: 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT}(
-            taraTokenOnEth, address(ethTokenOnTara), taraLightClient, FINALIZATION_INTERVAL
-        );
-    }
-
-    // define it to not fail on incoming transfers
-    receive() external payable {}
-
+contract StateTransfersTest is SymmetricTestSetup {
     function test_fail_toEth_on_not_enough_blocks_passed() public {
         uint256 value = 1 ether;
         NativeConnector taraBridgeToken =
-            NativeConnector(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS)));
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraBridgeToken.lock{value: value}();
 
         // vm.roll(FINALIZATION_INTERVAL);
@@ -61,7 +34,7 @@ contract StateTransfersTest is Test {
     function test_toEth() public {
         uint256 value = 1 ether;
         NativeConnector taraBridgeToken =
-            NativeConnector(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS)));
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraBridgeToken.lock{value: value}();
 
         vm.roll(FINALIZATION_INTERVAL);
@@ -72,7 +45,7 @@ contract StateTransfersTest is Test {
         ethBridge.applyState(state);
 
         ERC20MintingConnector ethTaraTokenConnector =
-            ERC20MintingConnector(address(ethBridge.connectors(address(taraTokenOnEth))));
+            ERC20MintingConnector(payable(address(ethBridge.connectors(address(taraTokenOnEth)))));
         ethTaraTokenConnector.claim{value: ethTaraTokenConnector.feeToClaim(address(this))}();
         assertEq(taraTokenOnEth.balanceOf(address(this)), value);
     }
@@ -81,7 +54,7 @@ contract StateTransfersTest is Test {
         test_toEth();
         uint256 value = 1 ether;
         ERC20MintingConnector ethNativeConnector =
-            ERC20MintingConnector(address(ethBridge.connectors(address(taraTokenOnEth))));
+            ERC20MintingConnector(payable(address(ethBridge.connectors(address(taraTokenOnEth)))));
         taraTokenOnEth.approve(address(ethNativeConnector), value);
         ethNativeConnector.burn(value);
 
@@ -95,7 +68,8 @@ contract StateTransfersTest is Test {
         vm.prank(caller);
         taraBridge.applyState(state);
 
-        NativeConnector taraConnector = NativeConnector(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS)));
+        NativeConnector taraConnector =
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         uint256 claim_fee = taraConnector.feeToClaim(address(this));
         taraConnector.claim{value: claim_fee}();
         assertEq(address(this).balance, balance_before + value - claim_fee);
@@ -103,7 +77,8 @@ contract StateTransfersTest is Test {
 
     function test_failOnChangedState() public {
         uint256 value = 1 ether;
-        NativeConnector taraConnector = NativeConnector(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS)));
+        NativeConnector taraConnector =
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraConnector.lock{value: value}();
 
         vm.roll(FINALIZATION_INTERVAL);
@@ -123,7 +98,8 @@ contract StateTransfersTest is Test {
 
     function test_failOnChangedEpoch() public {
         uint256 value = 1 ether;
-        NativeConnector taraConnector = NativeConnector(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS)));
+        NativeConnector taraConnector =
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraConnector.lock{value: value}();
 
         vm.roll(FINALIZATION_INTERVAL);
@@ -144,7 +120,8 @@ contract StateTransfersTest is Test {
 
     function test_emptyEpoch() public {
         uint256 value = 1 ether;
-        NativeConnector taraConnector = NativeConnector(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS)));
+        NativeConnector taraConnector =
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraConnector.lock{value: value}();
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
@@ -162,7 +139,8 @@ contract StateTransfersTest is Test {
 
     function test_futureEpoch() public {
         uint256 value = 1 ether;
-        NativeConnector taraConnector = NativeConnector(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS)));
+        NativeConnector taraConnector =
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraConnector.lock{value: value}();
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
@@ -194,7 +172,8 @@ contract StateTransfersTest is Test {
         uint256 value = 1 ether / 1000;
         uint256 count = 100;
         address[] memory addrs = new address[](count);
-        NativeConnector taraConnector = NativeConnector(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS)));
+        NativeConnector taraConnector =
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         for (uint256 i = 0; i < count; i++) {
             address payable addr = payable(address(uint160(uint256(keccak256(abi.encodePacked(i))))));
             addrs[i] = addr;
@@ -209,7 +188,9 @@ contract StateTransfersTest is Test {
 
         ethBridge.applyState(state);
         ERC20LockingConnector ethNativeConnector = ERC20LockingConnector(
-            address(ethBridge.connectors(address(ethBridge.localAddress(address(Constants.NATIVE_TOKEN_ADDRESS)))))
+            payable(
+                address(ethBridge.connectors(address(ethBridge.localAddress(address(Constants.NATIVE_TOKEN_ADDRESS)))))
+            )
         );
         for (uint256 i = 0; i < count; i++) {
             vm.prank(addrs[i]);
@@ -223,14 +204,25 @@ contract StateTransfersTest is Test {
 
     function test_customToken() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
         // deploy and register token on both sides
-        taraTestToken = new TestERC20("TEST");
-        ethTestToken = new TestERC20("TEST");
-        ERC20LockingConnector taraTestTokenConnector = new ERC20LockingConnector{
-            value: Constants.MINIMUM_CONNECTOR_DEPOSIT
-        }(address(taraBridge), taraTestToken, address(ethTestToken));
-        ERC20MintingConnector ethTestTokenConnector = new ERC20MintingConnector{
-            value: Constants.MINIMUM_CONNECTOR_DEPOSIT
-        }(address(ethBridge), ethTestToken, address(taraTestToken));
+        taraTestToken = new TestERC20();
+        taraTestToken.initialize("Test", "TEST");
+        ethTestToken = new TestERC20();
+        ethTestToken.initialize("Test", "TEST");
+        ERC20LockingConnector taraTestTokenConnector = new ERC20LockingConnector();
+        taraTestTokenConnector.initialize(address(taraBridge), taraTestToken, address(ethTestToken));
+        ERC20MintingConnector ethTestTokenConnector = new ERC20MintingConnector();
+        ethTestTokenConnector.initialize(address(ethBridge), ethTestToken, address(taraTestToken));
+
+        // fund connectors
+        (bool success,) = payable(address(taraTestTokenConnector)).call{value: 2 ether}("");
+        if (!success) {
+            revert("Failed to fund tara connector");
+        }
+        (bool success2,) = payable(address(ethTestTokenConnector)).call{value: 2 ether}("");
+        if (!success2) {
+            revert("Failed to fund eth connector");
+        }
+
         taraBridge.registerContract(taraTestTokenConnector);
         ethBridge.registerContract(ethTestTokenConnector);
 
@@ -257,13 +249,13 @@ contract StateTransfersTest is Test {
         uint256 value = 1 ether;
 
         ERC20LockingConnector taraTestTokenConnector =
-            ERC20LockingConnector(address(taraBridge.connectors(address(taraTestToken))));
+            ERC20LockingConnector(payable(address(taraBridge.connectors(address(taraTestToken)))));
         taraTestToken.approve(address(taraTestTokenConnector), value);
         taraTestTokenConnector.lock(value);
         uint256 tokenBalanceBefore = ethTestToken.balanceOf(address(this));
 
         NativeConnector taraBridgeTokenConnector =
-            NativeConnector(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS)));
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraBridgeTokenConnector.lock{value: value}();
 
         vm.roll(2 * FINALIZATION_INTERVAL);
@@ -281,11 +273,13 @@ contract StateTransfersTest is Test {
         ethBridge.applyState(state);
 
         ERC20MintingConnector ethTestTokenConnector =
-            ERC20MintingConnector(address(ethBridge.connectors(address(ethTestToken))));
+            ERC20MintingConnector(payable(address(ethBridge.connectors(address(ethTestToken)))));
         ethTestTokenConnector.claim{value: ethTestTokenConnector.feeToClaim(address(this))}();
 
         ERC20LockingConnector ethNativeConnector = ERC20LockingConnector(
-            address(ethBridge.connectors(address(ethBridge.localAddress(address(Constants.NATIVE_TOKEN_ADDRESS)))))
+            payable(
+                address(ethBridge.connectors(address(ethBridge.localAddress(address(Constants.NATIVE_TOKEN_ADDRESS)))))
+            )
         );
         ethNativeConnector.claim{value: ethNativeConnector.feeToClaim(address(this))}();
 
@@ -298,13 +292,13 @@ contract StateTransfersTest is Test {
         uint256 value = 1 ether;
 
         ERC20MintingConnector ethTestTokenConnector =
-            ERC20MintingConnector(address(ethBridge.connectors(address(ethTestToken))));
+            ERC20MintingConnector(payable(address(ethBridge.connectors(address(ethTestToken)))));
         ethTestToken.approve(address(ethTestTokenConnector), value);
         ethTestTokenConnector.burn(value);
         uint256 ethTestTokenBalanceBefore = taraTestToken.balanceOf(address(this));
 
         ERC20MintingConnector ethTaraTokenConnector =
-            ERC20MintingConnector(address(ethBridge.connectors(address(taraTokenOnEth))));
+            ERC20MintingConnector(payable(address(ethBridge.connectors(address(taraTokenOnEth)))));
         taraTokenOnEth.approve(address(ethTaraTokenConnector), value);
         ethTaraTokenConnector.burn(value);
         uint256 taraBalanceBefore = address(this).balance;
@@ -322,11 +316,12 @@ contract StateTransfersTest is Test {
         taraBridge.applyState(state);
 
         ERC20MintingConnector taraTestTokenConnector =
-            ERC20MintingConnector(address(taraBridge.connectors(address(taraTestToken))));
+            ERC20MintingConnector(payable(address(taraBridge.connectors(address(taraTestToken)))));
         uint256 claim_fee = taraTestTokenConnector.feeToClaim(address(this));
         taraTestTokenConnector.claim{value: claim_fee}();
 
-        NativeConnector taraConnector = NativeConnector(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS)));
+        NativeConnector taraConnector =
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         uint256 claim_fee2 = taraConnector.feeToClaim(address(this));
         taraConnector.claim{value: claim_fee2}();
 

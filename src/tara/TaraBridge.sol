@@ -8,16 +8,14 @@ import "../lib/BridgeBase.sol";
 import "../connectors/ERC20MintingConnector.sol";
 
 contract TaraBridge is BridgeBase {
-    constructor(
-        IERC20MintableBurnable eth,
-        address tara_address_on_eth,
-        IBridgeLightClient light_client,
-        uint256 finalizationInterval
-    ) payable BridgeBase(light_client, finalizationInterval) {
-        registerContract(new NativeConnector{value: msg.value / 2}(address(this), tara_address_on_eth));
+    /// Events
+    event Initialized(address indexed tara, address indexed light_client, uint256 finalizationInterval);
 
-        registerContract(
-            new ERC20MintingConnector{value: msg.value / 2}(address(this), eth, Constants.NATIVE_TOKEN_ADDRESS)
-        );
+    function initialize(IERC20MintableBurnable tara, IBridgeLightClient light_client, uint256 finalizationInterval)
+        public
+        initializer
+    {
+        __BridgeBase_init(light_client, finalizationInterval);
+        emit Initialized(address(tara), address(light_client), finalizationInterval);
     }
 }

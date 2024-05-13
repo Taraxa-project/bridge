@@ -2,9 +2,10 @@
 
 pragma solidity ^0.8.17;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "../lib/SharedStructs.sol";
 import {StateIsNotEmpty} from "../errors/ConnectorErrors.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 struct Transfer {
     address account;
@@ -14,10 +15,15 @@ struct Transfer {
 contract TokenState is Ownable {
     uint256 public epoch;
     address[] accounts;
-    mapping(address => uint256) balances; // position = 2
+    mapping(address => uint256) balances;
 
-    constructor(uint256 _epoch) Ownable() {
+    /// Events
+    event TransferAdded(address indexed account, address indexed tokenState, uint256 indexed amount);
+    event Initialized(uint256 indexed epoch);
+
+    constructor(uint256 _epoch) Ownable(msg.sender) {
         epoch = _epoch;
+        emit Initialized(_epoch);
     }
 
     function empty() public view returns (bool) {
@@ -36,6 +42,7 @@ contract TokenState is Ownable {
             accounts.push(account);
         }
         balances[account] += amount;
+        emit TransferAdded(account, address(this), amount);
     }
 
     function getTransfers() public view returns (Transfer[] memory) {
