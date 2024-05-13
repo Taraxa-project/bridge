@@ -1,0 +1,55 @@
+# Workflow for deploying the `forge doc` site to GitHub Pages
+name: Docs
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    # In the GitHub Actions Marketplace template, we can use $default-branch
+    # However, $default-branch functions in templates but not in workflows
+    # branches: [ $default-branch ]
+
+    # Therefore, if you're using this GitHub Action directly, you need to add
+    # branches below
+    # Add branch names that you want to run the Action on here
+    branches: [main, master]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Generate docs
+        run: forge doc --build --out documentation
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          # Upload generated book directory
+          path: ./docs/book
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
