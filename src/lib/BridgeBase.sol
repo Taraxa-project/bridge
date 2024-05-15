@@ -112,11 +112,11 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         // get bridge root from light client and compare it (it should be proved there)
         if (
             SharedStructs.getBridgeRoot(state_with_proof.state.epoch, state_with_proof.state_hashes)
-                != lightClient.getFinalizedBridgeRoot()
+                != lightClient.getFinalizedBridgeRoot(state_with_proof.state.epoch)
         ) {
             revert StateNotMatchingBridgeRoot({
                 stateRoot: SharedStructs.getBridgeRoot(state_with_proof.state.epoch, state_with_proof.state_hashes),
-                bridgeRoot: lightClient.getFinalizedBridgeRoot()
+                bridgeRoot: lightClient.getFinalizedBridgeRoot(state_with_proof.state.epoch)
             });
         }
         if (state_with_proof.state.epoch != appliedEpoch + 1) {

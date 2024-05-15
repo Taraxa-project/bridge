@@ -26,7 +26,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     event BridgeRootProcessed(bytes32 indexed bridgeRoot);
 
     function initialize(BeaconLightClient _client, address _eth_bridge_address) public initializer {
-        bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000006;
+        bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000008;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
         emit Initialized(address(_client), _eth_bridge_address);
@@ -36,7 +36,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
      * @dev Implements the IBridgeLightClient interface method
      * @return The finalized bridge root as a bytes32 value.
      */
-    function getFinalizedBridgeRoot() external view returns (bytes32) {
+    function getFinalizedBridgeRoot(uint256 epoch) external view returns (bytes32) {
         return bridgeRoot;
     }
 
@@ -49,13 +49,16 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
      * @param account_proof The account proofs for the bridge root.
      * @param storage_proof The storage proofs for the bridge root.
      */
-    function processBridgeRoot(bytes[] memory account_proof, bytes[] memory storage_proof) external {
-        if (bridgeRoot.length != 32) {
-            revert InvalidBridgeRoot(bridgeRoot);
-        }
-        bytes32 stateRoot = client.merkle_root();
+    function processBridgeRoot(uint256 block_number, bytes[] memory account_proof, bytes[] memory storage_proof) external {
+        // add check that the previous root was exactly the one before this
+        bytes32 stateRoot = client.merkle_root(block_number);
         bytes memory br = StorageProof.verify(stateRoot, ethBridgeAddress, account_proof, bridgeRootKey, storage_proof);
-        bridgeRoot = bytes32(br);
+        bytes32 br32 = bytes32(br);
+        if (br.length != 32) {
+            revert InvalidBridgeRoot(br32);
+        }
+        
+        bridgeRoot = br32;
         emit BridgeRootProcessed(bridgeRoot);
     }
 

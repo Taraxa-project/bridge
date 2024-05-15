@@ -67,10 +67,11 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, U
         address[] memory addresses = applyState(_state);
         uint256 total_fee = common_part + (gasleftbefore - gasleft()) * tx.gasprice;
 
-        unchecked {
-            uint256 addressesLength = addresses.length;
-            for (uint256 i = 0; i < addressesLength; i++) {
-                feeToClaim[addresses[i]] += total_fee / addresses.length;
+        uint256 addressesLength = addresses.length;
+        for (uint256 i = 0; i < addressesLength;) {
+            feeToClaim[addresses[i]] += total_fee / addresses.length;
+            unchecked {
+                i++;
             }
         }
         refund(refund_receiver, total_fee);
