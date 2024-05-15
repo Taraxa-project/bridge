@@ -195,7 +195,7 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         }
         lastFinalizedBlock = block.number;
         unchecked {
-            finalizedEpoch++;
+            ++finalizedEpoch;
         }
         bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, hashes);
         emit Finalized(finalizedEpoch, bridgeRoot);

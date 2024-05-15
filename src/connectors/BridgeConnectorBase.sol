@@ -71,7 +71,7 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, U
         for (uint256 i = 0; i < addressesLength;) {
             feeToClaim[addresses[i]] += total_fee / addresses.length;
             unchecked {
-                i++;
+                ++i;
             }
         }
         refund(refund_receiver, total_fee);
