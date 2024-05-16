@@ -25,7 +25,7 @@ contract TestERC20 is ERC20Upgradeable, OwnableUpgradeable, IERC20MintableBurnab
      * @param receiver The address to which the tokens will be minted.
      * @param amount The amount of tokens to be minted.
      */
-    function mintTo(address receiver, uint256 amount) public {
+    function mintTo(address receiver, uint256 amount) public onlyOwner {
         _mint(receiver, amount);
     }
 
@@ -40,7 +40,7 @@ contract TestERC20 is ERC20Upgradeable, OwnableUpgradeable, IERC20MintableBurnab
      * - the caller must have allowance for ``accounts``'s tokens of at least
      * `value`.
      */
-    function burnFrom(address account, uint256 value) public virtual {
+    function burnFrom(address account, uint256 value) public virtual onlyOwner {
         _spendAllowance(account, _msgSender(), value);
         _burn(account, value);
     }

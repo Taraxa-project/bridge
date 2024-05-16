@@ -26,7 +26,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     event BridgeRootProcessed(bytes32 indexed bridgeRoot);
 
     function initialize(BeaconLightClient _client, address _eth_bridge_address) public initializer {
-        bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000008;
+        bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000005;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
         emit Initialized(address(_client), _eth_bridge_address);
@@ -49,7 +49,9 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
      * @param account_proof The account proofs for the bridge root.
      * @param storage_proof The storage proofs for the bridge root.
      */
-    function processBridgeRoot(uint256 block_number, bytes[] memory account_proof, bytes[] memory storage_proof) external {
+    function processBridgeRoot(uint256 block_number, bytes[] memory account_proof, bytes[] memory storage_proof)
+        external
+    {
         // add check that the previous root was exactly the one before this
         bytes32 stateRoot = client.merkle_root(block_number);
         bytes memory br = StorageProof.verify(stateRoot, ethBridgeAddress, account_proof, bridgeRootKey, storage_proof);
@@ -57,7 +59,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
         if (br.length != 32) {
             revert InvalidBridgeRoot(br32);
         }
-        
+
         bridgeRoot = br32;
         emit BridgeRootProcessed(bridgeRoot);
     }

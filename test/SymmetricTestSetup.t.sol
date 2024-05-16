@@ -55,6 +55,9 @@ contract SymmetricTestSetup is Test {
             revert("Failed to initialize tara minting connector");
         }
 
+        // give ownership ot erc20 to the connector
+        ethTokenOnTara.transferOwnership(address(ethOnTaraMintingConnector));
+
         taraBridge.registerContract(ethOnTaraMintingConnector);
 
         // Set Up ETH side of the bridge
@@ -75,6 +78,9 @@ contract SymmetricTestSetup is Test {
         if (!success4) {
             revert("Failed to initialize minting connector");
         }
+
+        // give ownership ot erc20 to the connector
+        taraTokenOnEth.transferOwnership(address(taraOnEthMintingConnector));
 
         ethBridge.registerContract(taraOnEthMintingConnector);
 

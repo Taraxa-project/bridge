@@ -228,6 +228,11 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         taraTestToken.mintTo(address(this), 10 ether);
         taraTestToken.approve(address(taraTestTokenConnector), 1 ether);
+
+        // give ownership of erc20s to the connectors
+        taraTestToken.transferOwnership(address(taraTestTokenConnector));
+        ethTestToken.transferOwnership(address(ethTestTokenConnector));
+
         taraTestTokenConnector.lock(1 ether);
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();

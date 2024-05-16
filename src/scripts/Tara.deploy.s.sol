@@ -21,7 +21,7 @@ import {NativeConnector} from "../connectors/NativeConnector.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 import {ERC20MintingConnector} from "../connectors/ERC20MintingConnector.sol";
 
-bytes32 constant GENERAL_BRIDGE_ROOT_KEY = 0x0000000000000000000000000000000000000000000000000000000000000006;
+bytes32 constant GENERAL_BRIDGE_ROOT_KEY = 0x0000000000000000000000000000000000000000000000000000000000000005;
 
 contract TaraDeployer is Script {
     using Bytes for bytes;
@@ -57,7 +57,7 @@ contract TaraDeployer is Script {
         bytes32 _sync_root = vm.envBytes32("SYNC_COMMITTEE_ROOT");
         console.log("Period: %s", _slot / 32 / 256);
 
-        bytes32 _genesis_validators_root = 0x9143aa7c615a7f7115e2b6aac319c03529df8242ae705fba9df39b79c59fa8b1;
+        bytes32 _genesis_validators_root = 0x81d0ed09d41d51e35a4e98f777e5f906996115f26fd72be32b5fb0caa82c287b;
 
         BeaconLightClient beaconClient = new BeaconLightClient(
             _slot,
@@ -199,6 +199,11 @@ contract TaraDeployer is Script {
 
         // Initialize EthMintingConnectorProxy
         taraBridge.registerContract(IBridgeConnector(ethMintingConnectorProxy));
+
+        address owner = TestERC20(ethAddressOnTara).owner();
+        console.log("Owner of TestERC20: %s", owner);
+        // give ownership of erc20 to the connector
+        TestERC20(ethAddressOnTara).transferOwnership(ethMintingConnectorProxy);
 
         console.log("TaraBridge initialized");
 
