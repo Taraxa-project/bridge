@@ -6,7 +6,13 @@ import hashlib
 from eth2spec.utils.ssz.ssz_typing import (
      Container, Vector, Bytes48 )
 
-PERIOD = 197 #UPDATE THIS
+
+headers_url = "https://beacon-pr-2618.prnet.taraxa.io/eth/v1/beacon/headers"
+response = requests.get(headers_url)
+data = response.json()
+slot = data['data'][0]['header']['message']['slot']
+
+PERIOD = int(int(slot) /32 /256)
 url = f'https://beacon-pr-2618.prnet.taraxa.io/eth/v1/beacon/light_client/updates?start_period={PERIOD}&count=1'
 committee_url = f'https://beacon-pr-2618.prnet.taraxa.io/eth/v1/beacon/light_client/updates?start_period={PERIOD -1}&count=1'
 
