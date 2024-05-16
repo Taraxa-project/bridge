@@ -11,7 +11,10 @@ import "../lib/IBridgeLightClient.sol";
 import "../lib/PillarBlock.sol";
 
 contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
+    /// Contains the last finalized block
     PillarBlock.FinalizedBlock public finalized;
+    /// Contains the last finalized block for each epoch
+    mapping(uint256 => bytes32) public finalizedBridgeRoots;
     mapping(address => uint256) public validatorVoteCounts;
     uint256 public totalWeight;
     uint256 public threshold;
@@ -46,8 +49,8 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
      * @dev Returns the finalized bridge root.
      * @return The finalized bridge root as a bytes32 value.
      */
-    function getFinalizedBridgeRoot() external view returns (bytes32) {
-        return finalized.block.bridgeRoot;
+    function getFinalizedBridgeRoot(uint256 epoch) external view returns (bytes32) {
+        return finalizedBridgeRoots[epoch];
     }
 
     /**
@@ -85,7 +88,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
      */
     function finalizeBlocks(PillarBlock.WithChanges[] memory blocks, CompactSignature[] memory lastBlockSigs) public {
         uint256 blocksLength = blocks.length;
-        for (uint256 i = 0; i < blocksLength; i++) {
+        for (uint256 i = 0; i < blocksLength;) {
             bytes32 pbh = PillarBlock.getHash(blocks[i]);
             if (blocks[i].block.prevHash != finalized.blockHash) {
                 revert HashesNotMatching({expected: finalized.blockHash, actual: blocks[i].block.prevHash});
@@ -108,8 +111,13 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
                     revert ThresholdNotMet({threshold: threshold, weight: weight});
                 }
             }
+            finalizedBridgeRoots[blocks[i].block.period] = finalized.block.bridgeRoot;
+            // add the last block to the single finalized block
             finalized = PillarBlock.FinalizedBlock(pbh, blocks[i].block, block.number);
             emit BlockFinalized(finalized);
+            unchecked {
+                ++i;
+            }
         }
     }
 
