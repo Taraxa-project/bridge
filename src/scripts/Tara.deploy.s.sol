@@ -13,12 +13,13 @@ import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import "../lib/Constants.sol";
 import {EthBridge} from "../eth/EthBridge.sol";
 import {TaraClient, PillarBlock} from "../eth/TaraClient.sol";
-import {TestERC20} from "../lib/TestERC20.sol";
+import {WETH9} from "../lib/WETH9.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 import {EthClient} from "../tara/EthClient.sol";
 import {TaraBridge} from "../tara/TaraBridge.sol";
 import {NativeConnector} from "../connectors/NativeConnector.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
+import {IERC20MintableBurnable} from "../connectors/IERC20MintableBurnable.sol";
 import {ERC20MintingConnector} from "../connectors/ERC20MintingConnector.sol";
 
 bytes32 constant GENERAL_BRIDGE_ROOT_KEY = 0x0000000000000000000000000000000000000000000000000000000000000005;
@@ -115,7 +116,7 @@ contract TaraDeployer is Script {
 
         address taraAddressOnEth = vm.envAddress("TARA_ADDRESS_ON_ETH");
         console.log("TARA_ADDRESS_ON_ETH: %s", taraAddressOnEth);
-        address ethAddressOnTara = vm.envAddress("ETH_ADDRESS_ON_TARA");
+        address payable ethAddressOnTara = payable(vm.envAddress("ETH_ADDRESS_ON_TARA"));
         console.log("ETH_ADDRESS_ON_TARA: %s", ethAddressOnTara);
 
         uint256 finalizationInterval = 100;
@@ -124,7 +125,11 @@ contract TaraDeployer is Script {
             "TaraBridge.sol",
             abi.encodeCall(
                 TaraBridge.initialize,
-                (TestERC20(ethAddressOnTara), IBridgeLightClient(address(ethClientProxy)), finalizationInterval)
+                (
+                    IERC20MintableBurnable(ethAddressOnTara),
+                    IBridgeLightClient(address(ethClientProxy)),
+                    finalizationInterval
+                )
             ),
             opts
         );
@@ -170,7 +175,7 @@ contract TaraDeployer is Script {
             "ERC20MintingConnector.sol",
             abi.encodeCall(
                 ERC20MintingConnector.initialize,
-                (address(taraBrigdeProxy), TestERC20(ethAddressOnTara), Constants.NATIVE_TOKEN_ADDRESS)
+                (address(taraBrigdeProxy), IERC20MintableBurnable(ethAddressOnTara), Constants.NATIVE_TOKEN_ADDRESS)
             ),
             opts
         );
@@ -200,10 +205,10 @@ contract TaraDeployer is Script {
         // Initialize EthMintingConnectorProxy
         taraBridge.registerContract(IBridgeConnector(ethMintingConnectorProxy));
 
-        address owner = TestERC20(ethAddressOnTara).owner();
+        address owner = WETH9(ethAddressOnTara).owner();
         console.log("Owner of TestERC20: %s", owner);
         // give ownership of erc20 to the connector
-        TestERC20(ethAddressOnTara).transferOwnership(ethMintingConnectorProxy);
+        WETH9(ethAddressOnTara).transferOwnership(ethMintingConnectorProxy);
 
         console.log("TaraBridge initialized");
 

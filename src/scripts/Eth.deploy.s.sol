@@ -8,8 +8,9 @@ import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import "../lib/Constants.sol";
 import {EthBridge} from "../eth/EthBridge.sol";
 import {TaraClient, PillarBlock} from "../eth/TaraClient.sol";
-import {TestERC20} from "../lib/TestERC20.sol";
+import {WETH9} from "../lib/WETH9.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
+import {IERC20MintableBurnable} from "../connectors/IERC20MintableBurnable.sol";
 import {ERC20MintingConnector} from "../connectors/ERC20MintingConnector.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 import {NativeConnector} from "../connectors/NativeConnector.sol";
@@ -65,7 +66,7 @@ contract EthDeployer is Script {
             "EthBridge.sol",
             abi.encodeCall(
                 EthBridge.initialize,
-                (TestERC20(taraAddressOnEth), IBridgeLightClient(taraClientProxy), finalizationInterval)
+                (IERC20MintableBurnable(taraAddressOnEth), IBridgeLightClient(taraClientProxy), finalizationInterval)
             ),
             opts
         );
@@ -84,7 +85,7 @@ contract EthDeployer is Script {
             "ERC20MintingConnector.sol",
             abi.encodeCall(
                 ERC20MintingConnector.initialize,
-                (address(ethBridgeProxy), TestERC20(taraAddressOnEth), Constants.NATIVE_TOKEN_ADDRESS)
+                (address(ethBridgeProxy), IERC20MintableBurnable(taraAddressOnEth), Constants.NATIVE_TOKEN_ADDRESS)
             ),
             opts
         );
@@ -109,7 +110,7 @@ contract EthDeployer is Script {
         }
 
         // give ownership of erc20 to the connector
-        TestERC20(taraAddressOnEth).transferOwnership(mintingConnectorProxy);
+        WETH9(payable(taraAddressOnEth)).transferOwnership(mintingConnectorProxy);
 
         // Add the connector to the bridge
         EthBridge bridge = EthBridge(ethBridgeProxy);
