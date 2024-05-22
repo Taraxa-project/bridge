@@ -44,7 +44,7 @@ contract ERC20MintingConnector is TokenConnectorBase {
      * @notice The amount of tokens to burn must be approved by the sender
      * @param amount The amount of tokens to burn.
      */
-    function burn(uint256 amount) public payable {
+    function burn(uint256 amount) public {
         try IERC20MintableBurnable(token).burnFrom(msg.sender, amount) {
             state.addAmount(msg.sender, amount);
             emit Burned(msg.sender, amount);

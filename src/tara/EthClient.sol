@@ -40,16 +40,14 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
         return bridgeRoot;
     }
 
-    function refundAmount() external view returns (uint256) {
-        return refund;
-    }
-
     /**
      * @dev Processes the bridge root by verifying account and storage proofs against state root from the light client.
      * @param account_proof The account proofs for the bridge root.
      * @param storage_proof The storage proofs for the bridge root.
      */
-    function processBridgeRoot(uint256 block_number, bytes[] memory account_proof, bytes[] memory storage_proof) external {
+    function processBridgeRoot(uint256 block_number, bytes[] memory account_proof, bytes[] memory storage_proof)
+        external
+    {
         // add check that the previous root was exactly the one before this
         bytes32 stateRoot = client.merkle_root(block_number);
         bytes memory br = StorageProof.verify(stateRoot, ethBridgeAddress, account_proof, bridgeRootKey, storage_proof);
@@ -57,7 +55,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
         if (br.length != 32) {
             revert InvalidBridgeRoot(br32);
         }
-        
+
         bridgeRoot = br32;
         emit BridgeRootProcessed(bridgeRoot);
     }
