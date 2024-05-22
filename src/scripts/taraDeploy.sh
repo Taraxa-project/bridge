@@ -42,16 +42,6 @@ if [ $? -ne 0 ]; then
   echo "Error calculating current sync committe aggregated PK"
   exit 1
 fi
-
-echo "Deploying Taraxa Bridge contract set >> Checking DRY RUN"
-
-forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url $RPC_FICUS_PRNET --legacy 
-
-if [ $? -ne 0 ]; then
-  echo "Error running deployment script for TaraClient"
-  exit 1
-fi
-
 # Run the deployment script for TaraClient
 res=$(forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy)
 

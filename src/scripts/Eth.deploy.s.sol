@@ -108,6 +108,9 @@ contract EthDeployer is Script {
             revert("Failed to fund the MintingConnector");
         }
 
+        address owner = TestERC20(taraAddressOnEth).owner();
+        console.log("Owner: %s", owner);
+
         // give ownership of erc20 to the connector
         TestERC20(taraAddressOnEth).transferOwnership(mintingConnectorProxy);
 
@@ -138,5 +141,7 @@ contract EthDeployer is Script {
         console.log("NativeConnector.sol proxy address: %s", nativeConnectorProxy);
         address nativeConnectorImpl = Upgrades.getImplementationAddress(nativeConnectorProxy);
         console.log("NativeConnector.sol implementation address: %s", nativeConnectorImpl);
+
+        vm.stopBroadcast();
     }
 }
