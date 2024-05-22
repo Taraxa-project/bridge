@@ -27,10 +27,8 @@ contract SymmetricTestSetup is Test {
         vm.startPrank(caller);
         taraLightClient = new BridgeLightClientMock();
         ethLightClient = new BridgeLightClientMock();
-        taraTokenOnEth = new TestERC20();
-        taraTokenOnEth.initialize("Tara", "TARA");
-        ethTokenOnTara = new TestERC20();
-        ethTokenOnTara.initialize("Eth", "ETH");
+        taraTokenOnEth = new TestERC20("Tara", "TARA");
+        ethTokenOnTara = new TestERC20("Eth", "ETH");
         taraBridge = new TaraBridge();
         taraBridge.initialize(taraTokenOnEth, ethLightClient, FINALIZATION_INTERVAL);
         ethBridge = new EthBridge();
@@ -55,6 +53,9 @@ contract SymmetricTestSetup is Test {
             revert("Failed to initialize tara minting connector");
         }
 
+        // give ownership ot erc20 to the connector
+        ethTokenOnTara.transferOwnership(address(ethOnTaraMintingConnector));
+
         taraBridge.registerContract(ethOnTaraMintingConnector);
 
         // Set Up ETH side of the bridge
@@ -75,6 +76,9 @@ contract SymmetricTestSetup is Test {
         if (!success4) {
             revert("Failed to initialize minting connector");
         }
+
+        // give ownership ot erc20 to the connector
+        taraTokenOnEth.transferOwnership(address(taraOnEthMintingConnector));
 
         ethBridge.registerContract(taraOnEthMintingConnector);
 

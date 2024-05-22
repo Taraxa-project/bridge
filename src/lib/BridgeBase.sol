@@ -22,11 +22,10 @@ import {NoFinalizedState} from "../errors/ConnectorErrors.sol";
 import "../connectors/IBridgeConnector.sol";
 
 abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
-    IBridgeLightClient public lightClient;
-
-    address[] public tokenAddresses;
     mapping(address => IBridgeConnector) public connectors;
     mapping(address => address) public localAddress;
+    IBridgeLightClient public lightClient;
+    address[] public tokenAddresses;
     uint256 public finalizedEpoch;
     uint256 public appliedEpoch;
     uint256 public finalizationInterval;

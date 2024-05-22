@@ -33,10 +33,8 @@ contract UpgradeabilityTest is Test {
         payable(caller).transfer(100 ether);
         taraLightClient = new BridgeLightClientMock();
         ethLightClient = new BridgeLightClientMock();
-        taraTokenOnEth =
-            TestERC20(Upgrades.deployUUPSProxy("TestERC20.sol", abi.encodeCall(TestERC20.initialize, ("Tara", "TARA"))));
-        ethTokenOnTara =
-            TestERC20(Upgrades.deployUUPSProxy("TestERC20.sol", abi.encodeCall(TestERC20.initialize, ("Eth", "ETH"))));
+        taraTokenOnEth = new TestERC20("Tara", "TARA");
+        ethTokenOnTara = new TestERC20("Eth", "ETH");
         taraBridge = TaraBridge(
             Upgrades.deployUUPSProxy(
                 "TaraBridge.sol",

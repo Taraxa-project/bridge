@@ -29,14 +29,9 @@ contract TokenDeployer is Script {
         Options memory opts;
         opts.defender.useDefenderDeploy = false;
 
-        address tokenProxy =
-            Upgrades.deployUUPSProxy("TestERC20.sol", abi.encodeCall(TestERC20.initialize, (name, symbol)), opts);
+        TestERC20 te = new TestERC20(name, symbol);
 
-        TestERC20 te = TestERC20(tokenProxy);
-
-        console.log("TestERC20 proxy: %s", tokenProxy);
-        address implAddress = Upgrades.getImplementationAddress(tokenProxy);
-        console.log("TestERC20 implementation: %s", implAddress);
+        console.log("TestERC20 address: %s", address(te));
 
         // call symbol to check if the token was deployed successfully
         string memory tokenSymbol = te.symbol();

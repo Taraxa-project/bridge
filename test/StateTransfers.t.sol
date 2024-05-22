@@ -206,10 +206,8 @@ contract StateTransfersTest is SymmetricTestSetup {
 
     function test_customToken() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
         // deploy and register token on both sides
-        taraTestToken = new TestERC20();
-        taraTestToken.initialize("Test", "TEST");
-        ethTestToken = new TestERC20();
-        ethTestToken.initialize("Test", "TEST");
+        taraTestToken = new TestERC20("Test", "TEST");
+        ethTestToken = new TestERC20("Test", "TEST");
         ERC20LockingConnector taraTestTokenConnector = new ERC20LockingConnector();
         taraTestTokenConnector.initialize(address(taraBridge), taraTestToken, address(ethTestToken));
         ERC20MintingConnector ethTestTokenConnector = new ERC20MintingConnector();
@@ -230,6 +228,11 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         taraTestToken.mintTo(address(this), 10 ether);
         taraTestToken.approve(address(taraTestTokenConnector), 1 ether);
+
+        // give ownership of erc20s to the connectors
+        taraTestToken.transferOwnership(address(taraTestTokenConnector));
+        ethTestToken.transferOwnership(address(ethTestTokenConnector));
+
         taraTestTokenConnector.lock(1 ether);
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();

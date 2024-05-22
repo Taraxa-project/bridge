@@ -108,6 +108,9 @@ contract EthDeployer is Script {
             revert("Failed to fund the MintingConnector");
         }
 
+        // give ownership of erc20 to the connector
+        TestERC20(taraAddressOnEth).transferOwnership(mintingConnectorProxy);
+
         // Add the connector to the bridge
         EthBridge bridge = EthBridge(ethBridgeProxy);
         bridge.registerContract(IBridgeConnector(mintingConnectorProxy));
