@@ -52,53 +52,44 @@ Last deployments are stored in the `deployments` folder.
 
 ## Deployment Details
 
-### Deployment from ./deployments/.tara.deployment.1715528731.json
+### Deployment from ./deployments/.token.deployment.1716392426.json
 
 ```json
 {
-  "taradeploy-1715528731": {
-    "RPC": "https://rpc-pr-2618.prnet.taraxa.io",
-    "EthClient": {
-      "implAddress": "0x0BB682a37FAA58Ed701283ff09aF4937BB5C618B",
-      "proxyAddress": "0xd16E9610A109118caD605F370025b51B78eaE988"
+  "tokendeploy-1716392426": {
+    "TARA": {
+      "address": "0x50Abd4a0B59Bcbfe9ee75E3cB8c1de006CE0f531",
+      "RPC": "https://holesky.drpc.org"
     },
-    "TaraBridge": {
-      "implAddress": "0xFBC597EEf68722E05bbC1e52264103b416551dFB",
-      "proxyAddress": "0xFA7c27D54B6e1C631D1426f3dDaC818Cb4033d84"
-    },
-    "ERC20MintingConnector": {
-      "implAddress": "0x76C7c6eD590ddC9E8d71377c4Eb1386A83330DF3",
-      "proxyAddress": "0xf014b0A09A9de4311ca62Af7654299be1337C5E8"
-    },
-    "NativeConnector": {
-      "implAddress": "0xf3cB9a75dC647531A18cB0fbA78e08d5604846AA",
-      "proxyAddress": "0x2D76E86F8285873Ba16EDCa529c884DE3661e62F"
+    "ETH": {
+      "address": "0xf798c0dAa637088b3e4C5ae88A20551c17438ee5",
+      "RPC": "https://rpc-pr-2756.prnet.taraxa.io"
     }
   }
 }
 ```
 
-### Deployment from ./deployments/.eth.deployment.1715528385.json
+### Deployment from ./deployments/.tara.deployment.1716392789.json
 
 ```json
 {
-  "ethdeploy-1715528385": {
-    "RPC": "https://holesky.drpc.org",
-    "TaraClient": {
-      "implAddress": "0x402908C007aAC2fAf83D57945ff95cF2de49b359",
-      "proxyAddress": "0x515d5e39a9FfF8dBBD84C8064ea3Bc4ad2610442"
+  "taradeploy-1716392789": {
+    "RPC": "https://rpc-pr-2756.prnet.taraxa.io",
+    "EthClient": {
+      "implAddress": "0x25394E29b8DFf642e66B221217AF7D313340C1fA",
+      "proxyAddress": "0xf6F70aD8212105bd51695766153793Cf9AE94F78"
     },
-    "EthBridge": {
-      "implAddress": "0x762dA247D9F269b1689d4baaD587243eccF7910c",
-      "proxyAddress": "0x438623c79b1721f13666a844F6Bc78619031ACd6"
+    "TaraBridge": {
+      "implAddress": "0x3Afa48FcF6191e0589CB2EED55820118aFB80A1e",
+      "proxyAddress": "0xd2C5ccAa72bfaF2d28e8e924D77870eBab3d047f"
     },
     "ERC20MintingConnector": {
-      "implAddress": "0xd1FA7C5782cc53dA98fC444c1A148338547Af763",
-      "proxyAddress": "0x604AF5F90acAC6bF459b5337002152dDd17c1e88"
+      "implAddress": "0x86Ba9aB2c10EbE0E025C141a74d0A5A7016E8304",
+      "proxyAddress": "0xC2073b2319588d2245493Fd03BAdBECb05288c16"
     },
     "NativeConnector": {
-      "implAddress": "0xb1ADA9687f03D7fBE3756037E32FB27d2185f60D",
-      "proxyAddress": "0x575E6706Acfab1e3A17daa8692b90Bd62D9c4674"
+      "implAddress": "0xe90BEbE643526FE85131bBfc4d12b1Eef9dd283C",
+      "proxyAddress": "0x72129D8648570ED5719AD49Ff4D51b28d47b59bB"
     }
   }
 }
