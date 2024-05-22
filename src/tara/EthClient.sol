@@ -40,10 +40,6 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
         return bridgeRoot;
     }
 
-    function refundAmount() external view returns (uint256) {
-        return refund;
-    }
-
     /**
      * @dev Processes the bridge root by verifying account and storage proofs against state root from the light client.
      * @param account_proof The account proofs for the bridge root.

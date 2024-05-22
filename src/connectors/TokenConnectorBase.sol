@@ -64,13 +64,14 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
             revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
         }
 
+        // increase epoch if there are no pending transfers
         if (state.empty() && address(finalizedState) != address(0) && finalizedState.empty()) {
             state.increaseEpoch();
             finalizedState.increaseEpoch();
-            return Constants.EMPTY_HASH;
+        } else {
+            finalizedState = state;
+            state = new TokenState(epoch_to_finalize + 1);
         }
-        finalizedState = state;
-        state = new TokenState(epoch_to_finalize + 1);
         emit Finalized(epoch_to_finalize);
         return keccak256(finalizedSerializedTransfers());
     }

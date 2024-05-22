@@ -42,7 +42,7 @@ echo "Running deployment script for TARA on ETH >> Checking DRY RUN"
 # Deploy the Eth token to Taraxa using forge create
 export SYMBOL="ETH"
 export NAME="Ethereum"
-forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --legacy --force --slow
+forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --legacy --force
 
 if [ $? -ne 0 ]; then
   echo "Error running DRY RUN for ETH token"
@@ -50,7 +50,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-res=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy --force --slow)
+res=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy --force)
 
 if [ $? -ne 0 ]; then
   echo "Error deploying Tara token"
