@@ -32,12 +32,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # Extract the proxy and implementation addresses of the deployed contract
-taraProxyAddress=$(echo "$res" | grep "TestERC20 proxy:" | awk '{print $3}')
-taraImplementationAddress=$(echo "$res" | grep "TestERC20 implementation:" | awk '{print $3}')
+taraAddress=$(echo "$res" | grep "TestERC20 address:" | awk '{print $3}')
 
-echo "TARA token on Eth deployed to: $taraProxyAddress"
+echo "TARA token on Eth deployed to: $taraAddress"
 
-echo "TARA_ADDRESS_ON_ETH=$taraProxyAddress" >> .env
+echo "TARA_ADDRESS_ON_ETH=$taraAddress" >> .env
 
 echo "Running deployment script for TARA on ETH >> Checking DRY RUN"
 # Deploy the Eth token to Taraxa using forge create
@@ -59,25 +58,22 @@ if [ $? -ne 0 ]; then
 fi
 
 # Extract the proxy and implementation addresses of the deployed contract
-ethProxyAddress=$(echo "$res" | grep "TestERC20 proxy:" | awk '{print $3}')
-ethImplementationAddress=$(echo "$res" | grep "TestERC20 implementation:" | awk '{print $3}')
+ethAddress=$(echo "$res" | grep "TestERC20 address:" | awk '{print $3}')
 
-echo "Eth token on Tara deployed to: $ethProxyAddress"
+echo "Eth token on Tara deployed to: $ethAddress"
 
-echo "ETH_ADDRESS_ON_TARA=$ethProxyAddress" >> .env
+echo "ETH_ADDRESS_ON_TARA=$ethAddress" >> .env
 
 currentTimestamp=$(date +%s)
 deploymentFile=".token.deployment.$currentTimestamp.json"
 echo "{" > $deploymentFile
 echo "  \"tokendeploy-$currentTimestamp\": {" >> $deploymentFile
 echo "    \"TARA\": {" >> $deploymentFile
-echo "      \"implAddress\": \"$taraImplementationAddress\"," >> $deploymentFile
-echo "      \"proxyAddress\": \"$taraProxyAddress\"," >> $deploymentFile
+echo "      \"address\": \"$taraAddress\"," >> $deploymentFile
 echo "      \"RPC\": \"$RPC_HOLESKY\"" >> $deploymentFile
 echo "    }," >> $deploymentFile
 echo "    \"ETH\": {" >> $deploymentFile
-echo "      \"implAddress\": \"$ethImplementationAddress\"," >> $deploymentFile
-echo "      \"proxyAddress\": \"$ethProxyAddress\"," >> $deploymentFile
+echo "      \"address\": \"$ethAddress\"," >> $deploymentFile
 echo "      \"RPC\": \"$RPC_FICUS_PRNET\"" >> $deploymentFile
 echo "    }" >> $deploymentFile
 echo "  }" >> $deploymentFile

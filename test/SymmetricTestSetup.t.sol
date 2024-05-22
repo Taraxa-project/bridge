@@ -27,10 +27,8 @@ contract SymmetricTestSetup is Test {
         vm.startPrank(caller);
         taraLightClient = new BridgeLightClientMock();
         ethLightClient = new BridgeLightClientMock();
-        taraTokenOnEth = new TestERC20();
-        taraTokenOnEth.initialize("Tara", "TARA");
-        ethTokenOnTara = new TestERC20();
-        ethTokenOnTara.initialize("Eth", "ETH");
+        taraTokenOnEth = new TestERC20("Tara", "TARA");
+        ethTokenOnTara = new TestERC20("Eth", "ETH");
         taraBridge = new TaraBridge();
         taraBridge.initialize(taraTokenOnEth, ethLightClient, FINALIZATION_INTERVAL);
         ethBridge = new EthBridge();
