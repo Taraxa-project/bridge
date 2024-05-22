@@ -69,12 +69,41 @@ Last deployments are stored in the `deployments` folder.
 }
 ```
 
+### Deployment from ./deployments/.eth.deployment.1716392669.json
+
+```json
+{
+  "ethdeploy-1716392669": {
+    "RPC": "https://holesky.drpc.org",
+    "TaraClient": {
+      "implAddress": "0xc9bbC8b4cf617a231B1bBe3A4b2a9c12d673b604",
+      "proxyAddress": "0xA711d06920Fb75C1CD0833cd39987D80Aef69296"
+    },
+    "EthBridge": {
+      "implAddress": "0x672bcEDaCF5dF81241Fe39D7C23A162171B425Bb",
+      "proxyAddress": "0x3657dA3a8188Fc389B8c25f466718E272CE824FD"
+    },
+    "ERC20MintingConnector": {
+      "implAddress": "0xc56393d28B10Af5ffBB13b500388B077B0C0A78F",
+      "proxyAddress": "0x04D5a6398519CBED0A5b39292B2271b2C5564B8a"
+    },
+    "NativeConnector": {
+      "implAddress": "0x8749e97a8f3c4FE6333fED0F06df42F84FEA2e51",
+      "proxyAddress": "0x57751c6181ee22Ec9C402A6bA8ceB44192525988"
+    }
+  }
+}
+```
+
 ### Deployment from ./deployments/.tara.deployment.1716392789.json
 
 ```json
 {
   "taradeploy-1716392789": {
     "RPC": "https://rpc-pr-2756.prnet.taraxa.io",
+    "BeaconLightClient": {
+      "address": "0xa545a5155105844a6c1aF2b4Bc35A09A7ceE6858"
+    },
     "EthClient": {
       "implAddress": "0x25394E29b8DFf642e66B221217AF7D313340C1fA",
       "proxyAddress": "0xf6F70aD8212105bd51695766153793Cf9AE94F78"
@@ -90,25 +119,6 @@ Last deployments are stored in the `deployments` folder.
     "NativeConnector": {
       "implAddress": "0xe90BEbE643526FE85131bBfc4d12b1Eef9dd283C",
       "proxyAddress": "0x72129D8648570ED5719AD49Ff4D51b28d47b59bB"
-    }
-  }
-}
-```
-
-### Deployment from ./deployments/.token.deployment.1715527980.json
-
-```json
-{
-  "tokendeploy-1715527980": {
-    "TARA": {
-      "implAddress": "0x3f810D69D2D6C4E7150743e8b1170761d0d905Ae",
-      "proxyAddress": "0x7E7921cb1440E76c1D4a59F9996e65e9a5B8761c",
-      "RPC": "https://holesky.drpc.org"
-    },
-    "ETH": {
-      "implAddress": "0x1d7FC09d70cEc88e7a048B84A80D381d92dbDBFF",
-      "proxyAddress": "0x8271649B4a682603119E118f250DCFde455B3286",
-      "RPC": "https://rpc-pr-2618.prnet.taraxa.io"
     }
   }
 }
