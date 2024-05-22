@@ -128,6 +128,8 @@ contract StateTransfersTest is SymmetricTestSetup {
         uint256 finalizedEpoch = taraBridge.getStateWithProof().state.epoch;
         assertEq(finalizedEpoch, 1);
         vm.roll(2 * FINALIZATION_INTERVAL);
+
+        vm.expectRevert();
         taraBridge.finalizeEpoch();
         // check that we are not finalizing empty epoch
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();

@@ -15,7 +15,8 @@ import {
     UnregisteredContract,
     InvalidStateHash,
     UnmatchingContractAddresses,
-    ZeroAddressCannotBeRegistered
+    ZeroAddressCannotBeRegistered,
+    NoStateToFinalize
 } from "../errors/BridgeBaseErrors.sol";
 import {NoFinalizedState} from "../errors/ConnectorErrors.sol";
 import "../connectors/IBridgeConnector.sol";
@@ -182,8 +183,7 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
 
         if (!shouldFinalizeEpoch()) {
-            // console.log("No need to finalize");
-            return;
+            revert NoStateToFinalize();
         }
         for (uint256 i = 0; i < tokenAddresses.length;) {
             hashes[i] = SharedStructs.ContractStateHash(

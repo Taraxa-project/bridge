@@ -45,7 +45,7 @@ fi
 
 echo "Deploying Taraxa Bridge contract set >> Checking DRY RUN"
 
-forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url $RPC_FICUS_PRNET --legacy --slow
+forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url $RPC_FICUS_PRNET --legacy 
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for TaraClient"
@@ -53,7 +53,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run the deployment script for TaraClient
-res=$(forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy --slow)
+res=$(forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for TaraClient"

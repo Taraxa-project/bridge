@@ -20,14 +20,14 @@ echo "Deploying TaraClient contract"
 
 echo "Running deployment script for TaraClient & EthBridge >> Checking DRY RUN"
 
-forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --slow --force
+forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY   --force
 
 if [ $? -ne 0 ]; then
   echo "Error running DRY RUN for EthBridge"
   exit 1
 fi
 
-res=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast --slow --force)
+res=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast --legacy --force)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for EthBridge"
