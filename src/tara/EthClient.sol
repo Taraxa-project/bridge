@@ -26,7 +26,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     event BridgeRootProcessed(bytes32 indexed bridgeRoot);
 
     function initialize(BeaconLightClient _client, address _eth_bridge_address) public initializer {
-        bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000005;
+        bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000008;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
         emit Initialized(address(_client), _eth_bridge_address);
