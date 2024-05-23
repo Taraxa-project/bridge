@@ -79,6 +79,7 @@ deploymentFile=".tara.deployment.$currentTimestamp.json"
 echo "{" > $deploymentFile
 echo "  \"taradeploy-$currentTimestamp\": {" >> $deploymentFile
 echo "    \"RPC\": \"$RPC_FICUS_PRNET\"," >> $deploymentFile
+echo "    \"BeaconLightClient\":  \"$blcAddress\"," >> $deploymentFile
 echo "    \"EthClient\": {" >> $deploymentFile
 echo "      \"implAddress\": \"$ethClientImpl\"," >> $deploymentFile
 echo "      \"proxyAddress\": \"$ethClientProxy\"" >> $deploymentFile
