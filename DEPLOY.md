@@ -50,75 +50,73 @@ Last deployments are stored in the `deployments` folder.
 
 **Note:** The deployment details section below lists both the RPC and the contract addresses for the deployed contracts. To interact with the contracts in Remix or any other tool, you will need to use the proxy addresses as `TaraBridge bridge = TaraBridge(proxyAddress)` or `TaraBridge bridge = TaraBridge(0xFA7c27D54B6e1C631D1426f3dDaC818Cb4033d84)`.
 
-## Deployment Details
+## TESTABLE DEPLOYMENT
 
-### Deployment from ./deployments/.token.deployment.1716392426.json
+### Deployment from ./deployments/.token.deployment.1716544892.json
 
 ```json
 {
-  "tokendeploy-1716392426": {
+  "tokendeploy-1716544892": {
     "TARA": {
-      "address": "0x50Abd4a0B59Bcbfe9ee75E3cB8c1de006CE0f531",
+      "address": "0x72862dc8eB9251D3ABE9cba411c41b38A9Ed12C9",
       "RPC": "https://holesky.drpc.org"
     },
     "ETH": {
-      "address": "0xf798c0dAa637088b3e4C5ae88A20551c17438ee5",
+      "address": "0xdB0698D2c8FbE2C3c36941ccEC488834BbcAf151",
       "RPC": "https://rpc-pr-2756.prnet.taraxa.io"
     }
   }
 }
 ```
 
-### Deployment from ./deployments/.eth.deployment.1716392669.json
+### Deployment from ./deployments/.eth.deployment.1716545201.json
 
 ```json
 {
-  "ethdeploy-1716392669": {
+  "ethdeploy-1716545201": {
     "RPC": "https://holesky.drpc.org",
     "TaraClient": {
-      "implAddress": "0xc9bbC8b4cf617a231B1bBe3A4b2a9c12d673b604",
-      "proxyAddress": "0xA711d06920Fb75C1CD0833cd39987D80Aef69296"
+      "implAddress": "0xd3EAF83f1984308633E1bB26a8DA49bA0658e587",
+      "proxyAddress": "0xFEBFE005CfeBC59590C7f22b61C13a296AF01f49"
     },
     "EthBridge": {
-      "implAddress": "0x672bcEDaCF5dF81241Fe39D7C23A162171B425Bb",
-      "proxyAddress": "0x3657dA3a8188Fc389B8c25f466718E272CE824FD"
+      "implAddress": "0x06BBa509ca36e9f764f94b9Ce8420b424fD94015",
+      "proxyAddress": "0x7744121681C9D9Bd1fA8aff148Cffe98b5E152e8"
     },
     "ERC20MintingConnector": {
-      "implAddress": "0xc56393d28B10Af5ffBB13b500388B077B0C0A78F",
-      "proxyAddress": "0x04D5a6398519CBED0A5b39292B2271b2C5564B8a"
+      "implAddress": "0xA190Db338F1838bDfD13E8b2d6F4505EFf002B0F",
+      "proxyAddress": "0xA23C7dF2E9fa24D1F20Ead92D49fad012d7B3A42"
     },
     "NativeConnector": {
-      "implAddress": "0x8749e97a8f3c4FE6333fED0F06df42F84FEA2e51",
-      "proxyAddress": "0x57751c6181ee22Ec9C402A6bA8ceB44192525988"
+      "implAddress": "0x937450589aAB8A807310e493fE51f70bC65cC053",
+      "proxyAddress": "0x78410949dDEEEbfAf7527f95d873c84297F82618"
     }
   }
 }
 ```
 
-### Deployment from ./deployments/.tara.deployment.1716392789.json
+### Deployment from ./deployments/.tara.deployment.1716545354.json
 
 ```json
 {
-  "taradeploy-1716392789": {
+  "taradeploy-1716545354": {
     "RPC": "https://rpc-pr-2756.prnet.taraxa.io",
-    "BeaconLightClient": {
-      "address": "0xa545a5155105844a6c1aF2b4Bc35A09A7ceE6858"
-    },
+    "BeaconLightClient": "0x3BBdc66Fa7eb51259Da29909529b65232c184519",
     "EthClient": {
-      "implAddress": "0x25394E29b8DFf642e66B221217AF7D313340C1fA",
-      "proxyAddress": "0xf6F70aD8212105bd51695766153793Cf9AE94F78"
+      "implAddress": "0xeB372006B243e00d7a97662221D3521be1Fb9a71",
+      "proxyAddress": "0x0824335062010047BA9Ca4b4E5b4B35Eb89B972d"
     },
     "TaraBridge": {
-      "implAddress": "0x3Afa48FcF6191e0589CB2EED55820118aFB80A1e",
-      "proxyAddress": "0xd2C5ccAa72bfaF2d28e8e924D77870eBab3d047f"
+      "implAddress": "0x13e6FBcdef48807baFeCA4d55Fd4f0895e34625c",
+      "proxyAddress": "0xcAF2b453FE8382a4B8110356DF0508f6d71F22BF"
     },
     "ERC20MintingConnector": {
-      "implAddress": "0x86Ba9aB2c10EbE0E025C141a74d0A5A7016E8304",
-      "proxyAddress": "0xC2073b2319588d2245493Fd03BAdBECb05288c16"
+      "implAddress": "0x305c67850795059a084af6De6E8E3f6422bB4103",
+      "proxyAddress": "0x030f4671e48Fc2a0eE4BdA956B2Aba26F5b7F8A9"
     },
     "NativeConnector": {
-      "implAddress": "0xe90BEbE643526FE85131bBfc4d12b1Eef9dd283C",
-      "proxyAddress": "0x72129D8648570ED5719AD49Ff4D51b28d47b59bB"
+      "implAddress": "0xaE98B111fFC1452895e4709FE84b7905C8735B69",
+      "proxyAddress": "0x98C860E92486975d93A4b83261315c02728Add43"
     }
   }
 }

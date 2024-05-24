@@ -57,7 +57,7 @@ contract TaraDeployer is Script {
         bytes32 _sync_root = vm.envBytes32("SYNC_COMMITTEE_ROOT");
         console.log("Period: %s", _slot / 32 / 256);
 
-        bytes32 _genesis_validators_root = 0x81d0ed09d41d51e35a4e98f777e5f906996115f26fd72be32b5fb0caa82c287b;
+        bytes32 _genesis_validators_root = 0x9143aa7c615a7f7115e2b6aac319c03529df8242ae705fba9df39b79c59fa8b1;
 
         BeaconLightClient beaconClient = new BeaconLightClient(
             _slot,

@@ -1,0 +1,12 @@
+{
+  "tokendeploy-1716452705": {
+    "TARA": {
+      "address": "0x6A051e33709529DA7F31E95CBCc54B7855ff4a45",
+      "RPC": "https://holesky.drpc.org"
+    },
+    "ETH": {
+      "address": "0x6CBF080550f41268817bAaE148fD393da547b21C",
+      "RPC": "https://rpc-pr-2756.prnet.taraxa.io"
+    }
+  }
+}
