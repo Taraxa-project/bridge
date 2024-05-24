@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+import "../connectors/NativeConnector.sol";
 import "../lib/IBridgeLightClient.sol";
+import "../lib/Constants.sol";
 import "../lib/BridgeBase.sol";
 import "../connectors/ERC20MintingConnector.sol";
 

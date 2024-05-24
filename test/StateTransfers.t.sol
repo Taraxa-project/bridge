@@ -90,7 +90,7 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                StateNotMatchingBridgeRoot.selector, root, ethBridge.lightClient().getFinalizedBridgeRoot(0)
+                StateNotMatchingBridgeRoot.selector, root, ethBridge.lightClient().getFinalizedBridgeRoot()
             )
         );
         ethBridge.applyState(state);
@@ -112,7 +112,7 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                StateNotMatchingBridgeRoot.selector, root, ethBridge.lightClient().getFinalizedBridgeRoot(0)
+                StateNotMatchingBridgeRoot.selector, root, ethBridge.lightClient().getFinalizedBridgeRoot()
             )
         );
         ethBridge.applyState(state);

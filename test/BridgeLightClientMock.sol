@@ -11,7 +11,7 @@ contract BridgeLightClientMock is IBridgeLightClient {
         bridgeRoot = SharedStructs.getBridgeRoot(state_with_proof.state.epoch, state_with_proof.state_hashes);
     }
 
-    function getFinalizedBridgeRoot(uint256 epoch) public view override returns (bytes32) {
+    function getFinalizedBridgeRoot() public view override returns (bytes32) {
         return bridgeRoot;
     }
 

@@ -11,10 +11,6 @@ contract LightClientMock {
         merkleRoot = root;
     }
 
-    function merkle_root(uint256 epoch) external view returns (bytes32) {
-        return merkleRoot;
-    }
-
     function merkle_root() external view returns (bytes32) {
         return merkleRoot;
     }
@@ -72,9 +68,9 @@ contract EthClientTest is Test {
         storageProof[0] =
             hex"f844a120290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563a1a02a6bdefe81a8e9d36fb1a8f8fb0b3e6e5fb45aa05b8542441a4c552b51e13fa7";
 
-        client.processBridgeRoot(0, accountProof, storageProof);
+        client.processBridgeRoot(accountProof, storageProof);
 
-        assertEq(client.getFinalizedBridgeRoot(0), 0x2a6bdefe81a8e9d36fb1a8f8fb0b3e6e5fb45aa05b8542441a4c552b51e13fa7);
+        assertEq(client.getFinalizedBridgeRoot(), 0x2a6bdefe81a8e9d36fb1a8f8fb0b3e6e5fb45aa05b8542441a4c552b51e13fa7);
     }
 
     function test_bridgeRootProofFail() public {
@@ -90,6 +86,6 @@ contract EthClientTest is Test {
             hex"f844a120290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563a1a02a6bdefe81a8e9d36fb1a8f8fb0b3e6e5fb45aa05b8542441a4c552b51e13fa7";
 
         vm.expectRevert("MerkleTrie: invalid root hash");
-        client.processBridgeRoot(0, accountProof, storageProof);
+        client.processBridgeRoot(accountProof, storageProof);
     }
 }
