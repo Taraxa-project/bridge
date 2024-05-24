@@ -7,14 +7,22 @@ from eth2spec.utils.ssz.ssz_typing import (
      Container, Vector, Bytes48 )
 
 
-headers_url = "https://beacon-pr-2618.prnet.taraxa.io/eth/v1/beacon/headers"
+rpc_node = "https://beacon-pr-2618.prnet.taraxa.io"
+
+
+headers_url = f'{rpc_node}/eth/v1/beacon/headers'
 response = requests.get(headers_url)
 data = response.json()
 slot = data['data'][0]['header']['message']['slot']
 
-PERIOD = int(int(slot) /32 /256)
-url = f'https://beacon-pr-2618.prnet.taraxa.io/eth/v1/beacon/light_client/updates?start_period={PERIOD}&count=1'
-committee_url = f'https://beacon-pr-2618.prnet.taraxa.io/eth/v1/beacon/light_client/updates?start_period={PERIOD -1}&count=1'
+genesis_url = f'{rpc_node}/eth/v1/beacon/genesis'
+response = requests.get(genesis_url)
+data = response.json()
+genesis_root = data['data']['genesis_validators_root']
+
+period = int(int(slot) /32 /256)
+url = f'{rpc_node}/eth/v1/beacon/light_client/updates?start_period={period}&count=1'
+committee_url = f'{rpc_node}/eth/v1/beacon/light_client/updates?start_period={period -1}&count=1'
 
 
 SYNC_COMMITTEE_SIZE = 512  # Example size, adjust as per your specs
@@ -101,6 +109,7 @@ env_file_path = os.path.join(os.getcwd(), '.env')  # Change as necessary
 # Writing to the .env file
 with open(env_file_path, 'a') as file:
     file.write(f"\nSLOT={data['data']['finalized_header']['beacon']['slot']}\n")
+    file.write(f"GENESIS_ROOT={genesis_root}\n")
     file.write(f"PROPOSER_INDEX={data['data']['finalized_header']['beacon']['proposer_index']}\n")
     file.write(f"PARENT_ROOT={data['data']['finalized_header']['beacon']['parent_root']}\n")
     file.write(f"STATE_ROOT={data['data']['finalized_header']['beacon']['state_root']}\n")
