@@ -42,6 +42,9 @@ if [ $? -ne 0 ]; then
   echo "Error calculating current sync committe aggregated PK"
   exit 1
 fi
+
+source .env
+
 # Run the deployment script for TaraClient
 res=$(forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --force --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy | tee /dev/tty)
 
