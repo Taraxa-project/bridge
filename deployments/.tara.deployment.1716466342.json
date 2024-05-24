@@ -1,0 +1,21 @@
+{
+  "taradeploy-1716466342": {
+    "RPC": "https://rpc-pr-2756.prnet.taraxa.io",
+    "EthClient": {
+      "implAddress": "0xB369f5Dd379985D13ca908D60Ddb0Ba5E9E6A032",
+      "proxyAddress": "0xCc45aAd3A0F246Ae830278280E7e9cB17A4b277A"
+    },
+    "TaraBridge": {
+      "implAddress": "0x0B8194DE50945eB142D808CD945DF7Ec3D61C14B",
+      "proxyAddress": "0x0588E24E0cc1beaF751707ecdB87b056bbC633f3"
+    },
+    "ERC20MintingConnector": {
+      "implAddress": "0xa27BFdfE70F8cB23f672D029748A35Dd41a037A5",
+      "proxyAddress": "0x31607cafF62E92036228082f5f2C2E702002F92e"
+    },
+    "NativeConnector": {
+      "implAddress": "0xcf8838a647539C8bE13831F722f2c3e73b167469",
+      "proxyAddress": "0x82be645961016849113D9f4eCBdB8f8957911A68"
+    }
+  }
+}

@@ -12,19 +12,12 @@ source .env
 echo "Holesky RPC: $RPC_HOLESKY"
 echo "Tara RPC: $RPC_FICUS_PRNET"
 
-echo "Running deployment script for TARA on ETH >> Checking DRY RUN"
+echo "Running deployment script for TARA on ETH"
 
 export SYMBOL="TARA"
 export NAME="Taraxa"
-forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_HOLESKY --legacy --force --slow
-
-if [ $? -ne 0 ]; then
-  echo "Error running DRY RUN for Tara token"
-  exit 1
-fi
-
 # # Deploy the Tara token to Holesky using forge create
-res=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast --legacy --force --slow)
+resTara=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_HOLESKY --broadcast --legacy | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error deploying Tara token"
@@ -32,25 +25,18 @@ if [ $? -ne 0 ]; then
 fi
 
 # Extract the proxy and implementation addresses of the deployed contract
-taraAddress=$(echo "$res" | grep "TestERC20 address:" | awk '{print $3}')
+taraAddress=$(echo "$resTara" | grep "TestERC20 address:" | awk '{print $3}')
 
 echo "TARA token on Eth deployed to: $taraAddress"
 
 echo "TARA_ADDRESS_ON_ETH=$taraAddress" >> .env
 
-echo "Running deployment script for TARA on ETH >> Checking DRY RUN"
+echo "Running deployment script for ETH on TARA"
 # Deploy the Eth token to Taraxa using forge create
 export SYMBOL="ETH"
 export NAME="Ethereum"
-forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --legacy --force
 
-if [ $? -ne 0 ]; then
-  echo "Error running DRY RUN for ETH token"
-  exit 1
-fi
-
-
-res=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --via-ir --rpc-url $RPC_FICUS_PRNET --broadcast --legacy --force)
+resEth=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_FICUS_PRNET --broadcast --legacy | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error deploying Tara token"
@@ -58,7 +44,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Extract the proxy and implementation addresses of the deployed contract
-ethAddress=$(echo "$res" | grep "TestERC20 address:" | awk '{print $3}')
+ethAddress=$(echo "$resEth" | grep "TestERC20 address:" | awk '{print $3}')
 
 echo "Eth token on Tara deployed to: $ethAddress"
 

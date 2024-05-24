@@ -16,21 +16,13 @@ if [ -z "$RPC_HOLESKY" ] || [ -z "$PRIVATE_KEY" ] || [ -z "$TARA_ADDRESS_ON_ETH"
   exit 1
 fi
 
-echo "Deploying TaraClient contract"
+echo "Running deployment script for TaraClient & EthBridge"
 
-echo "Running deployment script for TaraClient & EthBridge >> Checking DRY RUN"
-
-forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY   --force
-
-if [ $? -ne 0 ]; then
-  echo "Error running DRY RUN for EthBridge"
-  exit 1
-fi
-
-res=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --via-ir --rpc-url $RPC_HOLESKY --broadcast --legacy --force)
+res=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --rpc-url $RPC_HOLESKY --broadcast --legacy --force | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for EthBridge"
+  echo "$res"
   exit 1
 fi
 
