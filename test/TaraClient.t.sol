@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 import {Test, console} from "forge-std/Test.sol";
 import "../src/eth/TaraClient.sol";
 import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../src/errors/ClientErrors.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
@@ -24,6 +25,17 @@ contract TaraClientTest is Test {
 
     address caller = address(bytes20(sha256(hex"1234")));
 
+    function updateCurrentBlock(PillarBlock.WithChanges memory newBlock) public {
+        currentBlock.block.period = newBlock.block.period;
+        currentBlock.block.stateRoot = newBlock.block.stateRoot;
+        currentBlock.block.bridgeRoot = newBlock.block.bridgeRoot;
+        currentBlock.block.prevHash = newBlock.block.prevHash;
+        delete currentBlock.validatorChanges;
+        for (uint256 i = 0; i < newBlock.validatorChanges.length; i++) {
+            currentBlock.validatorChanges.push(newBlock.validatorChanges[i]);
+        }
+    }
+
     function setUp() public {
         vm.startBroadcast(caller);
         PillarBlock.VoteCountChange[] memory initial = new PillarBlock.VoteCountChange[](10);
@@ -32,10 +44,14 @@ contract TaraClientTest is Test {
             initial[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 20);
         }
 
-        currentBlock =
-            PillarBlock.WithChanges(PillarBlock.FinalizationData(1, bytes32(0), bytes32(0), bytes32(0)), initial);
-        client = new TaraClient();
-        client.initialize(PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL);
+        updateCurrentBlock(
+            PillarBlock.WithChanges(PillarBlock.FinalizationData(1, bytes32(0), bytes32(0), bytes32(0)), initial)
+        );
+
+        address taraClientProxy = Upgrades.deployUUPSProxy(
+            "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL))
+        );
+        client = TaraClient(taraClientProxy);
         PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
         blocks[0] = currentBlock;
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
@@ -43,7 +59,7 @@ contract TaraClientTest is Test {
         currentBlock.block.prevHash = client.getFinalized().blockHash;
 
         // this should not revert
-        bytes32 finalizedBridgeRoot = client.getFinalizedBridgeRoot(1);
+        client.getFinalizedBridgeRoot(1);
         vm.stopBroadcast();
     }
 
@@ -93,10 +109,25 @@ contract TaraClientTest is Test {
         assertEq(weight, uint256(signatures_count));
     }
 
+    function updateCurrentBlockVoteChanges(PillarBlock.VoteCountChange[] memory changes) public {
+        delete currentBlock.validatorChanges;
+        for (uint256 i = 0; i < changes.length; i++) {
+            currentBlock.validatorChanges.push(changes[i]);
+        }
+    }
+
     function test_blockAccept() public {
-        currentBlock.validatorChanges = getVoteCountChanges();
+        PillarBlock.WithChanges memory currBlock = currentBlock;
+        assertEq(currentBlock.block.period, currBlock.block.period, "periods should match");
+        currBlock.validatorChanges = getVoteCountChanges();
+        assertNotEq(currBlock.validatorChanges.length, currentBlock.validatorChanges.length, "lengths should not match");
         PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
+        delete currentBlock.validatorChanges;
+        for (uint256 i = 0; i < currBlock.validatorChanges.length; i++) {
+            currentBlock.validatorChanges.push(currBlock.validatorChanges[i]);
+        }
         blocks[0] = currentBlock;
+
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
         (bytes32 blockHash,, uint256 finalizedAt) = client.finalized();
         assertEq(blockHash, PillarBlock.getHash(currentBlock));
@@ -104,7 +135,7 @@ contract TaraClientTest is Test {
     }
 
     function test_rejectBlockWithWrongSignatures() public {
-        currentBlock.validatorChanges = getVoteCountChanges();
+        updateCurrentBlockVoteChanges(getVoteCountChanges());
         PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
         blocks[0] = currentBlock;
         currentBlock.block.period += 1;
@@ -124,14 +155,14 @@ contract TaraClientTest is Test {
     }
 
     function test_acceptBatch() public {
-        currentBlock.validatorChanges = getVoteCountChanges();
+        updateCurrentBlockVoteChanges(getVoteCountChanges());
         PillarBlock.WithChanges[] memory blocks = makePillarChain(10);
 
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
     function test_rejectBatchWithWrongPrevHash() public {
-        currentBlock.validatorChanges = getVoteCountChanges();
+        updateCurrentBlockVoteChanges(getVoteCountChanges());
         PillarBlock.WithChanges[] memory blocks = makePillarChain(10);
 
         blocks[3].block.prevHash = bytes32(0);
@@ -141,24 +172,26 @@ contract TaraClientTest is Test {
     }
 
     function test_rejectBatchWithWrongSignatures() public {
-        currentBlock.validatorChanges = getVoteCountChanges();
+        updateCurrentBlockVoteChanges(getVoteCountChanges());
         PillarBlock.WithChanges[] memory blocks = makePillarChain(10);
 
         // set some block in the middle to create signatures for
-        currentBlock = blocks[3];
+        currentBlock.block = blocks[3].block;
         vm.expectRevert();
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
-    // function test_weightChanges() public {
-    //     PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](20);
-    //     for (uint256 i = 0; i < changes.length; i++) {
-    //         bytes32 pk = keccak256(abi.encodePacked(i));
-    //         changes[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 10);
-    //     }
-    //     client.setThreshold(1);
-    //     client.processValidatorChanges(changes);
-    // }
+    function test_weightChanges() public {
+        vm.startBroadcast(caller);
+        PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](20);
+        for (uint256 i = 0; i < changes.length; i++) {
+            bytes32 pk = keccak256(abi.encodePacked(i));
+            changes[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 10);
+        }
+        client.setThreshold(1);
+        client.processValidatorChanges(changes);
+        vm.stopBroadcast();
+    }
 
     function test_blockEncodeDecode() public view {
         PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](10);

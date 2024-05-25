@@ -19,26 +19,26 @@ doc :; forge doc --build --out documentation --serve --port 4000
 # Update Dependencies
 update:; forge update
 
-build:; forge build --via-ir
+build:; forge build
 
-test :; forge test --via-ir --force
+test :; forge test --ffi
 
-snapshot :; forge snapshot
+snapshot :; forge snapshot --ffi
 
 # solhint should be installed globally
 lint :; solhint src/**/*.sol && solhint src/*.sol
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
-tokens-deploy :; bash ./src/scripts/tokensDeploy.sh
+tokens-deploy :; bash ./script/tokensDeploy.sh
 
-eth-deploy :; bash ./src/scripts/ethDeploy.sh
+eth-deploy :; bash ./script/ethDeploy.sh
 
-tara-deploy :; bash ./src/scripts/taraDeploy.sh
+tara-deploy :; bash ./script/taraDeploy.sh
 
-bridge-deploy :; bash ./src/scripts/deploySymmetricBridge.sh
+bridge-deploy :; bash ./script/deploySymmetricBridge.sh
 
-add-deployment-metadata :; bash ./src/scripts/addToDeployMarkdown.sh
+add-deployment-metadata :; bash ./script/addToDeployMarkdown.sh
 
 -include ${FCT_PLUGIN_PATH}/makefile-external
 

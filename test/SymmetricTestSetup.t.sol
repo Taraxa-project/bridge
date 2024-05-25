@@ -2,14 +2,15 @@
 pragma solidity ^0.8.17;
 
 import {Test, console} from "forge-std/Test.sol";
-import "src/tara/TaraBridge.sol";
-import "src/connectors/NativeConnector.sol";
-import "src/eth/EthBridge.sol";
-import "src/lib/TestERC20.sol";
-import "src/connectors/ERC20LockingConnector.sol";
-import "src/connectors/ERC20MintingConnector.sol";
-import "src/lib/Constants.sol";
-import "./BridgeLightClientMock.sol";
+import {TaraBridge} from "src/tara/TaraBridge.sol";
+import {NativeConnector} from "src/connectors/NativeConnector.sol";
+import {EthBridge} from "src/eth/EthBridge.sol";
+import {TestERC20} from "src/lib/TestERC20.sol";
+import {ERC20LockingConnector} from "src/connectors/ERC20LockingConnector.sol";
+import {ERC20MintingConnector} from "src/connectors/ERC20MintingConnector.sol";
+import {Constants} from "src/lib/Constants.sol";
+import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract SymmetricTestSetup is Test {
     BridgeLightClientMock taraLightClient;
@@ -27,17 +28,28 @@ contract SymmetricTestSetup is Test {
         vm.startPrank(caller);
         taraLightClient = new BridgeLightClientMock();
         ethLightClient = new BridgeLightClientMock();
+
         taraTokenOnEth = new TestERC20("Tara", "TARA");
         ethTokenOnTara = new TestERC20("Eth", "ETH");
-        taraBridge = new TaraBridge();
-        taraBridge.initialize(taraTokenOnEth, ethLightClient, FINALIZATION_INTERVAL);
-        ethBridge = new EthBridge();
-        ethBridge.initialize(taraTokenOnEth, taraLightClient, FINALIZATION_INTERVAL);
+
+        address taraBridgeProxy = Upgrades.deployUUPSProxy(
+            "TaraBridge.sol",
+            abi.encodeCall(TaraBridge.initialize, (taraTokenOnEth, ethLightClient, FINALIZATION_INTERVAL))
+        );
+        taraBridge = TaraBridge(taraBridgeProxy);
+        address ethBridgeProxy = Upgrades.deployUUPSProxy(
+            "EthBridge.sol",
+            abi.encodeCall(EthBridge.initialize, (taraTokenOnEth, taraLightClient, FINALIZATION_INTERVAL))
+        );
+        ethBridge = EthBridge(ethBridgeProxy);
 
         // Set Up TARA side of the bridge
+        address taraConnectorProxy = Upgrades.deployUUPSProxy(
+            "NativeConnector.sol",
+            abi.encodeCall(NativeConnector.initialize, (address(taraBridge), address(taraTokenOnEth)))
+        );
+        NativeConnector taraConnector = NativeConnector(payable(taraConnectorProxy));
 
-        NativeConnector taraConnector = new NativeConnector();
-        taraConnector.initialize(address(taraBridge), address(taraTokenOnEth));
         (bool success,) = payable(taraConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success) {
             revert("Failed to initialize tara native connector");
@@ -45,8 +57,13 @@ contract SymmetricTestSetup is Test {
 
         taraBridge.registerContract(taraConnector);
 
-        ERC20MintingConnector ethOnTaraMintingConnector = new ERC20MintingConnector();
-        ethOnTaraMintingConnector.initialize(address(taraBridge), ethTokenOnTara, Constants.NATIVE_TOKEN_ADDRESS);
+        address ethOnTaraMintingConnectorProxy = Upgrades.deployUUPSProxy(
+            "ERC20MintingConnector.sol",
+            abi.encodeCall(
+                ERC20MintingConnector.initialize, (address(taraBridge), ethTokenOnTara, Constants.NATIVE_TOKEN_ADDRESS)
+            )
+        );
+        ERC20MintingConnector ethOnTaraMintingConnector = ERC20MintingConnector(payable(ethOnTaraMintingConnectorProxy));
 
         (bool success2,) = payable(ethOnTaraMintingConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success2) {
@@ -60,8 +77,12 @@ contract SymmetricTestSetup is Test {
 
         // Set Up ETH side of the bridge
 
-        NativeConnector ethConnector = new NativeConnector();
-        ethConnector.initialize(address(ethBridge), address(ethTokenOnTara));
+        address ethConnectorProxy = Upgrades.deployUUPSProxy(
+            "NativeConnector.sol",
+            abi.encodeCall(NativeConnector.initialize, (address(ethBridge), address(ethTokenOnTara)))
+        );
+        NativeConnector ethConnector = NativeConnector(payable(ethConnectorProxy));
+
         (bool success3,) = payable(ethConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success3) {
             revert("Failed to initialize eth connector");
@@ -69,8 +90,13 @@ contract SymmetricTestSetup is Test {
 
         ethBridge.registerContract(ethConnector);
 
-        ERC20MintingConnector taraOnEthMintingConnector = new ERC20MintingConnector();
-        taraOnEthMintingConnector.initialize(address(ethBridge), taraTokenOnEth, Constants.NATIVE_TOKEN_ADDRESS);
+        address taraOnEthMintingConnectorProxy = Upgrades.deployUUPSProxy(
+            "ERC20MintingConnector.sol",
+            abi.encodeCall(
+                ERC20MintingConnector.initialize, (address(ethBridge), taraTokenOnEth, Constants.NATIVE_TOKEN_ADDRESS)
+            )
+        );
+        ERC20MintingConnector taraOnEthMintingConnector = ERC20MintingConnector(payable(taraOnEthMintingConnectorProxy));
 
         (bool success4,) = payable(taraOnEthMintingConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success4) {

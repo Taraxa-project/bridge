@@ -2,15 +2,16 @@
 pragma solidity ^0.8.17;
 
 import {Test, console} from "forge-std/Test.sol";
-import "src/tara/TaraBridge.sol";
-import "src/connectors/NativeConnector.sol";
-import "src/eth/EthBridge.sol";
-import "src/lib/TestERC20.sol";
-import "src/connectors/ERC20LockingConnector.sol";
-import "src/connectors/ERC20MintingConnector.sol";
-import "./BridgeLightClientMock.sol";
-import "src/lib/Constants.sol";
-import "./SymmetricTestSetup.t.sol";
+import {TaraBridge} from "src/tara/TaraBridge.sol";
+import {NativeConnector} from "src/connectors/NativeConnector.sol";
+import {EthBridge} from "src/eth/EthBridge.sol";
+import {TestERC20} from "src/lib/TestERC20.sol";
+import {ERC20LockingConnector} from "src/connectors/ERC20LockingConnector.sol";
+import {ERC20MintingConnector} from "src/connectors/ERC20MintingConnector.sol";
+import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
+import {Constants} from "src/lib/Constants.sol";
+import {SharedStructs} from "src/lib/SharedStructs.sol";
+import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
 
 contract FeesTest is SymmetricTestSetup {
     function test_toEthFees() public {
