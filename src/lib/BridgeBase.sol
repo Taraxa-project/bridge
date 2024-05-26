@@ -18,8 +18,7 @@ import {
     ZeroAddressCannotBeRegistered,
     NoStateToFinalize
 } from "../errors/BridgeBaseErrors.sol";
-import {NoFinalizedState} from "../errors/ConnectorErrors.sol";
-import "../connectors/IBridgeConnector.sol";
+import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 
 abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     mapping(address => IBridgeConnector) public connectors;

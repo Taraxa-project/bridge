@@ -15,7 +15,7 @@ import "../src/lib/Constants.sol";
 import "./SymmetricTestSetup.t.sol";
 
 contract StateTransfersTest is SymmetricTestSetup {
-    function test_fail_toEth_on_not_enough_blocks_passed() public {
+    function test_Revert_toEth_on_not_enough_blocks_passed() public {
         uint256 value = 1 ether;
         NativeConnector taraBridgeToken =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
@@ -29,6 +29,28 @@ contract StateTransfersTest is SymmetricTestSetup {
             )
         );
         taraBridge.finalizeEpoch();
+    }
+
+    function test_Revert_toEth_on_zero_value() public {
+        NativeConnector taraBridgeToken =
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
+        vm.expectRevert();
+        taraBridgeToken.lock{value: 0}();
+
+        vm.roll(FINALIZATION_INTERVAL);
+
+        vm.expectRevert();
+        taraBridge.finalizeEpoch();
+        vm.expectRevert();
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        taraLightClient.setBridgeRoot(state);
+        vm.expectRevert();
+        ethBridge.applyState(state);
+
+        ERC20MintingConnector ethTaraTokenConnector =
+            ERC20MintingConnector(payable(address(ethBridge.connectors(address(taraTokenOnEth)))));
+        vm.expectRevert();
+        ethTaraTokenConnector.claim{value: 0}();
     }
 
     function test_toEth() public {
@@ -75,7 +97,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         assertEq(address(this).balance, balance_before + value - claim_fee);
     }
 
-    function test_failOnChangedState() public {
+    function test_Revert_OnChangedState() public {
         uint256 value = 1 ether;
         NativeConnector taraConnector =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
@@ -96,7 +118,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         ethBridge.applyState(state);
     }
 
-    function test_failOnChangedEpoch() public {
+    function test_Revert_OnChangedEpoch() public {
         uint256 value = 1 ether;
         NativeConnector taraConnector =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
