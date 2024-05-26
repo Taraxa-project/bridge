@@ -72,7 +72,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
      * @dev Processes the changes in validator weights.
      * @param validatorChanges An array of VoteCountChange structs representing the changes in validator vote counts.
      */
-    function processValidatorChanges(PillarBlock.VoteCountChange[] memory validatorChanges) public {
+    function processValidatorChanges(PillarBlock.VoteCountChange[] memory validatorChanges) internal {
         uint256 validatorChangesLength = validatorChanges.length;
         for (uint256 i = 0; i < validatorChangesLength;) {
             validatorVoteCounts[validatorChanges[i].validator] =

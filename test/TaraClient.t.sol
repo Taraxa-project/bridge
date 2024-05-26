@@ -2,7 +2,10 @@
 pragma solidity ^0.8.17;
 
 import {Test, console} from "forge-std/Test.sol";
-import "../src/eth/TaraClient.sol";
+import {TaraClient} from "../src/eth/TaraClient.sol";
+import {PillarBlock} from "../src/lib/PillarBlock.sol";
+import {TaraClientHarness} from "./upgradeableMocks/TaraClientHarness.sol";
+import {CompactSignature} from "../src/lib/PillarBlock.sol";
 import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../src/errors/ClientErrors.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
@@ -18,7 +21,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  *  - the finalizedBlock should always be registered before the next pending block
  */
 contract TaraClientTest is Test {
-    TaraClient client;
+    TaraClientHarness client;
     PillarBlock.WithChanges currentBlock;
     uint256 constant PILLAR_BLOCK_INTERVAL = 100;
     uint32 constant PILLAR_BLOCK_THRESHOLD = 50;
@@ -49,9 +52,10 @@ contract TaraClientTest is Test {
         );
 
         address taraClientProxy = Upgrades.deployUUPSProxy(
-            "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL))
+            "TaraClientHarness.sol",
+            abi.encodeCall(TaraClientHarness.initializeIt, (PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL))
         );
-        client = TaraClient(taraClientProxy);
+        client = TaraClientHarness(taraClientProxy);
         PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
         blocks[0] = currentBlock;
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
@@ -189,7 +193,7 @@ contract TaraClientTest is Test {
             changes[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 10);
         }
         client.setThreshold(1);
-        client.processValidatorChanges(changes);
+        client.processValidatorChangesPublic(changes);
         vm.stopBroadcast();
     }
 
