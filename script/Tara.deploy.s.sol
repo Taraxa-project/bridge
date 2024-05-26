@@ -107,8 +107,6 @@ contract TaraDeployer is Script {
             )
         );
 
-        TaraBridge taraBridge = TaraBridge(taraBrigdeProxy);
-
         console.log("TaraBridge.sol proxy address: %s", taraBrigdeProxy);
         console.log("TaraBridge.sol implementation address: %s", Upgrades.getImplementationAddress(taraBrigdeProxy));
         return taraBrigdeProxy;

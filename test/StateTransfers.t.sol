@@ -25,7 +25,10 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                NotEnoughBlocksPassed.selector, taraBridge.lastFinalizedBlock(), FINALIZATION_INTERVAL
+                NotEnoughBlocksPassed.selector,
+                taraBridge.lastFinalizedBlock(),
+                block.number - taraBridge.lastFinalizedBlock(),
+                FINALIZATION_INTERVAL
             )
         );
         taraBridge.finalizeEpoch();

@@ -93,25 +93,25 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
      * @param connector The address of the connector contract.
      */
     function registerContract(IBridgeConnector connector) public {
-        address contractAddress = connector.getContractAddress();
+        address tokenSrc = connector.getContractSource();
 
         if (connectors[address(connector)] != IBridgeConnector(address(0))) {
             return;
         }
-        if (contractAddress == address(0)) {
+        if (tokenSrc == address(0)) {
             revert ZeroAddressCannotBeRegistered();
         }
         if (
-            localAddress[connector.getBridgedContractAddress()] != address(0)
-                || connectors[contractAddress] != IBridgeConnector(address(0))
+            localAddress[connector.getContractDestination()] != address(0)
+                || connectors[tokenSrc] != IBridgeConnector(address(0))
         ) {
-            revert ConnectorAlreadyRegistered({connector: address(connector), token: contractAddress});
+            revert ConnectorAlreadyRegistered({connector: address(connector), token: tokenSrc});
         }
 
-        connectors[contractAddress] = connector;
-        localAddress[connector.getBridgedContractAddress()] = connector.getContractAddress();
-        tokenAddresses.push(contractAddress);
-        emit ConnectorRegistered(contractAddress);
+        connectors[tokenSrc] = connector;
+        localAddress[connector.getContractDestination()] = connector.getContractSource();
+        tokenAddresses.push(tokenSrc);
+        emit ConnectorRegistered(tokenSrc);
     }
 
     /**
@@ -174,7 +174,7 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         bool shouldFinalize = false;
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             if (!connectors[tokenAddresses[i]].isStateEmpty()) {
-                shouldFinalize = true;
+                return true;
             }
         }
         return shouldFinalize;
@@ -187,7 +187,8 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         if (block.number - lastFinalizedBlock < finalizationInterval) {
             revert NotEnoughBlocksPassed({
                 lastFinalizedBlock: lastFinalizedBlock,
-                finalizationInterval: finalizationInterval
+                currentInterval: block.number - lastFinalizedBlock,
+                requiredInterval: finalizationInterval
             });
         }
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
