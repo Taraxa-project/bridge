@@ -9,6 +9,7 @@ import "../lib/SharedStructs.sol";
 import "../lib/Constants.sol";
 import "../lib/IBridgeLightClient.sol";
 import {
+    ConnectorAlreadyRegistered,
     StateNotMatchingBridgeRoot,
     NotSuccessiveEpochs,
     NotEnoughBlocksPassed,
@@ -99,6 +100,12 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         }
         if (contractAddress == address(0)) {
             revert ZeroAddressCannotBeRegistered();
+        }
+        if (
+            localAddress[connector.getBridgedContractAddress()] != address(0)
+                || connectors[contractAddress] != IBridgeConnector(address(0))
+        ) {
+            revert ConnectorAlreadyRegistered({connector: address(connector), token: contractAddress});
         }
 
         connectors[contractAddress] = connector;

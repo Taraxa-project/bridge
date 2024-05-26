@@ -113,4 +113,22 @@ contract SymmetricTestSetup is Test {
 
     // define it to not fail on incoming transfers
     receive() external payable {}
+
+    function test_revertOnDuplicateConnectorRegistration() public {
+        vm.startPrank(caller);
+        address ethConnectorProxy = Upgrades.deployUUPSProxy(
+            "NativeConnector.sol",
+            abi.encodeCall(NativeConnector.initialize, (address(ethBridge), address(ethTokenOnTara)))
+        );
+        NativeConnector ethConnector = NativeConnector(payable(ethConnectorProxy));
+
+        (bool success3,) = payable(ethConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
+        if (!success3) {
+            revert("Failed to initialize eth connector");
+        }
+
+        vm.expectRevert();
+        ethBridge.registerContract(ethConnector);
+        vm.stopPrank();
+    }
 }
