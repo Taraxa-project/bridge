@@ -31,6 +31,11 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     event ValidatorWeightChanged(address indexed validator, uint256 weight);
     event BlockFinalized(PillarBlock.FinalizedBlock finalized);
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(uint256 _threshold, uint256 _pillarBlockInterval) public initializer {
         __TaraClient_init_unchained(_threshold, _pillarBlockInterval);
     }

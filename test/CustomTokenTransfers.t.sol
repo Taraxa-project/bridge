@@ -1,28 +1,41 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import "../src/tara/TaraBridge.sol";
-import "../src/eth/EthBridge.sol";
-import "../src/lib/TestERC20.sol";
+import {TaraBridge} from "../src/tara/TaraBridge.sol";
+import {EthBridge} from "../src/eth/EthBridge.sol";
+import {TestERC20} from "../src/lib/TestERC20.sol";
 import {
     StateNotMatchingBridgeRoot, NotSuccessiveEpochs, NotEnoughBlocksPassed
 } from "../src/errors/BridgeBaseErrors.sol";
-import "../src/connectors/NativeConnector.sol";
-import "../src/connectors/ERC20LockingConnector.sol";
-import "../src/connectors/ERC20MintingConnector.sol";
-import "./BridgeLightClientMock.sol";
-import "../src/lib/Constants.sol";
-import "./SymmetricTestSetup.t.sol";
+import {NativeConnector} from "../src/connectors/NativeConnector.sol";
+import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
+import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
+import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
+import {Constants} from "../src/lib/Constants.sol";
+import {SharedStructs} from "../src/lib/SharedStructs.sol";
+import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-contract StateTransfersTest is SymmetricTestSetup {
+contract CustomTokenTransfersTest is SymmetricTestSetup {
     function test_customToken() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
         // deploy and register token on both sides
         taraTestToken = new TestERC20("Test", "TEST");
         ethTestToken = new TestERC20("Test", "TEST");
-        ERC20LockingConnector taraTestTokenConnector = new ERC20LockingConnector();
-        taraTestTokenConnector.initialize(address(taraBridge), taraTestToken, address(ethTestToken));
-        ERC20MintingConnector ethTestTokenConnector = new ERC20MintingConnector();
-        ethTestTokenConnector.initialize(address(ethBridge), ethTestToken, address(taraTestToken));
+        address taraTestTokenConnectorProxy = Upgrades.deployUUPSProxy(
+            "ERC20LockingConnector.sol",
+            abi.encodeWithSelector(
+                ERC20LockingConnector.initialize.selector, address(taraBridge), taraTestToken, address(ethTestToken)
+            )
+        );
+        ERC20LockingConnector taraTestTokenConnector = ERC20LockingConnector(payable(taraTestTokenConnectorProxy));
+
+        address ethTestTokenConnectorProxy = Upgrades.deployUUPSProxy(
+            "ERC20MintingConnector.sol",
+            abi.encodeWithSelector(
+                ERC20MintingConnector.initialize.selector, address(ethBridge), ethTestToken, address(taraTestToken)
+            )
+        );
+        ERC20MintingConnector ethTestTokenConnector = ERC20MintingConnector(payable(ethTestTokenConnectorProxy));
 
         // fund connectors
         (bool success,) = payable(address(taraTestTokenConnector)).call{value: 2 ether}("");

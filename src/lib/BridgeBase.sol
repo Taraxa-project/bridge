@@ -41,6 +41,11 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     event Finalized(uint256 indexed epoch, bytes32 bridgeRoot);
     event ConnectorRegistered(address indexed connector);
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function __BridgeBase_init(IBridgeLightClient light_client, uint256 _finalizationInterval)
         internal
         onlyInitializing

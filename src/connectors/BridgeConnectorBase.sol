@@ -21,6 +21,11 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, U
     event Refunded(address indexed receiver, uint256 amount);
     event StateApplied(bytes indexed state, address indexed receiver, uint256 amount);
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     receive() external payable {
         emit Funded(msg.sender, address(this), msg.value);
     }
@@ -66,7 +71,6 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, U
         uint256 gasLeftBefore = gasleft();
         address[] memory addresses = applyState(_state);
         uint256 totalFee = common_part + (gasLeftBefore - gasleft()) * tx.gasprice;
-
         uint256 addressesLength = addresses.length;
         for (uint256 i = 0; i < addressesLength;) {
             feeToClaim[addresses[i]] += totalFee / addresses.length;
