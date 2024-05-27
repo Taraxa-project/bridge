@@ -141,6 +141,18 @@ contract UpgradeabilityTest is Test {
         assertEq(upgradedBridge.getNewStorageValue(), newFinalizationInterval);
     }
 
+    function test_Revert_ConnectorRegistration_By_Not_Owner() public {
+        EthBridgeV2 upgradedBridge = EthBridgeV2(address(ethBridge));
+
+        address newNativeConnectorProxy = Upgrades.deployUUPSProxy(
+            "NativeConnector.sol",
+            abi.encodeCall(NativeConnector.initialize, (address(taraBridge), address(taraTokenOnEth)))
+        );
+        // vm.prank(caller);
+        vm.expectRevert();
+        upgradedBridge.registerContractOwner(IBridgeConnector(newNativeConnectorProxy));
+    }
+
     function test_upgrade_taraBridge() public {
         Options memory opts;
         opts.referenceContract = "TaraBridge.sol";
