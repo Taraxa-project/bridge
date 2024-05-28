@@ -45,7 +45,7 @@ echo "Tara client contract deployed to: $taraClientOnEthProxy"
 echo "TARA_CLIENT=$taraClientOnEthProxy" >> .env
 
 currentTimestamp=$(date +%s)
-deploymentFile=".eth.deployment.$currentTimestamp.json"
+deploymentFile=".deployments/.eth.deployment.$currentTimestamp.json"
 echo "{" > $deploymentFile
 echo "  \"ethdeploy-$currentTimestamp\": {" >> $deploymentFile
 echo "    \"RPC\": \"$RPC_HOLESKY\"," >> $deploymentFile
