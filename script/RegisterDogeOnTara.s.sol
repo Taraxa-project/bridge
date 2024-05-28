@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
 import {Constants} from "../src/lib/Constants.sol";
-import {TestERC20} from "../src/lib/TESTERC20.sol";
+import {TestERC20} from "../src/lib/TestERC20.sol";
 import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
 import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
 import {TaraBridge} from "../src/tara/TaraBridge.sol";
 import {IBridgeConnector} from "../src/connectors/IBridgeConnector.sol";
-import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract RegisterDogeOnTara is Script {
     address public deployerAddress;

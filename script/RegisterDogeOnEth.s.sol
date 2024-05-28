@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
 import {Constants} from "../src/lib/Constants.sol";
@@ -8,7 +9,6 @@ import {BridgeDoge} from "../src/lib/BridgeDoge.sol";
 import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
 import {EthBridge} from "../src/eth/EthBridge.sol";
 import {IBridgeConnector} from "../src/connectors/IBridgeConnector.sol";
-import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract RegisterDogeOnEth is Script {
     address public deployerAddress;
