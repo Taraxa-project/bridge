@@ -40,5 +40,7 @@ bridge-deploy :; bash ./script/deploySymmetricBridge.sh
 
 add-deployment-metadata :; bash ./script/addToDeployMarkdown.sh
 
+doge :; bash ./script/registerDoge.sh
+
 -include ${FCT_PLUGIN_PATH}/makefile-external
 

@@ -51,7 +51,7 @@ echo "Eth token on Tara deployed to: $ethAddress"
 echo "ETH_ADDRESS_ON_TARA=$ethAddress" >> .env
 
 currentTimestamp=$(date +%s)
-deploymentFile=".token.deployment.$currentTimestamp.json"
+deploymentFile="..deployments/.token.deployment.$currentTimestamp.json"
 echo "{" > $deploymentFile
 echo "  \"tokendeploy-$currentTimestamp\": {" >> $deploymentFile
 echo "    \"TARA\": {" >> $deploymentFile

@@ -74,7 +74,7 @@ echo "EthMintingConnector contract deployed to: $ethMintingConnectorProxy"
 
 
 currentTimestamp=$(date +%s)
-deploymentFile=".tara.deployment.$currentTimestamp.json"
+deploymentFile=".deployments/.tara.deployment.$currentTimestamp.json"
 
 echo "{" > $deploymentFile
 echo "  \"taradeploy-$currentTimestamp\": {" >> $deploymentFile
