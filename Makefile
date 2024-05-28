@@ -21,7 +21,7 @@ update:; forge update
 
 build:; forge build
 
-test :; forge test --ffi
+test :; forge test --ffi --force
 
 snapshot :; forge snapshot --ffi
 

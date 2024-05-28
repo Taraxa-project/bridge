@@ -9,7 +9,6 @@ import "../lib/Maths.sol";
 import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../errors/ClientErrors.sol";
 import "../lib/IBridgeLightClient.sol";
 import "../lib/PillarBlock.sol";
-import "forge-std/console.sol";
 
 contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     /// Contains the last finalized block
@@ -114,7 +113,6 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
                 uint256 weight =
                     getSignaturesWeight(PillarBlock.getVoteHash(blocks[i].block.period, pbh), lastBlockSigs);
                 if (weight < threshold) {
-                    console.logBytes32(pbh);
                     revert ThresholdNotMet({threshold: threshold, weight: weight});
                 }
             }
