@@ -6,7 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./TokenConnectorBase.sol";
 import "../lib/SharedStructs.sol";
-import {InsufficientFunds, NoClaimAvailable, TransferFailed} from "../errors/ConnectorErrors.sol";
+import {InsufficientFunds, NoClaimAvailable, TransferFailed, ZeroValueCall} from "../errors/ConnectorErrors.sol";
 
 contract ERC20LockingConnector is TokenConnectorBase {
     /// Events
@@ -47,6 +47,9 @@ contract ERC20LockingConnector is TokenConnectorBase {
      * @param value The amount of tokens to lock.
      */
     function lock(uint256 value) public {
+        if (value == 0) {
+            revert ZeroValueCall();
+        }
         IERC20(token).transferFrom(msg.sender, address(this), value);
         state.addAmount(msg.sender, value);
         emit Locked(msg.sender, value);
@@ -60,14 +63,15 @@ contract ERC20LockingConnector is TokenConnectorBase {
         if (msg.value < feeToClaim[msg.sender]) {
             revert InsufficientFunds({expected: feeToClaim[msg.sender], actual: msg.value});
         }
-        if (toClaim[msg.sender] == 0) {
+        uint256 amount = toClaim[msg.sender];
+        if (amount == 0) {
             revert NoClaimAvailable();
         }
-        (bool transferSuccess) = IERC20(token).transfer(msg.sender, toClaim[msg.sender]);
+        (bool transferSuccess) = IERC20(token).transfer(msg.sender, amount);
         if (!transferSuccess) {
-            revert TransferFailed({recipient: msg.sender, amount: toClaim[msg.sender]});
+            revert TransferFailed({recipient: msg.sender, amount: amount});
         }
         toClaim[msg.sender] = 0;
-        emit Claimed(msg.sender, toClaim[msg.sender]);
+        emit Claimed(msg.sender, amount);
     }
 }

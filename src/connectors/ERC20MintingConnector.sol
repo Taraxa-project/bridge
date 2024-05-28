@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.17;
 
-import {InsufficientFunds} from "../errors/ConnectorErrors.sol";
+import {InsufficientFunds, ZeroValueCall, NoClaimAvailable} from "../errors/ConnectorErrors.sol";
 import "../lib/SharedStructs.sol";
 import "./TokenConnectorBase.sol";
 import "./IERC20MintableBurnable.sol";
@@ -45,6 +45,9 @@ contract ERC20MintingConnector is TokenConnectorBase {
      * @param amount The amount of tokens to burn.
      */
     function burn(uint256 amount) public {
+        if (amount == 0) {
+            revert ZeroValueCall();
+        }
         try IERC20MintableBurnable(token).burnFrom(msg.sender, amount) {
             state.addAmount(msg.sender, amount);
             emit Burned(msg.sender, amount);
@@ -62,6 +65,9 @@ contract ERC20MintingConnector is TokenConnectorBase {
             revert InsufficientFunds({expected: feeToClaim[msg.sender], actual: msg.value});
         }
         uint256 amount = toClaim[msg.sender];
+        if (amount == 0) {
+            revert NoClaimAvailable();
+        }
         toClaim[msg.sender] = 0;
         IERC20MintableBurnable(token).mintTo(msg.sender, amount);
         emit Claimed(msg.sender, amount);

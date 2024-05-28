@@ -4,7 +4,11 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import {Test, console} from "forge-std/Test.sol";
-import "../src/eth/TaraClient.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {TaraClient} from "../src/eth/TaraClient.sol";
+import {CompactSignature} from "../src/lib/PillarBlock.sol";
+import {PillarBlock} from "../src/lib/PillarBlock.sol";
+import {TaraClientHarness} from "./upgradeableMocks/TaraClientHarness.sol";
 
 /**
  * @title Test that Tara client accepts blocks from the PRNet
@@ -16,42 +20,51 @@ contract TaraClientPRNetTest is Test {
     uint256 constant PILLAR_BLOCK_INTERVAL = 100;
     uint32 constant PILLAR_BLOCK_THRESHOLD = 50;
 
+    // {
+    //     "bridge_root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    //     "hash": "0x659f33d940342ccbb534a745e93b3cc0d44f09f8b5f9db7d8c9ede2d047b4522",
+    //     "pbft_period": 100,
+    //     "previous_pillar_block_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    //     "state_root": "0xc8e155d2b0f39dd07a9520667445a79a67576387f97cdb15b14157e45f1bee91",
+    //     "validators_vote_counts_changes": [
+    //         {
+    //         "address": "0xfe3d5e3b9c2080bf338638fd831a35a4b4344a2c",
+    //         "value": 100
+    //         },
+    //         {
+    //         "address": "0x515c990ef87668e57a290f650b4c39c343d73d9a",
+    //         "value": 100
+    //         },
+    //         {
+    //         "address": "0x3e62c62ac89c71412ca68688530d112433fec78c",
+    //         "value": 100
+    //         }
+    //     ]
+    // }
     function setUp() public {
-        // {
-        //     "bridge_root": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        //     "hash": "0x659f33d940342ccbb534a745e93b3cc0d44f09f8b5f9db7d8c9ede2d047b4522",
-        //     "pbft_period": 100,
-        //     "previous_pillar_block_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        //     "state_root": "0xc8e155d2b0f39dd07a9520667445a79a67576387f97cdb15b14157e45f1bee91",
-        //     "validators_vote_counts_changes": [
-        //         {
-        //         "address": "0xfe3d5e3b9c2080bf338638fd831a35a4b4344a2c",
-        //         "value": 100
-        //         },
-        //         {
-        //         "address": "0x515c990ef87668e57a290f650b4c39c343d73d9a",
-        //         "value": 100
-        //         },
-        //         {
-        //         "address": "0x3e62c62ac89c71412ca68688530d112433fec78c",
-        //         "value": 100
-        //         }
-        //     ]
-        // }
         PillarBlock.VoteCountChange[] memory initial = new PillarBlock.VoteCountChange[](3);
         initial[0] = PillarBlock.VoteCountChange(0xFe3d5E3B9c2080bF338638Fd831a35A4B4344a2C, 100);
         initial[1] = PillarBlock.VoteCountChange(0x515C990Ef87668E57A290F650b4C39c343d73d9a, 100);
         initial[2] = PillarBlock.VoteCountChange(0x3E62C62Ac89c71412CA68688530D112433FEC78C, 100);
 
-        currentBlock = PillarBlock.WithChanges(
+        PillarBlock.WithChanges memory _currentBlock = PillarBlock.WithChanges(
             PillarBlock.FinalizationData(
                 100, 0xc8e155d2b0f39dd07a9520667445a79a67576387f97cdb15b14157e45f1bee91, 0x0, 0x0
             ),
             initial
         );
+        currentBlock.block = _currentBlock.block;
+        for (uint256 i = 0; i < initial.length; i++) {
+            currentBlock.validatorChanges.push(initial[i]);
+        }
         assertEq(PillarBlock.getHash(currentBlock), 0x659f33d940342ccbb534a745e93b3cc0d44f09f8b5f9db7d8c9ede2d047b4522);
-        client = new TaraClient();
-        client.initialize(PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL);
+
+        address taraClientProxy = Upgrades.deployUUPSProxy(
+            "TaraClientHarness.sol",
+            abi.encodeCall(TaraClientHarness.initializeIt, (PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL))
+        );
+        client = TaraClientHarness(taraClientProxy);
+
         PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
         blocks[0] = currentBlock;
         client.finalizeBlocks(blocks, new CompactSignature[](0));
@@ -60,33 +73,33 @@ contract TaraClientPRNetTest is Test {
         assertEq(client.validatorVoteCounts(0x3E62C62Ac89c71412CA68688530D112433FEC78C), 100);
     }
 
+    // {
+    //     "pillar_block": {
+    //         "bridge_root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    //         "hash": "0xb5821389568f0baa4f422eea88ec490be7d5a45eb36917703c07ce7a2069f870",
+    //         "pbft_period": 200,
+    //         "previous_pillar_block_hash": "0x659f33d940342ccbb534a745e93b3cc0d44f09f8b5f9db7d8c9ede2d047b4522",
+    //         "state_root": "0x3927e752a7732d2380a8d5c3480103590bd53bdb6fa694fbdce326203792a5bb",
+    //         "validators_vote_counts_changes": []
+    //     },
+    //     "pillar_block_binary_data": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000c83927e752a7732d2380a8d5c3480103590bd53bdb6fa694fbdce326203792a5bb0000000000000000000000000000000000000000000000000000000000000000659f33d940342ccbb534a745e93b3cc0d44f09f8b5f9db7d8c9ede2d047b452200000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000",
+    //     "signatures": [
+    //         {
+    //             "r": "0xc99aa7129783f9e04daba144b6346b69982db9a518f03c4f345181d7d417fbc7",
+    //             "vs": "0x932ec62fc58f9f4b6e3233dc8ce0cdd8f5fe770920491803cfa855773f38db82"
+    //         },
+    //         {
+    //             "r": "0x19755b9e65303f8c479c5b33488d6b5830dbb059332524968c71b2c5739abee4",
+    //             "vs": "0xcb27f39ea0d434be260048a99ffdf2bfea1f04657750aebaee17c4d56a739ca6"
+    //         },
+    //         {
+    //             "r": "0x70cf255902ab32b09f72a09afa682522555dd05aa32c4c01ef383896a1842157",
+    //             "vs": "0x96dd278029d9c555fa5956950aa227d2778c99d85aba6f0985f398aa6caca9fc"
+    //         }
+    //     ]
+    // }
     function test_acceptPrNetBlocks() public {
-        // {
-        //     "pillar_block": {
-        //         "bridge_root": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        //         "hash": "0xb5821389568f0baa4f422eea88ec490be7d5a45eb36917703c07ce7a2069f870",
-        //         "pbft_period": 200,
-        //         "previous_pillar_block_hash": "0x659f33d940342ccbb534a745e93b3cc0d44f09f8b5f9db7d8c9ede2d047b4522",
-        //         "state_root": "0x3927e752a7732d2380a8d5c3480103590bd53bdb6fa694fbdce326203792a5bb",
-        //         "validators_vote_counts_changes": []
-        //     },
-        //     "pillar_block_binary_data": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000c83927e752a7732d2380a8d5c3480103590bd53bdb6fa694fbdce326203792a5bb0000000000000000000000000000000000000000000000000000000000000000659f33d940342ccbb534a745e93b3cc0d44f09f8b5f9db7d8c9ede2d047b452200000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000",
-        //     "signatures": [
-        //         {
-        //             "r": "0xc99aa7129783f9e04daba144b6346b69982db9a518f03c4f345181d7d417fbc7",
-        //             "vs": "0x932ec62fc58f9f4b6e3233dc8ce0cdd8f5fe770920491803cfa855773f38db82"
-        //         },
-        //         {
-        //             "r": "0x19755b9e65303f8c479c5b33488d6b5830dbb059332524968c71b2c5739abee4",
-        //             "vs": "0xcb27f39ea0d434be260048a99ffdf2bfea1f04657750aebaee17c4d56a739ca6"
-        //         },
-        //         {
-        //             "r": "0x70cf255902ab32b09f72a09afa682522555dd05aa32c4c01ef383896a1842157",
-        //             "vs": "0x96dd278029d9c555fa5956950aa227d2778c99d85aba6f0985f398aa6caca9fc"
-        //         }
-        //     ]
-        // }
-        currentBlock = PillarBlock.WithChanges(
+        PillarBlock.WithChanges memory _currentBlock = PillarBlock.WithChanges(
             PillarBlock.FinalizationData(
                 200,
                 0x3927e752a7732d2380a8d5c3480103590bd53bdb6fa694fbdce326203792a5bb,
@@ -95,6 +108,9 @@ contract TaraClientPRNetTest is Test {
             ),
             new PillarBlock.VoteCountChange[](0)
         );
+        currentBlock.block = _currentBlock.block;
+        delete currentBlock.validatorChanges;
+
         assertEq(PillarBlock.getHash(currentBlock), 0xb5821389568f0baa4f422eea88ec490be7d5a45eb36917703c07ce7a2069f870);
 
         CompactSignature[] memory signatures = new CompactSignature[](3);
@@ -138,7 +154,7 @@ contract TaraClientPRNetTest is Test {
         //         }
         //     ]
         // }
-        currentBlock = PillarBlock.WithChanges(
+        PillarBlock.WithChanges memory _currentBlock2 = PillarBlock.WithChanges(
             PillarBlock.FinalizationData(
                 300,
                 0x2f14aba5f820184ac95fe79aff921047d73a567d70d46f0c44d609f00749b1e6,
@@ -147,6 +163,8 @@ contract TaraClientPRNetTest is Test {
             ),
             new PillarBlock.VoteCountChange[](0)
         );
+        currentBlock.block = _currentBlock2.block;
+        delete currentBlock.validatorChanges;
         assertEq(PillarBlock.getHash(currentBlock), 0xfc2f5857f08ff62434f1f4d0b54ca32ccb10e39e95c046e9ce1826a7447a2821);
 
         signatures = new CompactSignature[](3);
@@ -167,7 +185,7 @@ contract TaraClientPRNetTest is Test {
     }
 
     function test_notAcceptChangedBlock() public {
-        currentBlock = PillarBlock.WithChanges(
+        PillarBlock.WithChanges memory _currentBlock2 = PillarBlock.WithChanges(
             PillarBlock.FinalizationData(
                 200,
                 0x3927e752a7732d2380a8d5c3480103590bd53bdb6fa694fbdce326203792a5bb,
@@ -176,6 +194,8 @@ contract TaraClientPRNetTest is Test {
             ),
             new PillarBlock.VoteCountChange[](0)
         );
+        currentBlock.block = _currentBlock2.block;
+        delete currentBlock.validatorChanges;
         assertNotEq(
             PillarBlock.getHash(currentBlock), 0xb5821389568f0baa4f422eea88ec490be7d5a45eb36917703c07ce7a2069f870
         );

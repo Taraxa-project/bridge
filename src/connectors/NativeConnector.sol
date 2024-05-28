@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {InsufficientFunds, NoClaimAvailable, RefundFailed} from "../errors/ConnectorErrors.sol";
+import {InsufficientFunds, NoClaimAvailable, RefundFailed, ZeroValueCall} from "../errors/ConnectorErrors.sol";
 import "../lib/SharedStructs.sol";
 import "../connectors/TokenConnectorBase.sol";
 import "../lib/Constants.sol";
@@ -37,6 +37,9 @@ contract NativeConnector is TokenConnectorBase {
      * @notice This function is payable, meaning it can receive TARA.
      */
     function lock() public payable {
+        if (msg.value == 0) {
+            revert ZeroValueCall();
+        }
         state.addAmount(msg.sender, msg.value);
         emit Locked(msg.sender, msg.value);
     }
@@ -49,15 +52,15 @@ contract NativeConnector is TokenConnectorBase {
         if (msg.value > feeToClaim[msg.sender]) {
             revert InsufficientFunds({expected: feeToClaim[msg.sender], actual: msg.value});
         }
-        if (toClaim[msg.sender] == 0) {
+        uint256 amount = toClaim[msg.sender];
+        if (amount == 0) {
             revert NoClaimAvailable();
         }
-        uint256 fee = toClaim[msg.sender];
         toClaim[msg.sender] = 0;
-        (bool success,) = payable(msg.sender).call{value: fee}("");
+        (bool success,) = payable(msg.sender).call{value: amount}("");
         if (!success) {
-            revert RefundFailed({recipient: msg.sender, amount: fee});
+            revert RefundFailed({recipient: msg.sender, amount: amount});
         }
-        emit Claimed(msg.sender, fee);
+        emit Claimed(msg.sender, amount);
     }
 }

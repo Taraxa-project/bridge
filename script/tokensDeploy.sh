@@ -17,7 +17,7 @@ echo "Running deployment script for TARA on ETH"
 export SYMBOL="TARA"
 export NAME="Taraxa"
 # # Deploy the Tara token to Holesky using forge create
-resTara=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_HOLESKY --broadcast --legacy | tee /dev/tty)
+resTara=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_HOLESKY --broadcast --legacy --ffi | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error deploying Tara token"
@@ -36,7 +36,7 @@ echo "Running deployment script for ETH on TARA"
 export SYMBOL="ETH"
 export NAME="Ethereum"
 
-resEth=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_FICUS_PRNET --broadcast --legacy | tee /dev/tty)
+resEth=$(forge script src/scripts/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_FICUS_PRNET --broadcast --legacy --ffi | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error deploying Tara token"
@@ -51,7 +51,7 @@ echo "Eth token on Tara deployed to: $ethAddress"
 echo "ETH_ADDRESS_ON_TARA=$ethAddress" >> .env
 
 currentTimestamp=$(date +%s)
-deploymentFile=".token.deployment.$currentTimestamp.json"
+deploymentFile="..deployments/.token.deployment.$currentTimestamp.json"
 echo "{" > $deploymentFile
 echo "  \"tokendeploy-$currentTimestamp\": {" >> $deploymentFile
 echo "    \"TARA\": {" >> $deploymentFile

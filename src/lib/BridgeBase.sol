@@ -9,6 +9,7 @@ import "../lib/SharedStructs.sol";
 import "../lib/Constants.sol";
 import "../lib/IBridgeLightClient.sol";
 import {
+    ConnectorAlreadyRegistered,
     StateNotMatchingBridgeRoot,
     NotSuccessiveEpochs,
     NotEnoughBlocksPassed,
@@ -18,8 +19,7 @@ import {
     ZeroAddressCannotBeRegistered,
     NoStateToFinalize
 } from "../errors/BridgeBaseErrors.sol";
-import {NoFinalizedState} from "../errors/ConnectorErrors.sol";
-import "../connectors/IBridgeConnector.sol";
+import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 
 abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     mapping(address => IBridgeConnector) public connectors;
@@ -40,6 +40,11 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     event StateApplied(bytes indexed state, address indexed receiver, address indexed connector, uint256 refund);
     event Finalized(uint256 indexed epoch, bytes32 bridgeRoot);
     event ConnectorRegistered(address indexed connector);
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     function __BridgeBase_init(IBridgeLightClient light_client, uint256 _finalizationInterval)
         internal
@@ -88,19 +93,25 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
      * @param connector The address of the connector contract.
      */
     function registerContract(IBridgeConnector connector) public {
-        address contractAddress = connector.getContractAddress();
+        address tokenSrc = connector.getContractSource();
 
         if (connectors[address(connector)] != IBridgeConnector(address(0))) {
             return;
         }
-        if (contractAddress == address(0)) {
+        if (tokenSrc == address(0)) {
             revert ZeroAddressCannotBeRegistered();
         }
+        if (
+            localAddress[connector.getContractDestination()] != address(0)
+                || connectors[tokenSrc] != IBridgeConnector(address(0))
+        ) {
+            revert ConnectorAlreadyRegistered({connector: address(connector), token: tokenSrc});
+        }
 
-        connectors[contractAddress] = connector;
-        localAddress[connector.getBridgedContractAddress()] = connector.getContractAddress();
-        tokenAddresses.push(contractAddress);
-        emit ConnectorRegistered(contractAddress);
+        connectors[tokenSrc] = connector;
+        localAddress[connector.getContractDestination()] = connector.getContractSource();
+        tokenAddresses.push(tokenSrc);
+        emit ConnectorRegistered(tokenSrc);
     }
 
     /**
@@ -163,7 +174,7 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         bool shouldFinalize = false;
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             if (!connectors[tokenAddresses[i]].isStateEmpty()) {
-                shouldFinalize = true;
+                return true;
             }
         }
         return shouldFinalize;
@@ -176,7 +187,8 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         if (block.number - lastFinalizedBlock < finalizationInterval) {
             revert NotEnoughBlocksPassed({
                 lastFinalizedBlock: lastFinalizedBlock,
-                finalizationInterval: finalizationInterval
+                currentInterval: block.number - lastFinalizedBlock,
+                requiredInterval: finalizationInterval
             });
         }
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);

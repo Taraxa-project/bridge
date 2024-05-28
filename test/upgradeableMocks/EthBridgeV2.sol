@@ -41,4 +41,9 @@ contract EthBridgeV2 is BridgeBase {
     function getNewStorageValue() public view returns (uint256) {
         return newValue;
     }
+
+    function registerContractOwner(IBridgeConnector connector) public onlyOwner {
+        connectors[address(connector)] = connector;
+        emit ConnectorRegistered(address(connector));
+    }
 }
