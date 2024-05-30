@@ -18,7 +18,7 @@ fi
 
 echo "Running deployment script for TaraClient & EthBridge"
 
-res=$(forge script src/scripts/Eth.deploy.s.sol:EthDeployer --rpc-url $RPC_HOLESKY --broadcast --legacy --ffi | tee /dev/tty)
+res=$(forge script ./script/Eth.deploy.s.sol:EthDeployer --rpc-url $RPC_HOLESKY --broadcast --legacy --ffi | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for EthBridge"
@@ -45,7 +45,7 @@ echo "Tara client contract deployed to: $taraClientOnEthProxy"
 echo "TARA_CLIENT=$taraClientOnEthProxy" >> .env
 
 currentTimestamp=$(date +%s)
-deploymentFile=".deployments/.eth.deployment.$currentTimestamp.json"
+deploymentFile="./deployments/.eth.deployment.$currentTimestamp.json"
 echo "{" > $deploymentFile
 echo "  \"ethdeploy-$currentTimestamp\": {" >> $deploymentFile
 echo "    \"RPC\": \"$RPC_HOLESKY\"," >> $deploymentFile
