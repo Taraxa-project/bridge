@@ -7,13 +7,10 @@ import "../connectors/ERC20MintingConnector.sol";
 
 contract TaraBridge is BridgeBase {
     /// Events
-    event Initialized(address indexed ethOnTara, address indexed light_client, uint256 finalizationInterval);
-
-    function initialize(IERC20MintableBurnable ethOnTara, IBridgeLightClient light_client, uint256 finalizationInterval)
+    function initialize(IBridgeLightClient light_client, uint256 finalizationInterval)
         public
         initializer
     {
         __BridgeBase_init(light_client, finalizationInterval);
-        emit Initialized(address(ethOnTara), address(light_client), finalizationInterval);
     }
 }
