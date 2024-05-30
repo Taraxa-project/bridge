@@ -1,5 +1,5 @@
 # IBridgeLightClient
-[Git Source](https://github.com-VargaElod23/Taraxa-project/bridge/blob/996f61a29d91a8326c805bfdad924088129ae1a7/src/lib/IBridgeLightClient.sol)
+[Git Source](https://github.com/Taraxa-project/bridge/blob/e4d318b451d9170f9f2dde80fe4263043786ba03/src/lib/IBridgeLightClient.sol)
 
 
 ## Functions
@@ -7,6 +7,6 @@
 
 
 ```solidity
-function getFinalizedBridgeRoot() external view returns (bytes32);
+function getFinalizedBridgeRoot(uint256 epoch) external view returns (bytes32);
 ```
 

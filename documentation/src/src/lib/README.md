@@ -2,6 +2,7 @@
 
 # Contents
 - [BridgeBase](BridgeBase.sol/abstract.BridgeBase.md)
+- [BridgeDoge](BridgeDoge.sol/contract.BridgeDoge.md)
 - [Constants](Constants.sol/library.Constants.md)
 - [IBridgeLightClient](IBridgeLightClient.sol/interface.IBridgeLightClient.md)
 - [Maths](Maths.sol/library.Maths.md)

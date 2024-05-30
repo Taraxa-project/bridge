@@ -1,25 +1,11 @@
 # BridgeBase
-[Git Source](https://github.com-VargaElod23/Taraxa-project/bridge/blob/996f61a29d91a8326c805bfdad924088129ae1a7/src/lib/BridgeBase.sol)
+[Git Source](https://github.com/Taraxa-project/bridge/blob/e4d318b451d9170f9f2dde80fe4263043786ba03/src/lib/BridgeBase.sol)
 
 **Inherits:**
 OwnableUpgradeable, UUPSUpgradeable
 
 
 ## State Variables
-### lightClient
-
-```solidity
-IBridgeLightClient public lightClient;
-```
-
-
-### tokenAddresses
-
-```solidity
-address[] public tokenAddresses;
-```
-
-
 ### connectors
 
 ```solidity
@@ -31,6 +17,20 @@ mapping(address => IBridgeConnector) public connectors;
 
 ```solidity
 mapping(address => address) public localAddress;
+```
+
+
+### lightClient
+
+```solidity
+IBridgeLightClient public lightClient;
+```
+
+
+### tokenAddresses
+
+```solidity
+address[] public tokenAddresses;
 ```
 
 
@@ -80,6 +80,13 @@ uint256[49] __gap;
 
 
 ## Functions
+### constructor
+
+
+```solidity
+constructor();
+```
+
 ### __BridgeBase_init
 
 
@@ -206,15 +213,9 @@ function getStateWithProof() public view returns (SharedStructs.StateWithProof m
 
 
 ## Events
-### StateApplied
+### Finalized
 Events
 
-
-```solidity
-event StateApplied(bytes indexed state, address indexed receiver, address indexed connector, uint256 refund);
-```
-
-### Finalized
 
 ```solidity
 event Finalized(uint256 indexed epoch, bytes32 bridgeRoot);
@@ -223,6 +224,6 @@ event Finalized(uint256 indexed epoch, bytes32 bridgeRoot);
 ### ConnectorRegistered
 
 ```solidity
-event ConnectorRegistered(address indexed connector);
+event ConnectorRegistered(address indexed connector, address indexed token_source, address indexed token_destination);
 ```
 

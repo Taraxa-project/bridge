@@ -1,5 +1,5 @@
 # TokenConnectorBase
-[Git Source](https://github.com-VargaElod23/Taraxa-project/bridge/blob/996f61a29d91a8326c805bfdad924088129ae1a7/src/connectors/TokenConnectorBase.sol)
+[Git Source](https://github.com/Taraxa-project/bridge/blob/e4d318b451d9170f9f2dde80fe4263043786ba03/src/connectors/TokenConnectorBase.sol)
 
 **Inherits:**
 [BridgeConnectorBase](/src/connectors/BridgeConnectorBase.sol/abstract.BridgeConnectorBase.md)
@@ -110,22 +110,22 @@ function getFinalizedState() public view override returns (bytes memory);
 |`<none>`|`bytes`|A bytes serialized finalized state|
 
 
-### getContractAddress
+### getContractSource
 
 *Returns the address of the underlying contract in this network*
 
 
 ```solidity
-function getContractAddress() public view returns (address);
+function getContractSource() public view returns (address);
 ```
 
-### getBridgedContractAddress
+### getContractDestination
 
-*Returns the address of the bridged contract in the other network*
+*Returns the address of the bridged contract on the other network*
 
 
 ```solidity
-function getBridgedContractAddress() external view returns (address);
+function getContractDestination() external view returns (address);
 ```
 
 ### claim
@@ -145,18 +145,6 @@ Events
 
 ```solidity
 event Finalized(uint256 indexed epoch);
-```
-
-### Initialized
-
-```solidity
-event Initialized(address indexed token, address indexed otherNetworkAddress, address indexed tokenState);
-```
-
-### StateApplied
-
-```solidity
-event StateApplied(bytes state);
 ```
 
 ### ClaimAccrued
