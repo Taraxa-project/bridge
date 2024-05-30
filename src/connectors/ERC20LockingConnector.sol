@@ -18,7 +18,6 @@ contract ERC20LockingConnector is TokenConnectorBase {
         initializer
     {
         TokenConnectorBase_init(bridge, address(tokenAddress), token_on_other_network);
-        emit Initialized(bridge, address(tokenAddress), token_on_other_network);
     }
 
     /**
