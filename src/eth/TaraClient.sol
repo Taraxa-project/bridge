@@ -25,7 +25,6 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     uint256[49] __gap;
 
     /// Events
-    event Initialized(uint256 threshold, uint256 pillarBlockInterval);
     event ThresholdChanged(uint256 threshold);
     event ValidatorWeightChanged(address indexed validator, uint256 weight);
     event BlockFinalized(PillarBlock.FinalizedBlock finalized);
@@ -43,7 +42,6 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
         __Ownable_init(msg.sender);
         threshold = _threshold;
         pillarBlockInterval = _pillarBlockInterval;
-        emit Initialized(threshold, pillarBlockInterval);
     }
 
     function getFinalized() public view returns (PillarBlock.FinalizedBlock memory) {
