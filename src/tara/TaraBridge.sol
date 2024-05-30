@@ -6,7 +6,6 @@ import "../lib/BridgeBase.sol";
 import "../connectors/ERC20MintingConnector.sol";
 
 contract TaraBridge is BridgeBase {
-    /// Events
     function initialize(IBridgeLightClient light_client, uint256 finalizationInterval)
         public
         initializer
