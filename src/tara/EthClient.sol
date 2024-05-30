@@ -22,7 +22,6 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     uint256[49] __gap;
 
     /// Events
-    event Initialized(address indexed client, address indexed ethBridgeAddress);
     event BridgeRootProcessed(bytes32 indexed bridgeRoot);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -38,7 +37,6 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
         bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000008;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
-        emit Initialized(address(_client), _eth_bridge_address);
     }
 
     /**

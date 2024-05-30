@@ -103,7 +103,7 @@ contract TaraDeployer is Script {
             "TaraBridge.sol",
             abi.encodeCall(
                 TaraBridge.initialize,
-                (TestERC20(ethAddressOnTara), IBridgeLightClient(_ethClientProxy), _finalizationInterval)
+                (IBridgeLightClient(_ethClientProxy), _finalizationInterval)
             )
         );
 

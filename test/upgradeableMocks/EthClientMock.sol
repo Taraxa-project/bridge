@@ -12,6 +12,5 @@ contract EthClientMock is EthClient {
         bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000000;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
-        emit Initialized(address(_client), _eth_bridge_address);
     }
 }

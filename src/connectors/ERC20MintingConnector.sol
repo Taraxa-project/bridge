@@ -16,7 +16,6 @@ contract ERC20MintingConnector is TokenConnectorBase {
         initializer
     {
         TokenConnectorBase_init(bridge, address(tokenAddress), token_on_other_network);
-        emit Initialized(bridge, address(tokenAddress), token_on_other_network);
     }
 
     /**
@@ -36,7 +35,6 @@ contract ERC20MintingConnector is TokenConnectorBase {
                 ++i;
             }
         }
-        emit StateApplied(_state);
     }
 
     /**

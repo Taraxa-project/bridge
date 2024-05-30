@@ -1,5 +1,5 @@
 # TaraClient
-[Git Source](https://github.com-VargaElod23/Taraxa-project/bridge/blob/996f61a29d91a8326c805bfdad924088129ae1a7/src/eth/TaraClient.sol)
+[Git Source](https://github.com/Taraxa-project/bridge/blob/e4d318b451d9170f9f2dde80fe4263043786ba03/src/eth/TaraClient.sol)
 
 **Inherits:**
 [IBridgeLightClient](/src/lib/IBridgeLightClient.sol/interface.IBridgeLightClient.md), OwnableUpgradeable
@@ -7,9 +7,20 @@
 
 ## State Variables
 ### finalized
+Contains the last finalized block
+
 
 ```solidity
 PillarBlock.FinalizedBlock public finalized;
+```
+
+
+### finalizedBridgeRoots
+Contains the last finalized block for each epoch
+
+
+```solidity
+mapping(uint256 => bytes32) public finalizedBridgeRoots;
 ```
 
 
@@ -52,6 +63,13 @@ uint256[49] __gap;
 
 
 ## Functions
+### constructor
+
+
+```solidity
+constructor();
+```
+
 ### initialize
 
 
@@ -79,7 +97,7 @@ function getFinalized() public view returns (PillarBlock.FinalizedBlock memory);
 
 
 ```solidity
-function getFinalizedBridgeRoot() external view returns (bytes32);
+function getFinalizedBridgeRoot(uint256 epoch) external view returns (bytes32);
 ```
 **Returns**
 
@@ -109,7 +127,7 @@ function setThreshold(uint256 _threshold) public onlyOwner;
 
 
 ```solidity
-function processValidatorChanges(PillarBlock.VoteCountChange[] memory validatorChanges) public;
+function processValidatorChanges(PillarBlock.VoteCountChange[] memory validatorChanges) internal;
 ```
 **Parameters**
 
@@ -157,15 +175,9 @@ function getSignaturesWeight(bytes32 h, CompactSignature[] memory signatures) pu
 
 
 ## Events
-### Initialized
+### ThresholdChanged
 Events
 
-
-```solidity
-event Initialized(uint256 threshold, uint256 pillarBlockInterval);
-```
-
-### ThresholdChanged
 
 ```solidity
 event ThresholdChanged(uint256 threshold);

@@ -1,5 +1,5 @@
 # BridgeConnectorBase
-[Git Source](https://github.com-VargaElod23/Taraxa-project/bridge/blob/996f61a29d91a8326c805bfdad924088129ae1a7/src/connectors/BridgeConnectorBase.sol)
+[Git Source](https://github.com/Taraxa-project/bridge/blob/e4d318b451d9170f9f2dde80fe4263043786ba03/src/connectors/BridgeConnectorBase.sol)
 
 **Inherits:**
 [IBridgeConnector](/src/connectors/IBridgeConnector.sol/interface.IBridgeConnector.md), OwnableUpgradeable, UUPSUpgradeable
@@ -24,6 +24,13 @@ uint256[49] __gap;
 
 
 ## Functions
+### constructor
+
+
+```solidity
+constructor();
+```
+
 ### receive
 
 
@@ -108,11 +115,5 @@ event Funded(address indexed sender, address indexed connectorBase, uint256 amou
 
 ```solidity
 event Refunded(address indexed receiver, uint256 amount);
-```
-
-### StateApplied
-
-```solidity
-event StateApplied(bytes indexed state, address indexed receiver, uint256 amount);
 ```
 
