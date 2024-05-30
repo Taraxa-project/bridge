@@ -38,7 +38,11 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
 
     /// Events
     event Finalized(uint256 indexed epoch, bytes32 bridgeRoot);
-    event ConnectorRegistered(address indexed connector);
+    event ConnectorRegistered(
+        address indexed connector,
+        address indexed token_source,
+        address indexed token_destination
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -93,6 +97,7 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
      */
     function registerContract(IBridgeConnector connector) public {
         address tokenSrc = connector.getContractSource();
+        address tokenDst = connector.getContractDestination();
 
         if (connectors[address(connector)] != IBridgeConnector(address(0))) {
             return;
@@ -101,16 +106,16 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
             revert ZeroAddressCannotBeRegistered();
         }
         if (
-            localAddress[connector.getContractDestination()] != address(0)
+            localAddress[tokenDst] != address(0)
                 || connectors[tokenSrc] != IBridgeConnector(address(0))
         ) {
             revert ConnectorAlreadyRegistered({connector: address(connector), token: tokenSrc});
         }
 
         connectors[tokenSrc] = connector;
-        localAddress[connector.getContractDestination()] = connector.getContractSource();
+        localAddress[tokenDst] = tokenSrc;
         tokenAddresses.push(tokenSrc);
-        emit ConnectorRegistered(tokenSrc);
+        emit ConnectorRegistered(address(connector), tokenSrc, tokenDst);
     }
 
     /**
