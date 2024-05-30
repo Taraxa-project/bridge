@@ -1,5 +1,5 @@
 # ERC20MintingConnector
-[Git Source](https://github.com-VargaElod23/Taraxa-project/bridge/blob/996f61a29d91a8326c805bfdad924088129ae1a7/src/connectors/ERC20MintingConnector.sol)
+[Git Source](https://github.com/Taraxa-project/bridge/blob/e4d318b451d9170f9f2dde80fe4263043786ba03/src/connectors/ERC20MintingConnector.sol)
 
 **Inherits:**
 [TokenConnectorBase](/src/connectors/TokenConnectorBase.sol/abstract.TokenConnectorBase.md)
@@ -44,7 +44,7 @@ The amount of tokens to burn must be approved by the sender
 
 
 ```solidity
-function burn(uint256 amount) public payable;
+function burn(uint256 amount) public;
 ```
 **Parameters**
 

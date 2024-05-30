@@ -1,8 +1,8 @@
 # TestERC20
-[Git Source](https://github.com-VargaElod23/Taraxa-project/bridge/blob/996f61a29d91a8326c805bfdad924088129ae1a7/src/lib/TestERC20.sol)
+[Git Source](https://github.com/Taraxa-project/bridge/blob/e4d318b451d9170f9f2dde80fe4263043786ba03/src/lib/TestERC20.sol)
 
 **Inherits:**
-ERC20Upgradeable, OwnableUpgradeable, [IERC20MintableBurnable](/src/connectors/IERC20MintableBurnable.sol/interface.IERC20MintableBurnable.md), UUPSUpgradeable
+ERC20, Ownable, [IERC20MintableBurnable](/src/connectors/IERC20MintableBurnable.sol/interface.IERC20MintableBurnable.md)
 
 
 ## Functions
@@ -10,21 +10,7 @@ ERC20Upgradeable, OwnableUpgradeable, [IERC20MintableBurnable](/src/connectors/I
 
 
 ```solidity
-constructor();
-```
-
-### initialize
-
-
-```solidity
-function initialize(string memory name, string memory symbol) public initializer;
-```
-
-### _authorizeUpgrade
-
-
-```solidity
-function _authorizeUpgrade(address newImplementation) internal override onlyOwner;
+constructor(string memory name, string memory symbol) ERC20(name, symbol) Ownable(msg.sender);
 ```
 
 ### mintTo
@@ -33,7 +19,7 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
 
 
 ```solidity
-function mintTo(address receiver, uint256 amount) public;
+function mintTo(address receiver, uint256 amount) public onlyOwner;
 ```
 **Parameters**
 
@@ -47,13 +33,13 @@ function mintTo(address receiver, uint256 amount) public;
 
 *Destroys a `value` amount of tokens from `account`, deducting from
 the caller's allowance.
-See [ERC20-_burn](/lib/beacon-light-client/lib/forge-std/src/mocks/MockERC20.sol/contract.MockERC20.md#_burn) and {ERC20-allowance}.
+See [ERC20-_burn](/lib/beacon-light-client/lib/create3-deploy/lib/solmate/src/tokens/ERC1155.sol/abstract.ERC1155.md#_burn) and {ERC20-allowance}.
 Requirements:
 - the caller must have allowance for ``accounts``'s tokens of at least
 `value`.*
 
 
 ```solidity
-function burnFrom(address account, uint256 value) public virtual;
+function burnFrom(address account, uint256 value) public virtual onlyOwner;
 ```
 

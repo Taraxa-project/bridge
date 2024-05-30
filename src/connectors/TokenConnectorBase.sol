@@ -20,8 +20,6 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
 
     /// Events
     event Finalized(uint256 indexed epoch);
-    event Initialized(address indexed token, address indexed otherNetworkAddress, address indexed tokenState);
-    event StateApplied(bytes state);
     event ClaimAccrued(address indexed account, uint256 value);
     event Claimed(address indexed account, uint256 value);
 
@@ -40,7 +38,6 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
         otherNetworkAddress = token_on_other_network;
         token = _token;
         state = new TokenState(0);
-        emit Initialized(_token, token_on_other_network, address(state));
     }
 
     function epoch() public view returns (uint256) {

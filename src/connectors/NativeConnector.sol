@@ -9,7 +9,6 @@ import "../lib/Constants.sol";
 contract NativeConnector is TokenConnectorBase {
     /// Events
     event Locked(address indexed account, uint256 value);
-    event AppliedState(bytes state);
 
     function initialize(address bridge, address token_on_other_network) public initializer {
         __TokenConnectorBase_init(bridge, Constants.NATIVE_TOKEN_ADDRESS, token_on_other_network);
@@ -29,7 +28,6 @@ contract NativeConnector is TokenConnectorBase {
             accounts[i] = transfers[i].account;
             emit ClaimAccrued(transfers[i].account, transfers[i].amount);
         }
-        emit AppliedState(_state);
     }
 
     /**

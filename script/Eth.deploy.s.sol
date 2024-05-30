@@ -58,7 +58,7 @@ contract EthDeployer is Script {
             "EthBridge.sol",
             abi.encodeCall(
                 EthBridge.initialize,
-                (TestERC20(taraAddressOnEth), IBridgeLightClient(taraClientProxy), finalizationInterval)
+                (IBridgeLightClient(taraClientProxy), finalizationInterval)
             ),
             opts
         );

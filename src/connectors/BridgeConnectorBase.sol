@@ -19,7 +19,6 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, U
     /// Events
     event Funded(address indexed sender, address indexed connectorBase, uint256 amount);
     event Refunded(address indexed receiver, uint256 amount);
-    event StateApplied(bytes indexed state, address indexed receiver, uint256 amount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -79,6 +78,5 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, U
             }
         }
         refund(refund_receiver, totalFee);
-        emit StateApplied(_state, refund_receiver, totalFee);
     }
 }

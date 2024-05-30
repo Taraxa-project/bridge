@@ -38,13 +38,13 @@ contract UpgradeabilityTest is Test {
         taraBridge = TaraBridge(
             Upgrades.deployUUPSProxy(
                 "TaraBridge.sol",
-                abi.encodeCall(TaraBridge.initialize, (taraTokenOnEth, ethLightClient, FINALIZATION_INTERVAL))
+                abi.encodeCall(TaraBridge.initialize, (ethLightClient, FINALIZATION_INTERVAL))
             )
         );
         ethBridge = EthBridge(
             Upgrades.deployUUPSProxy(
                 "EthBridge.sol",
-                abi.encodeCall(EthBridge.initialize, (taraTokenOnEth, taraLightClient, FINALIZATION_INTERVAL))
+                abi.encodeCall(EthBridge.initialize, (taraLightClient, FINALIZATION_INTERVAL))
             )
         );
 

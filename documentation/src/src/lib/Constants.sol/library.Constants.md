@@ -1,26 +1,12 @@
 # Constants
-[Git Source](https://github.com-VargaElod23/Taraxa-project/bridge/blob/996f61a29d91a8326c805bfdad924088129ae1a7/src/lib/Constants.sol)
+[Git Source](https://github.com/Taraxa-project/bridge/blob/e4d318b451d9170f9f2dde80fe4263043786ba03/src/lib/Constants.sol)
 
 
 ## State Variables
 ### NATIVE_TOKEN_ADDRESS
 
 ```solidity
-address public constant NATIVE_TOKEN_ADDRESS = address(1);
-```
-
-
-### EMPTY_BYTES
-
-```solidity
-bytes public constant EMPTY_BYTES = "";
-```
-
-
-### EMPTY_HASH
-
-```solidity
-bytes32 public constant EMPTY_HASH = keccak256(EMPTY_BYTES);
+address public constant NATIVE_TOKEN_ADDRESS = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 ```
 
 

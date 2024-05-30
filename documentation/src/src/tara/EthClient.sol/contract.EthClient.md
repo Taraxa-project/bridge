@@ -1,5 +1,5 @@
 # EthClient
-[Git Source](https://github.com-VargaElod23/Taraxa-project/bridge/blob/996f61a29d91a8326c805bfdad924088129ae1a7/src/tara/EthClient.sol)
+[Git Source](https://github.com/Taraxa-project/bridge/blob/e4d318b451d9170f9f2dde80fe4263043786ba03/src/tara/EthClient.sol)
 
 **Inherits:**
 [IBridgeLightClient](/src/lib/IBridgeLightClient.sol/interface.IBridgeLightClient.md), OwnableUpgradeable
@@ -52,6 +52,13 @@ uint256[49] __gap;
 
 
 ## Functions
+### constructor
+
+
+```solidity
+constructor();
+```
+
 ### initialize
 
 
@@ -65,7 +72,7 @@ function initialize(BeaconLightClient _client, address _eth_bridge_address) publ
 
 
 ```solidity
-function getFinalizedBridgeRoot() external view returns (bytes32);
+function getFinalizedBridgeRoot(uint256 epoch) external view returns (bytes32);
 ```
 **Returns**
 
@@ -74,25 +81,19 @@ function getFinalizedBridgeRoot() external view returns (bytes32);
 |`<none>`|`bytes32`|The finalized bridge root as a bytes32 value.|
 
 
-### refundAmount
-
-
-```solidity
-function refundAmount() external view returns (uint256);
-```
-
 ### processBridgeRoot
 
 *Processes the bridge root by verifying account and storage proofs against state root from the light client.*
 
 
 ```solidity
-function processBridgeRoot(bytes[] memory account_proof, bytes[] memory storage_proof) external;
+function processBridgeRoot(uint256 block_number, bytes[] memory account_proof, bytes[] memory storage_proof) external;
 ```
 **Parameters**
 
 |Name|Type|Description|
 |----|----|-----------|
+|`block_number`|`uint256`||
 |`account_proof`|`bytes[]`|The account proofs for the bridge root.|
 |`storage_proof`|`bytes[]`|The storage proofs for the bridge root.|
 
@@ -113,15 +114,9 @@ function getMerkleRoot() external view returns (bytes32);
 
 
 ## Events
-### Initialized
+### BridgeRootProcessed
 Events
 
-
-```solidity
-event Initialized(address indexed client, address indexed ethBridgeAddress);
-```
-
-### BridgeRootProcessed
 
 ```solidity
 event BridgeRootProcessed(bytes32 indexed bridgeRoot);

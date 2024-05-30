@@ -36,14 +36,14 @@ fi
 
 echo "Calculating current sync committe aggregated PK"
 
-python3 src/scripts/calculate_sync_committee_hash.py
+python3 ./script/calculate_sync_committee_hash.py
 
 if [ $? -ne 0 ]; then
   echo "Error calculating current sync committe aggregated PK"
   exit 1
 fi
 # Run the deployment script for TaraClient
-res=$(forge script src/scripts/Tara.deploy.s.sol:TaraDeployer --ffi --rpc-url $RPC_FICUS_PRNET --broadcast --legacy | tee /dev/tty)
+res=$(forge script ./script/Tara.deploy.s.sol:TaraDeployer --ffi --rpc-url $RPC_FICUS_PRNET --broadcast --legacy | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for TaraClient"
@@ -74,7 +74,7 @@ echo "EthMintingConnector contract deployed to: $ethMintingConnectorProxy"
 
 
 currentTimestamp=$(date +%s)
-deploymentFile=".deployments/.tara.deployment.$currentTimestamp.json"
+deploymentFile="./deployments/.tara.deployment.$currentTimestamp.json"
 
 echo "{" > $deploymentFile
 echo "  \"taradeploy-$currentTimestamp\": {" >> $deploymentFile

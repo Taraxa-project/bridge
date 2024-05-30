@@ -18,12 +18,10 @@ contract TokenState is Ownable {
     mapping(address => uint256) balances;
 
     /// Events
-    event TransferAdded(address indexed account, address indexed tokenState, uint256 indexed amount);
-    event Initialized(uint256 indexed epoch);
+    event TransferAdded(address indexed account, uint256 amount);
 
     constructor(uint256 _epoch) Ownable(msg.sender) {
         epoch = _epoch;
-        emit Initialized(_epoch);
     }
 
     function empty() public view returns (bool) {
@@ -42,7 +40,7 @@ contract TokenState is Ownable {
             accounts.push(account);
         }
         balances[account] += amount;
-        emit TransferAdded(account, address(this), amount);
+        emit TransferAdded(account, amount);
     }
 
     function getTransfers() public view returns (Transfer[] memory) {
