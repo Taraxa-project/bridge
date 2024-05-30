@@ -50,57 +50,29 @@ Last deployments are stored in the `deployments` folder.
 
 **Note:** The deployment details section below lists both the RPC and the contract addresses for the deployed contracts. To interact with the contracts in Remix or any other tool, you will need to use the proxy addresses as `TaraBridge bridge = TaraBridge(proxyAddress)` or `TaraBridge bridge = TaraBridge(0xFA7c27D54B6e1C631D1426f3dDaC818Cb4033d84)`.
 
-## TESTABLE DEPLOYMENT
+## Deployment Details
 
-### Deployment from ./deployments/.token.deployment.1716544892.json
-
+### Deployment from ./deployments/.token.deployment.1717091029.json
 ```json
 {
-  "tokendeploy-1716544892": {
+  "tokendeploy-1717091029": {
     "TARA": {
-      "address": "0x72862dc8eB9251D3ABE9cba411c41b38A9Ed12C9",
+      "address": "0x09A77e9b4a8E96Fe874A88229a95BC69Bc2e05F9",
       "RPC": "https://holesky.drpc.org"
     },
     "ETH": {
       "address": "0xdB0698D2c8FbE2C3c36941ccEC488834BbcAf151",
-      "RPC": "https://rpc-pr-2756.prnet.taraxa.io"
+      "RPC": "https://rpc-pr-2618.prnet.taraxa.io"
     }
   }
 }
 ```
 
-### Deployment from ./deployments/.eth.deployment.1716545201.json
-
+### Deployment from ./deployments/.tara.deployment.1717091205.json
 ```json
 {
-  "ethdeploy-1716545201": {
-    "RPC": "https://holesky.drpc.org",
-    "TaraClient": {
-      "implAddress": "0xd3EAF83f1984308633E1bB26a8DA49bA0658e587",
-      "proxyAddress": "0xFEBFE005CfeBC59590C7f22b61C13a296AF01f49"
-    },
-    "EthBridge": {
-      "implAddress": "0x06BBa509ca36e9f764f94b9Ce8420b424fD94015",
-      "proxyAddress": "0x7744121681C9D9Bd1fA8aff148Cffe98b5E152e8"
-    },
-    "ERC20MintingConnector": {
-      "implAddress": "0xA190Db338F1838bDfD13E8b2d6F4505EFf002B0F",
-      "proxyAddress": "0xA23C7dF2E9fa24D1F20Ead92D49fad012d7B3A42"
-    },
-    "NativeConnector": {
-      "implAddress": "0x937450589aAB8A807310e493fE51f70bC65cC053",
-      "proxyAddress": "0x78410949dDEEEbfAf7527f95d873c84297F82618"
-    }
-  }
-}
-```
-
-### Deployment from ./deployments/.tara.deployment.1716545354.json
-
-```json
-{
-  "taradeploy-1716545354": {
-    "RPC": "https://rpc-pr-2756.prnet.taraxa.io",
+  "taradeploy-1717091205": {
+    "RPC": "https://rpc-pr-2618.prnet.taraxa.io",
     "BeaconLightClient": "0x3BBdc66Fa7eb51259Da29909529b65232c184519",
     "EthClient": {
       "implAddress": "0xeB372006B243e00d7a97662221D3521be1Fb9a71",
@@ -121,3 +93,29 @@ Last deployments are stored in the `deployments` folder.
   }
 }
 ```
+
+### Deployment from ./deployments/.eth.deployment.1717091129.json
+```json
+{
+  "ethdeploy-1717091129": {
+    "RPC": "https://holesky.drpc.org",
+    "TaraClient": {
+      "implAddress": "0x1D1E2e435CEba04C9209FE6Ea1BaaE4D90a59469",
+      "proxyAddress": "0x041cf5DC73793483e638Ae6333B348bbe42b96dE"
+    },
+    "EthBridge": {
+      "implAddress": "0x513FfdbE5b2f6Bf2cb8116a16B9375fd20550622",
+      "proxyAddress": "0xe67957f965b3cb5c58abF0309D9a8e98787Ab75e"
+    },
+    "ERC20MintingConnector": {
+      "implAddress": "0xE0bcaC3b12cd64d25E52d921a79e53421AD6E0a2",
+      "proxyAddress": "0x6aA8f4644bAa008e1fD6A81d31aCCC1cCf13e339"
+    },
+    "NativeConnector": {
+      "implAddress": "0x6FdE52E45acd76541Cc7Aae036358329f000DF59",
+      "proxyAddress": "0x6B404ccd2AEa5B06F00a4f3565fE88Ed1fD7A07E"
+    }
+  }
+}
+```
+
