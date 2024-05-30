@@ -21,7 +21,6 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     /// Events
     event Finalized(uint256 indexed epoch);
     event Initialized(address indexed token, address indexed otherNetworkAddress, address indexed tokenState);
-    event StateApplied(bytes state);
     event ClaimAccrued(address indexed account, uint256 value);
     event Claimed(address indexed account, uint256 value);
 

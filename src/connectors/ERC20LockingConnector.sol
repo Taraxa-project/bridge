@@ -38,7 +38,6 @@ contract ERC20LockingConnector is TokenConnectorBase {
                 ++i;
             }
         }
-        emit StateApplied(_state);
     }
 
     /**

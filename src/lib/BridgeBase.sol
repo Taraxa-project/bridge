@@ -37,7 +37,6 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     uint256[49] __gap;
 
     /// Events
-    event StateApplied(bytes indexed state, address indexed receiver, address indexed connector, uint256 refund);
     event Finalized(uint256 indexed epoch, bytes32 bridgeRoot);
     event ConnectorRegistered(address indexed connector);
 
@@ -156,12 +155,6 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
             uint256 refund = (used + common / state_with_proof.state_hashes.length);
             connectors[localAddress[state_with_proof.state_hashes[i].contractAddress]].applyStateWithRefund(
                 state_with_proof.state.states[i].state, payable(msg.sender), refund
-            );
-            emit StateApplied(
-                state_with_proof.state.states[i].state,
-                msg.sender,
-                localAddress[state_with_proof.state_hashes[i].contractAddress],
-                refund
             );
             unchecked {
                 ++i;

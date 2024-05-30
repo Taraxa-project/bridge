@@ -36,7 +36,6 @@ contract ERC20MintingConnector is TokenConnectorBase {
                 ++i;
             }
         }
-        emit StateApplied(_state);
     }
 
     /**
