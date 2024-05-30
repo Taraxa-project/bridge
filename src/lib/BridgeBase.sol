@@ -93,7 +93,7 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
      * @param connector The address of the connector contract.
      */
     function registerContract(IBridgeConnector connector) public {
-        address tokenSrc = connector.getContractAddress();
+        address tokenSrc = connector.getContractSource();
 
         if (connectors[address(connector)] != IBridgeConnector(address(0))) {
             return;
@@ -102,14 +102,14 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
             revert ZeroAddressCannotBeRegistered();
         }
         if (
-            localAddress[connector.getBridgedContractAddress()] != address(0)
+            localAddress[connector.getContractDestination()] != address(0)
                 || connectors[tokenSrc] != IBridgeConnector(address(0))
         ) {
             revert ConnectorAlreadyRegistered({connector: address(connector), token: tokenSrc});
         }
 
         connectors[tokenSrc] = connector;
-        localAddress[connector.getBridgedContractAddress()] = connector.getContractAddress();
+        localAddress[connector.getContractDestination()] = connector.getContractSource();
         tokenAddresses.push(tokenSrc);
         emit ConnectorRegistered(tokenSrc);
     }

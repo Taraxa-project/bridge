@@ -95,14 +95,14 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     /**
      * @dev Returns the address of the underlying contract in this network
      */
-    function getContractAddress() public view returns (address) {
+    function getContractSource() public view returns (address) {
         return address(token);
     }
 
     /**
      * @dev Returns the address of the bridged contract on the other network
      */
-    function getBridgedContractAddress() external view returns (address) {
+    function getContractDestination() external view returns (address) {
         return otherNetworkAddress;
     }
 
