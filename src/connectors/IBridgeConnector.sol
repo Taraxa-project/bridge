@@ -30,12 +30,12 @@ interface IBridgeConnector {
     /**
      * @dev Returns the address of the underlying contract in this network
      */
-    function getContractSource() external view returns (address);
+    function getContractAddress() external view returns (address);
 
     /**
      * @dev Returns the address of the bridged contract on the other network
      */
-    function getContractDestination() external view returns (address);
+    function getBridgedContractAddress() external view returns (address);
 
     /**
      * @dev Applies the given state with a refund to the specified receiver.

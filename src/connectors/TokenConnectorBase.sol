@@ -36,6 +36,10 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
         internal
         onlyInitializing
     {
+        require(
+            bridge != address(0) && _token != address(0) && token_on_other_network != address(0),
+            "TokenConnectorBase: invalid bridge, token, or token_on_other_network"
+        );
         __BridgeConnectorBase_init(bridge);
         otherNetworkAddress = token_on_other_network;
         token = _token;
@@ -91,14 +95,14 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     /**
      * @dev Returns the address of the underlying contract in this network
      */
-    function getContractSource() public view returns (address) {
+    function getContractAddress() public view returns (address) {
         return address(token);
     }
 
     /**
      * @dev Returns the address of the bridged contract on the other network
      */
-    function getContractDestination() external view returns (address) {
+    function getBridgedContractAddress() external view returns (address) {
         return otherNetworkAddress;
     }
 
