@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.17;
 
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./TokenConnectorBase.sol";
@@ -9,7 +10,9 @@ import "../lib/SharedStructs.sol";
 import {InsufficientFunds, NoClaimAvailable, TransferFailed, ZeroValueCall} from "../errors/ConnectorErrors.sol";
 
 contract ERC20LockingConnector is TokenConnectorBase {
+    using SafeERC20 for IERC20;
     /// Events
+
     event Locked(address indexed account, uint256 value);
 
     function initialize(address bridge, IERC20 tokenAddress, address token_on_other_network)
@@ -50,7 +53,7 @@ contract ERC20LockingConnector is TokenConnectorBase {
         if (value == 0) {
             revert ZeroValueCall();
         }
-        IERC20(token).transferFrom(msg.sender, address(this), value);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), value);
         state.addAmount(msg.sender, value);
         emit Locked(msg.sender, value);
     }
@@ -67,11 +70,8 @@ contract ERC20LockingConnector is TokenConnectorBase {
         if (amount == 0) {
             revert NoClaimAvailable();
         }
-        (bool transferSuccess) = IERC20(token).transfer(msg.sender, amount);
-        if (!transferSuccess) {
-            revert TransferFailed({recipient: msg.sender, amount: amount});
-        }
         toClaim[msg.sender] = 0;
+        IERC20(token).safeTransfer(msg.sender, amount);
         emit Claimed(msg.sender, amount);
     }
 }
