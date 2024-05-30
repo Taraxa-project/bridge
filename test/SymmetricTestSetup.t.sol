@@ -34,7 +34,7 @@ contract SymmetricTestSetup is Test {
 
         address taraBridgeProxy = Upgrades.deployUUPSProxy(
             "TaraBridge.sol",
-            abi.encodeCall(TaraBridge.initialize, (taraTokenOnEth, ethLightClient, FINALIZATION_INTERVAL))
+            abi.encodeCall(TaraBridge.initialize, (ethLightClient, FINALIZATION_INTERVAL))
         );
         taraBridge = TaraBridge(taraBridgeProxy);
         address ethBridgeProxy = Upgrades.deployUUPSProxy(
