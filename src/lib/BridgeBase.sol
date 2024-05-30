@@ -63,6 +63,8 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         finalizationInterval = _finalizationInterval;
     }
 
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
     /**
      * @dev Sets the finalization interval.
      * @param _finalizationInterval The finalization interval to be set.

@@ -40,6 +40,8 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, U
         _transferOwnership(bridge);
     }
 
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
     /**
      * @dev Refunds the specified amount to the given receiver.
      * @param receiver The address of the receiver.
