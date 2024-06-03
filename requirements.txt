@@ -10,7 +10,7 @@ idna==3.7
 lru-dict==1.1.6
 mypy-extensions==1.0.0
 py-ecc==2.0.0
-pycryptodome==3.9.4
+pycryptodome==3.19.1
 remerkleable==0.1.13
 requests==2.31.0
 ruamel.yaml==0.16.5
