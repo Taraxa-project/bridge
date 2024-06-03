@@ -19,8 +19,11 @@ import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 contract CustomTokenTransfersTest is SymmetricTestSetup {
     function test_customToken() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
         // deploy and register token on both sides
+        vm.startPrank(caller);
         taraTestToken = new TestERC20("Test", "TEST");
         ethTestToken = new TestERC20("Test", "TEST");
+        relayerWhitelist.setAddress(address(taraTestToken));
+        relayerWhitelist.setAddress(address(ethTestToken));
         address taraTestTokenConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20LockingConnector.sol",
             abi.encodeWithSelector(
@@ -50,7 +53,7 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         taraBridge.registerContract(taraTestTokenConnector);
         ethBridge.registerContract(ethTestTokenConnector);
 
-        taraTestToken.mintTo(address(this), 10 ether);
+        taraTestToken.mintTo(address(caller), 10 ether);
         taraTestToken.approve(address(taraTestTokenConnector), 1 ether);
 
         // give ownership of erc20s to the connectors
@@ -60,17 +63,17 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         taraTestTokenConnector.lock(1 ether);
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
         assertEq(state.state.epoch, 1, "epoch");
         taraLightClient.setBridgeRoot(state);
-        assertEq(ethTestToken.balanceOf(address(this)), 0, "token balance before");
+        assertEq(ethTestToken.balanceOf(address(caller)), 0, "token balance before");
 
-        vm.prank(caller);
         ethBridge.applyState(state);
 
         ethTestTokenConnector.claim{value: ethTestTokenConnector.feeToClaim(address(this))}();
+        vm.stopPrank();
 
-        assertEq(ethTestToken.balanceOf(address(this)), 1 ether, "token balance after");
+        assertEq(ethTestToken.balanceOf(address(caller)), 1 ether, "token balance after");
     }
 
     function test_multipleContractsToEth() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
@@ -90,7 +93,7 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         vm.roll(2 * FINALIZATION_INTERVAL);
         vm.prank(caller);
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
         assertEq(state.state.epoch, 2, "epoch");
         taraLightClient.setBridgeRoot(state);
 
@@ -134,7 +137,7 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
 
         vm.roll(3 * FINALIZATION_INTERVAL);
         ethBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = ethBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state = ethBridge.getStateWithProof(relayerWhitelist);
         assertEq(state.state.epoch, 1, "epoch");
         ethLightClient.setBridgeRoot(state);
 

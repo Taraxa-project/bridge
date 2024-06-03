@@ -45,7 +45,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         vm.expectRevert();
         taraBridge.finalizeEpoch();
         vm.expectRevert();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
         taraLightClient.setBridgeRoot(state);
         vm.expectRevert();
         ethBridge.applyState(state);
@@ -65,7 +65,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         vm.roll(FINALIZATION_INTERVAL);
 
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
         taraLightClient.setBridgeRoot(state);
         ethBridge.applyState(state);
 
@@ -86,7 +86,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         vm.roll(FINALIZATION_INTERVAL);
 
         ethBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = ethBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state = ethBridge.getStateWithProof(relayerWhitelist);
         ethLightClient.setBridgeRoot(state);
         uint256 balance_before = address(this).balance;
 
@@ -108,7 +108,7 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
         state.state.states[0] = SharedStructs.StateWithAddress(address(0), abi.encode(1));
 
         bytes32 root = SharedStructs.getBridgeRoot(state.state.epoch, state.state_hashes);
@@ -129,7 +129,7 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
         ethLightClient.setBridgeRoot(state);
         state.state.epoch = 2;
 
@@ -150,14 +150,14 @@ contract StateTransfersTest is SymmetricTestSetup {
         taraConnector.lock{value: value}();
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
-        uint256 finalizedEpoch = taraBridge.getStateWithProof().state.epoch;
+        uint256 finalizedEpoch = taraBridge.getStateWithProof(relayerWhitelist).state.epoch;
         assertEq(finalizedEpoch, 1);
         vm.roll(2 * FINALIZATION_INTERVAL);
 
         vm.expectRevert();
         taraBridge.finalizeEpoch();
         // check that we are not finalizing empty epoch
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
         assertEq(state.state.epoch, finalizedEpoch);
         assertEq(state.state.states.length, 2);
         assertEq(state.state.epoch, 1);
@@ -171,11 +171,11 @@ contract StateTransfersTest is SymmetricTestSetup {
         taraConnector.lock{value: value}();
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state1 = taraBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state1 = taraBridge.getStateWithProof(relayerWhitelist);
         taraConnector.lock{value: value}();
         vm.roll(2 * FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
         assertFalse(state.state.epoch == state1.state.epoch);
         assertFalse(
             SharedStructs.getBridgeRoot(state.state.epoch, state.state_hashes)
@@ -210,7 +210,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         }
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
         taraLightClient.setBridgeRoot(state);
 
         ethBridge.applyState(state);

@@ -9,6 +9,7 @@ import {TestERC20} from "src/lib/TestERC20.sol";
 import {ERC20LockingConnector} from "src/connectors/ERC20LockingConnector.sol";
 import {ERC20MintingConnector} from "src/connectors/ERC20MintingConnector.sol";
 import {Constants} from "src/lib/Constants.sol";
+import {RelayerWhitelist} from "src/lib/RelayerWhitelist.sol";
 import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
@@ -19,6 +20,7 @@ contract SymmetricTestSetup is Test {
     TestERC20 ethTokenOnTara;
     TaraBridge taraBridge;
     EthBridge ethBridge;
+    RelayerWhitelist relayerWhitelist;
 
     address caller = vm.addr(0x1234);
     uint256 constant FINALIZATION_INTERVAL = 100;
@@ -32,14 +34,18 @@ contract SymmetricTestSetup is Test {
         taraTokenOnEth = new TestERC20("Tara", "TARA");
         ethTokenOnTara = new TestERC20("Eth", "ETH");
 
+        address[] memory whitelistedTokenAddresses = new address[](2);
+        whitelistedTokenAddresses[0] = address(taraTokenOnEth);
+        whitelistedTokenAddresses[1] = address(ethTokenOnTara);
+
+        relayerWhitelist = new RelayerWhitelist(whitelistedTokenAddresses);
+
         address taraBridgeProxy = Upgrades.deployUUPSProxy(
-            "TaraBridge.sol",
-            abi.encodeCall(TaraBridge.initialize, (ethLightClient, FINALIZATION_INTERVAL))
+            "TaraBridge.sol", abi.encodeCall(TaraBridge.initialize, (ethLightClient, FINALIZATION_INTERVAL))
         );
         taraBridge = TaraBridge(taraBridgeProxy);
         address ethBridgeProxy = Upgrades.deployUUPSProxy(
-            "EthBridge.sol",
-            abi.encodeCall(EthBridge.initialize, (taraLightClient, FINALIZATION_INTERVAL))
+            "EthBridge.sol", abi.encodeCall(EthBridge.initialize, (taraLightClient, FINALIZATION_INTERVAL))
         );
         ethBridge = EthBridge(ethBridgeProxy);
 
