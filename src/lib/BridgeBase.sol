@@ -18,6 +18,7 @@ import {
     NotAllStatesApplied,
     NoStateToFinalize
 } from "../errors/BridgeBaseErrors.sol";
+import {RelayerWhitelist} from "../lib/RelayerWhitelist.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 
 abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
@@ -210,19 +211,25 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
                 ++finalizedIndex;
             }
         }
-        // TODO: strip empty hashes
+        SharedStructs.ContractStateHash[] memory finalHashes = new SharedStructs.ContractStateHash[](finalizedIndex);
+        for (uint256 i = 0; i < finalizedIndex;) {
+            hashes[i] = hashes[i];
+            unchecked {
+                ++i;
+            }
+        }
         lastFinalizedBlock = block.number;
         unchecked {
             ++finalizedEpoch;
         }
-        bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, hashes);
+        bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, finalHashes);
         emit Finalized(finalizedEpoch, bridgeRoot);
     }
 
     /**
      * @return ret finalized states with proof for all tokens
      */
-    function getStateWithProof( /*address[] calldata whitelist*/ )
+    function getStateWithProof(RelayerWhitelist relayerWhitelist)
         public
         view
         returns (SharedStructs.StateWithProof memory ret)
@@ -232,14 +239,18 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         ret.state_hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
         uint256 tokenAddressesLength = tokenAddresses.length;
         for (uint256 i = 0; i < tokenAddressesLength;) {
-            bytes memory state = connectors[tokenAddresses[i]].getFinalizedState();
-            ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));
-            // TODO: skip if not in the "whitelist"
-            ret.state.states[i] = SharedStructs.StateWithAddress(tokenAddresses[i], state);
+            bool inWhitelist = relayerWhitelist.contains(tokenAddresses[i]);
+            if (inWhitelist) {
+                bytes memory state = connectors[tokenAddresses[i]].getFinalizedState();
+                ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));
+                ret.state.states[i] = SharedStructs.StateWithAddress(tokenAddresses[i], state);
+            } else {
+                ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], bytes32(0));
+                ret.state.states[i] = SharedStructs.StateWithAddress(tokenAddresses[i], bytes(""));
+            }
             unchecked {
                 ++i;
             }
         }
-        // TODO: strip empty states
     }
 }

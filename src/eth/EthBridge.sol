@@ -7,17 +7,14 @@ import "../connectors/ERC20MintingConnector.sol";
 import "../lib/BridgeBase.sol";
 
 contract EthBridge is BridgeBase {
-    function initialize(IBridgeLightClient light_client, uint256 finalizationInterval)
-        public
-        initializer
-    {
+    function initialize(IBridgeLightClient light_client, uint256 finalizationInterval) public initializer {
         __initialize_EthBridge_unchained(light_client, finalizationInterval);
     }
 
-    function __initialize_EthBridge_unchained(
-        IBridgeLightClient light_client,
-        uint256 finalizationInterval
-    ) internal onlyInitializing {
+    function __initialize_EthBridge_unchained(IBridgeLightClient light_client, uint256 finalizationInterval)
+        internal
+        onlyInitializing
+    {
         __BridgeBase_init(light_client, finalizationInterval);
     }
 }
