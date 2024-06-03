@@ -21,6 +21,7 @@ interface IBridgeConnector {
      * @return true if the state is empty, false otherwise
      */
     function isStateEmpty() external view returns (bool);
+
     /**
      * @dev Retrieves the finalized state of the bridgeable contract.
      * @return A bytes serialized finalized state

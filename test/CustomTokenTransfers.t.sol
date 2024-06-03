@@ -22,8 +22,6 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         vm.startPrank(caller);
         taraTestToken = new TestERC20("Test", "TEST");
         ethTestToken = new TestERC20("Test", "TEST");
-        relayerWhitelist.setAddress(address(taraTestToken));
-        relayerWhitelist.setAddress(address(ethTestToken));
         address taraTestTokenConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20LockingConnector.sol",
             abi.encodeWithSelector(
@@ -63,7 +61,7 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         taraTestTokenConnector.lock(1 ether);
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         assertEq(state.state.epoch, 1, "epoch");
         taraLightClient.setBridgeRoot(state);
         assertEq(ethTestToken.balanceOf(address(caller)), 0, "token balance before");
@@ -93,7 +91,7 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         vm.roll(2 * FINALIZATION_INTERVAL);
         vm.prank(caller);
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         assertEq(state.state.epoch, 2, "epoch");
         taraLightClient.setBridgeRoot(state);
 
@@ -137,7 +135,7 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
 
         vm.roll(3 * FINALIZATION_INTERVAL);
         ethBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = ethBridge.getStateWithProof(relayerWhitelist);
+        SharedStructs.StateWithProof memory state = ethBridge.getStateWithProof();
         assertEq(state.state.epoch, 1, "epoch");
         ethLightClient.setBridgeRoot(state);
 

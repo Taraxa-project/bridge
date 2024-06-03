@@ -23,7 +23,7 @@ contract FeesTest is SymmetricTestSetup {
         taraBridgeToken.lock{value: value}();
 
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof(relayerWhitelist);
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         taraLightClient.setBridgeRoot(state);
         ethBridge.applyState(state);
 

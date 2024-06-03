@@ -82,6 +82,9 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
             revert NoFinalizedState();
         }
 
+        if (finalizedState.empty()) {
+            return new bytes(0);
+        }
         return finalizedSerializedTransfers();
     }
 

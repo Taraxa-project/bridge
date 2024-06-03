@@ -18,7 +18,6 @@ import {
     NotAllStatesApplied,
     NoStateToFinalize
 } from "../errors/BridgeBaseErrors.sol";
-import {RelayerWhitelist} from "../lib/RelayerWhitelist.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 
 abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
@@ -170,16 +169,6 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         ++appliedEpoch;
     }
 
-    function shouldFinalizeEpoch() public view returns (bool) {
-        bool shouldFinalize = false;
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            if (!connectors[tokenAddresses[i]].isStateEmpty()) {
-                return true;
-            }
-        }
-        return shouldFinalize;
-    }
-
     /**
      * @dev Finalizes the current epoch.
      */
@@ -193,16 +182,13 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         }
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
 
-        if (!shouldFinalizeEpoch()) {
-            revert NoStateToFinalize();
-        }
-
         uint256 finalizedIndex = 0;
         for (uint256 i = 0; i < tokenAddresses.length;) {
             IBridgeConnector c = connectors[tokenAddresses[i]];
             bool isStateEmpty = c.isStateEmpty();
             bytes32 finalizedHash = c.finalize(finalizedEpoch);
             if (isStateEmpty) {
+                ++i;
                 continue;
             }
             hashes[finalizedIndex] = SharedStructs.ContractStateHash(tokenAddresses[i], finalizedHash);
@@ -211,9 +197,14 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
                 ++finalizedIndex;
             }
         }
+
+        if (finalizedIndex == 0) {
+            revert NoStateToFinalize();
+        }
+
         SharedStructs.ContractStateHash[] memory finalHashes = new SharedStructs.ContractStateHash[](finalizedIndex);
         for (uint256 i = 0; i < finalizedIndex;) {
-            hashes[i] = hashes[i];
+            finalHashes[i] = hashes[i];
             unchecked {
                 ++i;
             }
@@ -229,25 +220,33 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     /**
      * @return ret finalized states with proof for all tokens
      */
-    function getStateWithProof(RelayerWhitelist relayerWhitelist)
-        public
-        view
-        returns (SharedStructs.StateWithProof memory ret)
-    {
-        ret.state.epoch = finalizedEpoch;
-        ret.state.states = new SharedStructs.StateWithAddress[](tokenAddresses.length);
-        ret.state_hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
+    function getStateWithProof() public view returns (SharedStructs.StateWithProof memory ret) {
+        uint256 proof_idx = 0;
         uint256 tokenAddressesLength = tokenAddresses.length;
+        SharedStructs.StateWithAddress[] memory states = new SharedStructs.StateWithAddress[](tokenAddresses.length);
+        SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
         for (uint256 i = 0; i < tokenAddressesLength;) {
-            bool inWhitelist = relayerWhitelist.contains(tokenAddresses[i]);
-            if (inWhitelist) {
-                bytes memory state = connectors[tokenAddresses[i]].getFinalizedState();
-                ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));
-                ret.state.states[i] = SharedStructs.StateWithAddress(tokenAddresses[i], state);
-            } else {
-                ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], bytes32(0));
-                ret.state.states[i] = SharedStructs.StateWithAddress(tokenAddresses[i], bytes(""));
+            bytes memory state = connectors[tokenAddresses[i]].getFinalizedState();
+            if (state.length == 0) {
+                unchecked {
+                    ++i;
+                }
+                continue;
             }
+            hashes[proof_idx] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));
+            states[proof_idx] = SharedStructs.StateWithAddress(tokenAddresses[i], state);
+            unchecked {
+                ++i;
+                ++proof_idx;
+            }
+        }
+
+        ret.state.epoch = finalizedEpoch;
+        ret.state.states = new SharedStructs.StateWithAddress[](proof_idx);
+        ret.state_hashes = new SharedStructs.ContractStateHash[](proof_idx);
+        for (uint256 i = 0; i < proof_idx;) {
+            ret.state.states[i] = states[i];
+            ret.state_hashes[i] = hashes[i];
             unchecked {
                 ++i;
             }
