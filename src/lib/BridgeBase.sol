@@ -39,9 +39,7 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     /// Events
     event Finalized(uint256 indexed epoch, bytes32 bridgeRoot);
     event ConnectorRegistered(
-        address indexed connector,
-        address indexed token_source,
-        address indexed token_destination
+        address indexed connector, address indexed token_source, address indexed token_destination
     );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -105,10 +103,7 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         if (tokenSrc == address(0)) {
             revert ZeroAddressCannotBeRegistered();
         }
-        if (
-            localAddress[tokenDst] != address(0)
-                || connectors[tokenSrc] != IBridgeConnector(address(0))
-        ) {
+        if (localAddress[tokenDst] != address(0) || connectors[tokenSrc] != IBridgeConnector(address(0))) {
             revert ConnectorAlreadyRegistered({connector: address(connector), token: tokenSrc});
         }
 
