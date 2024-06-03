@@ -30,6 +30,10 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     }
 
     function initialize(BeaconLightClient _client, address _eth_bridge_address) public initializer {
+        require(
+            _eth_bridge_address != address(0) && address(client) != address(0),
+            "TaraClient: eth bridge or BLC address is the zero address"
+        );
         bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000008;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;

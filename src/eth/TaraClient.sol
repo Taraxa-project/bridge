@@ -72,6 +72,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     function processValidatorChanges(PillarBlock.VoteCountChange[] memory validatorChanges) internal {
         uint256 validatorChangesLength = validatorChanges.length;
         for (uint256 i = 0; i < validatorChangesLength;) {
+            require(validatorChanges[i].validator != address(0), "TaraClient: validator is the zero address");
             validatorVoteCounts[validatorChanges[i].validator] =
                 Maths.add(validatorVoteCounts[validatorChanges[i].validator], validatorChanges[i].change);
             totalWeight = Maths.add(totalWeight, validatorChanges[i].change);

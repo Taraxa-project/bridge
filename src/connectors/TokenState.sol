@@ -36,6 +36,7 @@ contract TokenState is Ownable {
     }
 
     function addAmount(address account, uint256 amount) public onlyOwner {
+        require(account != address(0), "TokenState: add amount to the zero address");
         if (balances[account] == 0) {
             accounts.push(account);
         }
