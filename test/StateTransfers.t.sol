@@ -143,59 +143,144 @@ contract StateTransfersTest is SymmetricTestSetup {
         ethBridge.applyState(state);
     }
 
-    function test_emptyEpoch() public {
+    function test_Revert_on_emptyEpoch() public {
         uint256 value = 1 ether;
         NativeConnector taraConnector =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraConnector.lock{value: value}();
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
-        uint256 finalizedEpoch = taraBridge.getStateWithProof().state.epoch;
-        assertEq(finalizedEpoch, 1, "finalized epoch should be 1");
+        SharedStructs.StateWithProof memory firstState = taraBridge.getStateWithProof();
+
+        assertEq(firstState.state.epoch, 1, "finalized epoch should be 1");
 
         vm.roll(2 * FINALIZATION_INTERVAL);
 
-        vm.expectRevert();
+        vm.expectRevert(); // TODO: add exact revert catch
         taraBridge.finalizeEpoch();
         // check that we are not finalizing empty epoch
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
-        assertEq(state.state.epoch, finalizedEpoch, "epoch should be the same as the finalized epoch");
-        assertEq(state.state.states.length, 2, "state should have 2 states");
-        assertEq(state.state.epoch, 1, "epoch should be 1");
+        SharedStructs.StateWithProof memory secondState = taraBridge.getStateWithProof();
+        assertEq(secondState.state.epoch, firstState.state.epoch, "epoch should be the same as the finalized epoch");
+        assertEq(secondState.state.states.length, firstState.state.states.length, "state should not have new elements");
         assertEq(
-            state.state.states[0].contractAddress, Constants.NATIVE_TOKEN_ADDRESS, "first state should be native token"
+            secondState.state.states[0].contractAddress,
+            Constants.NATIVE_TOKEN_ADDRESS,
+            "first state should be native token"
         );
     }
 
-    function test_futureEpoch() public {
+    function test_Success_on_NonEmpty_futureEpoch() public {
         uint256 value = 1 ether;
         NativeConnector taraConnector =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraConnector.lock{value: value}();
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state1 = taraBridge.getStateWithProof();
+        SharedStructs.StateWithProof memory firstEpochState = taraBridge.getStateWithProof();
+        assertEq(firstEpochState.state.epoch, 1, "epoch should be 1");
+        assertEq(firstEpochState.state.states.length, 1, "state should have 1 state");
+
         taraConnector.lock{value: value}();
         vm.roll(2 * FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
-        assertFalse(state.state.epoch == state1.state.epoch);
+        SharedStructs.StateWithProof memory secondEpochState = taraBridge.getStateWithProof();
+
+        assertTrue(secondEpochState.state.epoch == firstEpochState.state.epoch + 1, "epoch should be incremented");
         assertFalse(
-            SharedStructs.getBridgeRoot(state.state.epoch, state.state_hashes)
-                == SharedStructs.getBridgeRoot(state1.state.epoch, state1.state_hashes),
+            SharedStructs.getBridgeRoot(secondEpochState.state.epoch, secondEpochState.state_hashes)
+                == SharedStructs.getBridgeRoot(firstEpochState.state.epoch, firstEpochState.state_hashes),
             "States with different epoch should have different roots"
         );
-        assertEq(state1.state_hashes[0].contractAddress, state.state_hashes[0].contractAddress);
-        assertEq(state1.state_hashes[0].stateHash, state.state_hashes[0].stateHash);
-        assertEq(state.state.epoch, 2);
-        assertEq(state.state.states.length, 2);
-        assertEq(state.state.states[0].contractAddress, Constants.NATIVE_TOKEN_ADDRESS);
-        taraLightClient.setBridgeRoot(state);
+        assertEq(
+            firstEpochState.state_hashes[0].contractAddress,
+            secondEpochState.state_hashes[0].contractAddress,
+            "first state should be native token"
+        );
+        assertEq(
+            firstEpochState.state_hashes[0].stateHash,
+            secondEpochState.state_hashes[0].stateHash,
+            "state hashes should be the same"
+        );
+        assertEq(secondEpochState.state.epoch, 2, "epoch should be 2");
+        assertEq(secondEpochState.state.states.length, 1, "state should have 1 state");
+        assertEq(
+            secondEpochState.state.states[0].contractAddress,
+            Constants.NATIVE_TOKEN_ADDRESS,
+            "first state should be native token"
+        );
+        taraLightClient.setBridgeRoot(secondEpochState);
 
         vm.expectRevert(
-            abi.encodeWithSelector(NotSuccessiveEpochs.selector, taraBridge.appliedEpoch(), state.state.epoch)
+            abi.encodeWithSelector(
+                NotSuccessiveEpochs.selector, taraBridge.appliedEpoch(), secondEpochState.state.epoch
+            )
         );
-        ethBridge.applyState(state);
+        ethBridge.applyState(secondEpochState);
+    }
+
+    function test_Success_on_TwoLocks_futureEpoch() public {
+        uint256 value = 1 ether;
+        NativeConnector taraConnector =
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
+        taraConnector.lock{value: value}();
+        vm.roll(FINALIZATION_INTERVAL);
+        taraBridge.finalizeEpoch();
+        SharedStructs.StateWithProof memory firstEpochState = taraBridge.getStateWithProof();
+        assertEq(firstEpochState.state.epoch, 1, "epoch should be 1");
+        assertEq(firstEpochState.state.states.length, 1, "state should have 1 state");
+
+        vm.prank(address(taraBridge.connectors(address(ethTokenOnTara))));
+        ethTokenOnTara.mintTo(caller, 12 ether);
+
+        assertEq(ethTokenOnTara.balanceOf(caller), 12 ether, "caller should have 12 ether");
+
+        ERC20MintingConnector ethTestTokenConnector =
+            ERC20MintingConnector(payable(address(taraBridge.connectors(address(ethTokenOnTara)))));
+        vm.prank(caller);
+        ethTokenOnTara.approve(address(ethTestTokenConnector), value);
+        vm.prank(caller);
+        ethTestTokenConnector.burn(value);
+
+        assertEq(ethTokenOnTara.balanceOf(caller), 12 ether - value, "caller should have 12 ether - value");
+
+        taraConnector.lock{value: value}();
+        vm.prank(caller);
+        taraConnector.lock{value: value}();
+        vm.roll(2 * FINALIZATION_INTERVAL);
+        taraBridge.finalizeEpoch();
+        SharedStructs.StateWithProof memory secondEpochState = taraBridge.getStateWithProof();
+
+        assertTrue(secondEpochState.state.epoch == firstEpochState.state.epoch + 1, "epoch should be incremented");
+        assertFalse(
+            SharedStructs.getBridgeRoot(secondEpochState.state.epoch, secondEpochState.state_hashes)
+                == SharedStructs.getBridgeRoot(firstEpochState.state.epoch, firstEpochState.state_hashes),
+            "States with different epoch should have different roots"
+        );
+        assertEq(
+            firstEpochState.state_hashes[0].contractAddress,
+            secondEpochState.state_hashes[0].contractAddress,
+            "first state should be native token"
+        );
+        assertNotEq(
+            firstEpochState.state_hashes[0].stateHash,
+            secondEpochState.state_hashes[0].stateHash,
+            "state hashes should be different"
+        );
+        assertEq(secondEpochState.state.epoch, 2, "epoch should be 2");
+        assertEq(secondEpochState.state.states.length, 2, "state should have 2 states");
+        assertEq(
+            secondEpochState.state.states[0].contractAddress,
+            Constants.NATIVE_TOKEN_ADDRESS,
+            "first state should be native token"
+        );
+        taraLightClient.setBridgeRoot(secondEpochState);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                NotSuccessiveEpochs.selector, taraBridge.appliedEpoch(), secondEpochState.state.epoch
+            )
+        );
+        ethBridge.applyState(secondEpochState);
     }
 
     function test_multipleTransfers() public {
