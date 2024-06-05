@@ -34,6 +34,10 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
         internal
         onlyInitializing
     {
+        require(
+            bridge != address(0) && _token != address(0) && token_on_other_network != address(0),
+            "TokenConnectorBase: invalid bridge, token, or token_on_other_network"
+        );
         __BridgeConnectorBase_init(bridge);
         otherNetworkAddress = token_on_other_network;
         token = _token;
