@@ -151,17 +151,20 @@ contract StateTransfersTest is SymmetricTestSetup {
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         uint256 finalizedEpoch = taraBridge.getStateWithProof().state.epoch;
-        assertEq(finalizedEpoch, 1);
+        assertEq(finalizedEpoch, 1, "finalized epoch should be 1");
+
         vm.roll(2 * FINALIZATION_INTERVAL);
 
         vm.expectRevert();
         taraBridge.finalizeEpoch();
         // check that we are not finalizing empty epoch
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
-        assertEq(state.state.epoch, finalizedEpoch);
-        assertEq(state.state.states.length, 2);
-        assertEq(state.state.epoch, 1);
-        assertEq(state.state.states[0].contractAddress, Constants.NATIVE_TOKEN_ADDRESS);
+        assertEq(state.state.epoch, finalizedEpoch, "epoch should be the same as the finalized epoch");
+        assertEq(state.state.states.length, 2, "state should have 2 states");
+        assertEq(state.state.epoch, 1, "epoch should be 1");
+        assertEq(
+            state.state.states[0].contractAddress, Constants.NATIVE_TOKEN_ADDRESS, "first state should be native token"
+        );
     }
 
     function test_futureEpoch() public {
