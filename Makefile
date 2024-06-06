@@ -18,7 +18,7 @@ build:; forge build
 
 test :; forge test --ffi --force
 
-snapshot :; forge snapshot --ffi
+snapshot :; forge snapshot --ffi --force
 
 # solhint should be installed globally
 lint :; solhint src/**/*.sol && solhint src/*.sol
