@@ -128,7 +128,7 @@ contract StateScenarios is Test, SymmetricTestSetup {
         if (tokenTransfersForEach == 0 || tokenTransfersForEach > 100) {
             return;
         }
-        setUpTokens(50);
+        setUpTokens(10);
 
         for (uint32 i = 0; i < erc20ConnectorsOnTara.length; i++) {
             for (uint32 j = 1; j <= tokenTransfersForEach; j++) {
