@@ -48,7 +48,7 @@ contract TaraClientTest is Test {
         }
 
         updateCurrentBlock(
-            PillarBlock.WithChanges(PillarBlock.FinalizationData(1, bytes32(0), bytes32(0), bytes32(0)), initial)
+            PillarBlock.WithChanges(PillarBlock.FinalizationData(1, bytes32(0), bytes32(0), bytes32(0), 0), initial)
         );
 
         address taraClientProxy = Upgrades.deployUUPSProxy(
@@ -215,7 +215,8 @@ contract TaraClientTest is Test {
         }
 
         PillarBlock.WithChanges memory b = PillarBlock.WithChanges(
-            PillarBlock.FinalizationData(11, bytes32(uint256(22)), bytes32(uint256(33)), bytes32(uint256(44))), changes
+            PillarBlock.FinalizationData(11, bytes32(uint256(22)), bytes32(uint256(33)), bytes32(uint256(44)), 55),
+            changes
         );
 
         bytes memory bb = abi.encode(b);
