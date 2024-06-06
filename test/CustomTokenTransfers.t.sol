@@ -105,7 +105,7 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
             ERC20MintingConnector(payable(address(ethBridge.connectors(address(ethTestToken)))));
         ethTestTokenConnector.claim{value: ethTestTokenConnector.feeToClaim(address(caller))}();
 
-        ERC20LockingConnector ethNativeConnector = ERC20LockingConnector(
+        NativeConnector ethNativeConnector = NativeConnector(
             payable(
                 address(ethBridge.connectors(address(ethBridge.localAddress(address(Constants.NATIVE_TOKEN_ADDRESS)))))
             )

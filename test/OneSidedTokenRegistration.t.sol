@@ -100,10 +100,6 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         vm.prank(caller);
         ethBridge.applyState(state);
 
-        ERC20MintingConnector ethTestTokenConnector =
-            ERC20MintingConnector(payable(address(ethBridge.connectors(address(ethTestToken)))));
-        // ethTestTokenConnector.claim{value: ethTestTokenConnector.feeToClaim(address(this))}();
-
         ERC20LockingConnector ethNativeConnector = ERC20LockingConnector(
             payable(
                 address(ethBridge.connectors(address(ethBridge.localAddress(address(Constants.NATIVE_TOKEN_ADDRESS)))))
@@ -116,7 +112,7 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
     }
 
     function test_Revert_returnToTara_claimFails_on_onesidedRegistration() public {
-        (TestERC20 taraTestToken, TestERC20 ethTestToken) = test_multipleContractsToEth();
+        (TestERC20 taraTestToken,) = test_multipleContractsToEth();
         uint256 value = 1 ether;
 
         // ERC20MintingConnector ethTestTokenConnector =
