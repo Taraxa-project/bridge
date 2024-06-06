@@ -38,6 +38,11 @@ contract SymmetricTestSetup is Test {
         ethTokenOnTara = new TestERC20("Eth", "ETH");
         ethTokenOnTara.mintTo(address(caller), 1 ether);
 
+        for (uint16 i = 1; i < 10; i++) {
+            address target = vm.addr(i);
+            ethTokenOnTara.mintTo(target, 1 ether);
+        }
+
         address taraBridgeProxy = Upgrades.deployUUPSProxy(
             "TaraBridge.sol", abi.encodeCall(TaraBridge.initialize, (ethLightClient, FINALIZATION_INTERVAL))
         );
@@ -157,5 +162,36 @@ contract SymmetricTestSetup is Test {
 
         assertEq(address(caller).balance, balanceBefore + 1 ether, "token balance after");
         vm.stopPrank();
+    }
+
+    function test_plain_multipleTxes_ForSameToken_toEthTransfer() public {
+        for (uint16 i = 1; i < 10; i++) {
+            address target = vm.addr(i);
+            vm.startPrank(target);
+            ethTokenOnTara.approve(address(ethOnTaraMintingConnector), 1 ether);
+            ethOnTaraMintingConnector.burn(1 ether);
+            vm.stopPrank();
+        }
+
+        vm.roll(FINALIZATION_INTERVAL);
+        taraBridge.finalizeEpoch();
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        assertEq(state.state.epoch, 1, "epoch");
+        taraLightClient.setBridgeRoot(state);
+
+        ethBridge.applyState(state);
+
+        for (uint16 i = 1; i < 10; i++) {
+            address target = vm.addr(i);
+            vm.startPrank(target);
+            vm.deal(address(target), 1 ether);
+            vm.deal(address(ethConnector), 1 ether);
+            uint256 balanceBefore = address(target).balance;
+            ethTokenOnTara.approve(address(ethConnector), 1 ether);
+            ethConnector.claim{value: ethConnector.feeToClaim(address(target))}();
+
+            assertEq(address(target).balance, balanceBefore + 1 ether, "token balance after");
+            vm.stopPrank();
+        }
     }
 }
