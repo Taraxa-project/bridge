@@ -115,7 +115,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
                     revert ThresholdNotMet({threshold: threshold, weight: weight});
                 }
             }
-            finalizedBridgeRoots[blocks[i].block.period] = finalized.block.bridgeRoot;
+            finalizedBridgeRoots[blocks[i].block.epoch] = finalized.block.bridgeRoot;
             // add the last block to the single finalized block
             finalized = PillarBlock.FinalizedBlock(pbh, blocks[i].block, block.number);
             emit BlockFinalized(finalized);
