@@ -28,6 +28,8 @@ contract SymmetricTestSetup is Test {
     address caller = vm.addr(0x1234);
     uint256 constant FINALIZATION_INTERVAL = 100;
 
+    uint32 transfers = 1000;
+
     function setUp() public {
         payable(caller).transfer(100 ether);
         vm.startPrank(caller);
@@ -38,7 +40,7 @@ contract SymmetricTestSetup is Test {
         ethTokenOnTara = new TestERC20("Eth", "ETH");
         ethTokenOnTara.mintTo(address(caller), 1 ether);
 
-        for (uint16 i = 1; i < 10; i++) {
+        for (uint16 i = 1; i < transfers; i++) {
             address target = vm.addr(i);
             ethTokenOnTara.mintTo(target, 1 ether);
         }
@@ -165,7 +167,7 @@ contract SymmetricTestSetup is Test {
     }
 
     function test_plain_multipleTxes_ForSameToken_toEthTransfer() public {
-        for (uint16 i = 1; i < 10; i++) {
+        for (uint16 i = 1; i < transfers; i++) {
             address target = vm.addr(i);
             vm.startPrank(target);
             ethTokenOnTara.approve(address(ethOnTaraMintingConnector), 1 ether);
@@ -181,7 +183,7 @@ contract SymmetricTestSetup is Test {
 
         ethBridge.applyState(state);
 
-        for (uint16 i = 1; i < 10; i++) {
+        for (uint16 i = 1; i < transfers; i++) {
             address target = vm.addr(i);
             vm.startPrank(target);
             vm.deal(address(target), 1 ether);
