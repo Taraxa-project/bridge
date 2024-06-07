@@ -21,8 +21,9 @@ library PillarBlock {
     struct FinalizationData {
         uint256 period;
         bytes32 stateRoot;
-        bytes32 bridgeRoot;
         bytes32 prevHash;
+        bytes32 bridgeRoot;
+        uint256 epoch;
     }
 
     struct WithChanges {
