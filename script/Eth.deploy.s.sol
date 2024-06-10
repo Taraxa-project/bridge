@@ -48,7 +48,7 @@
 //         opts.defender.useDefenderDeploy = false;
 
 //         address taraClientProxy = Upgrades.deployUUPSProxy(
-//             "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (3, finalizationInterval)), opts
+//             "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (finalizationInterval)), opts
 //         );
 
 //         console.log("TaraClient.sol proxy address: %s", taraClientProxy);

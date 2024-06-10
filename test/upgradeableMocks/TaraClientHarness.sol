@@ -9,7 +9,7 @@ contract TaraClientHarness is TaraClient {
         super.processValidatorChanges(validatorChanges);
     }
 
-    function initializeIt(uint256 _threshold, uint256 _pillarBlockInterval) public initializer {
-        super.initialize(_threshold, _pillarBlockInterval);
+    function initializeIt(uint256 _pillarBlockInterval) public initializer {
+        super.initialize(_pillarBlockInterval);
     }
 }
