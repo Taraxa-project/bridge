@@ -25,28 +25,15 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         ethTestToken = TestERC20(randomEthTestAddress);
         address taraTestTokenConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20LockingConnector.sol",
-            abi.encodeCall(ERC20LockingConnector.initialize, (address(taraBridge), taraTestToken, randomEthTestAddress))
+            abi.encodeCall(ERC20LockingConnector.initialize, (taraBridge, taraTestToken, randomEthTestAddress))
         );
         ERC20LockingConnector taraTestTokenConnector = ERC20LockingConnector(payable(taraTestTokenConnectorProxy));
 
         address ethTestTokenConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
-            abi.encodeCall(ERC20MintingConnector.initialize, (address(ethBridge), ethTestToken, address(taraTestToken)))
+            abi.encodeCall(ERC20MintingConnector.initialize, (ethBridge, ethTestToken, address(taraTestToken)))
         );
         ERC20MintingConnector ethTestTokenConnector = ERC20MintingConnector(payable(ethTestTokenConnectorProxy));
-
-        // fund connectors
-        (bool success,) = payable(address(taraTestTokenConnector)).call{value: 2 ether}("");
-        if (!success) {
-            revert("Failed to fund tara connector");
-        }
-        (bool success2,) = payable(address(ethTestTokenConnector)).call{value: 2 ether}("");
-        if (!success2) {
-            revert("Failed to fund eth connector");
-        }
-
-        taraBridge.registerContract(taraTestTokenConnector);
-        ethBridge.registerContract(ethTestTokenConnector);
 
         taraTestToken.mintTo(address(caller), 10 ether);
         taraTestToken.mintTo(address(this), 10 ether);
@@ -55,6 +42,11 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         // give ownership of erc20s to the connectors
         taraTestToken.transferOwnership(address(taraTestTokenConnector));
         // ethTestToken.transferOwnership(address(ethTestTokenConnector));
+
+        taraTestTokenConnector.transferOwnership(address(taraBridge));
+
+        vm.deal(caller, REGISTRATION_FEE_TARA);
+        taraBridge.registerContract(taraTestTokenConnector);
 
         taraTestTokenConnector.lock(1 ether);
         vm.roll(FINALIZATION_INTERVAL);
@@ -100,16 +92,7 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         vm.prank(caller);
         ethBridge.applyState(state);
 
-        ERC20MintingConnector ethTestTokenConnector =
-            ERC20MintingConnector(payable(address(ethBridge.connectors(address(ethTestToken)))));
         // ethTestTokenConnector.claim{value: ethTestTokenConnector.feeToClaim(address(this))}();
-
-        ERC20LockingConnector ethNativeConnector = ERC20LockingConnector(
-            payable(
-                address(ethBridge.connectors(address(ethBridge.localAddress(address(Constants.NATIVE_TOKEN_ADDRESS)))))
-            )
-        );
-        ethNativeConnector.claim{value: ethNativeConnector.feeToClaim(address(this))}();
 
         assertEq(taraTokenOnEth.balanceOf(address(this)), value, "tara balance after");
         // assertEq(ethTestToken.balanceOf(address(this)), tokenBalanceBefore + value, "token balance after");
@@ -143,18 +126,6 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         vm.prank(caller);
         taraBridge.applyState(state);
 
-        ERC20MintingConnector taraTestTokenConnector =
-            ERC20MintingConnector(payable(address(taraBridge.connectors(address(taraTestToken)))));
-        uint256 claim_fee = taraTestTokenConnector.feeToClaim(address(this));
-        vm.expectRevert();
-        taraTestTokenConnector.claim{value: claim_fee}();
-
-        NativeConnector taraConnector =
-            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
-        uint256 claim_fee2 = taraConnector.feeToClaim(address(this));
-        taraConnector.claim{value: claim_fee2}();
-
         assertEq(taraTestToken.balanceOf(address(this)), ethTestTokenBalanceBefore, "token balance after");
-        assertEq(address(this).balance, taraBalanceBefore + value - claim_fee - claim_fee2, "tara balance after");
     }
 }

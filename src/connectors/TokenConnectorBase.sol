@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {InvalidEpoch, NoFinalizedState} from "../errors/ConnectorErrors.sol";
 import "../lib/SharedStructs.sol";
@@ -12,7 +13,7 @@ import "./BridgeConnectorBase.sol";
 import "./TokenState.sol";
 
 abstract contract TokenConnectorBase is BridgeConnectorBase {
-    address public token; // slot 1 as slot 0 is used by BridgeConnectorBase
+    IERC20 public token; // slot 1 as slot 0 is used by BridgeConnectorBase
     address public otherNetworkAddress; // slot 2
     TokenState public state; // slot 3
     TokenState public finalizedState; // slot 4
@@ -23,22 +24,22 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     event ClaimAccrued(address indexed account, uint256 value);
     event Claimed(address indexed account, uint256 value);
 
-    function TokenConnectorBase_init(address bridge, address _token, address token_on_other_network)
+    function TokenConnectorBase_init(BridgeBase _bridge, IERC20 _token, address token_on_other_network)
         public
         onlyInitializing
     {
-        __TokenConnectorBase_init(bridge, _token, token_on_other_network);
+        __TokenConnectorBase_init(_bridge, _token, token_on_other_network);
     }
 
-    function __TokenConnectorBase_init(address bridge, address _token, address token_on_other_network)
+    function __TokenConnectorBase_init(BridgeBase _bridge, IERC20 _token, address token_on_other_network)
         internal
         onlyInitializing
     {
         require(
-            bridge != address(0) && _token != address(0) && token_on_other_network != address(0),
+            address(_bridge) != address(0) && address(_token) != address(0) && token_on_other_network != address(0),
             "TokenConnectorBase: invalid bridge, token, or token_on_other_network"
         );
-        __BridgeConnectorBase_init(bridge);
+        __BridgeConnectorBase_init(_bridge);
         otherNetworkAddress = token_on_other_network;
         token = _token;
         state = new TokenState(0);
@@ -58,6 +59,10 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
 
     function isStateEmpty() external view override returns (bool) {
         return state.empty();
+    }
+
+    function getStateLength() external view returns (uint256) {
+        return state.getStateLength();
     }
 
     function finalize(uint256 epoch_to_finalize) public override onlyOwner returns (bytes32) {
@@ -102,10 +107,4 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     function getContractDestination() external view returns (address) {
         return otherNetworkAddress;
     }
-
-    /**
-     * @dev Allows the caller to claim tokens by sending Ether to this function to cover fees.
-     * This function is virtual and must be implemented by derived contracts.
-     */
-    function claim() public payable virtual;
 }

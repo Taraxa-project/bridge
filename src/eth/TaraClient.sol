@@ -86,7 +86,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     }
 
     /**
-     * @dev Pinalizes blocks by verifying the signatures for the last blocks
+     * @dev Finalizes blocks by verifying the signatures for the last blocks
      * @param blocks list of PillarBlockWithChanges.
      * @param lastBlockSigs An array of Signature structs representing the signatures of the last block.
      */

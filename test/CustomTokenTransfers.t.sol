@@ -68,8 +68,6 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         vm.prank(caller);
         ethBridge.applyState(state);
 
-        ethTestTokenConnector.claim{value: ethTestTokenConnector.feeToClaim(address(this))}();
-
         assertEq(ethTestToken.balanceOf(address(this)), 1 ether, "token balance after");
     }
 
@@ -100,17 +98,6 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         // call from other account to not affect balances
         vm.prank(caller);
         ethBridge.applyState(state);
-
-        ERC20MintingConnector ethTestTokenConnector =
-            ERC20MintingConnector(payable(address(ethBridge.connectors(address(ethTestToken)))));
-        ethTestTokenConnector.claim{value: ethTestTokenConnector.feeToClaim(address(this))}();
-
-        ERC20LockingConnector ethNativeConnector = ERC20LockingConnector(
-            payable(
-                address(ethBridge.connectors(address(ethBridge.localAddress(address(Constants.NATIVE_TOKEN_ADDRESS)))))
-            )
-        );
-        ethNativeConnector.claim{value: ethNativeConnector.feeToClaim(address(this))}();
 
         assertEq(taraTokenOnEth.balanceOf(address(this)), value, "tara balance after");
         assertEq(ethTestToken.balanceOf(address(this)), tokenBalanceBefore + value, "token balance after");
@@ -144,17 +131,6 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         vm.prank(caller);
         taraBridge.applyState(state);
 
-        ERC20MintingConnector taraTestTokenConnector =
-            ERC20MintingConnector(payable(address(taraBridge.connectors(address(taraTestToken)))));
-        uint256 claim_fee = taraTestTokenConnector.feeToClaim(address(this));
-        taraTestTokenConnector.claim{value: claim_fee}();
-
-        NativeConnector taraConnector =
-            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
-        uint256 claim_fee2 = taraConnector.feeToClaim(address(this));
-        taraConnector.claim{value: claim_fee2}();
-
         assertEq(taraTestToken.balanceOf(address(this)), ethTestTokenBalanceBefore + value, "token balance after");
-        assertEq(address(this).balance, taraBalanceBefore + value - claim_fee - claim_fee2, "tara balance after");
     }
 }

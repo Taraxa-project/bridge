@@ -11,26 +11,27 @@ contract ERC20MintingConnector is TokenConnectorBase {
     /// Events
     event Burned(address indexed account, uint256 value);
 
-    function initialize(address bridge, IERC20MintableBurnable tokenAddress, address token_on_other_network)
+    function initialize(BridgeBase _bridge, IERC20MintableBurnable _token, address token_on_other_network)
         public
         initializer
     {
-        TokenConnectorBase_init(bridge, address(tokenAddress), token_on_other_network);
+        try _token.mintTo(address(this), 0) {
+            // If the call succeeds, proceed with initialization
+            TokenConnectorBase_init(_bridge, _token, token_on_other_network);
+        } catch {
+            revert("Provided token does not implement IERC20MintableBurnable");
+        }
     }
 
     /**
      * @dev Applies the given state to the token contract by transfers.
      * @param _state The state to be applied.
-     * @return accounts Affected accounts that we should split fee between
      */
-    function applyState(bytes calldata _state) internal override returns (address[] memory accounts) {
+    function applyState(bytes calldata _state) external override {
         Transfer[] memory transfers = deserializeTransfers(_state);
-        accounts = new address[](transfers.length);
         uint256 transfersLength = transfers.length;
         for (uint256 i = 0; i < transfersLength;) {
-            toClaim[transfers[i].account] += transfers[i].amount;
-            accounts[i] = transfers[i].account;
-            emit ClaimAccrued(transfers[i].account, transfers[i].amount);
+            IERC20MintableBurnable(address(token)).mintTo(transfers[i].account, transfers[i].amount);
             unchecked {
                 ++i;
             }
@@ -42,32 +43,16 @@ contract ERC20MintingConnector is TokenConnectorBase {
      * @notice The amount of tokens to burn must be approved by the sender
      * @param amount The amount of tokens to burn.
      */
-    function burn(uint256 amount) public {
+    function burn(uint256 amount) public payable onlySettled {
         if (amount == 0) {
             revert ZeroValueCall();
         }
-        try IERC20MintableBurnable(token).burnFrom(msg.sender, amount) {
+        IERC20MintableBurnable mintableContract = IERC20MintableBurnable(address(token));
+        try mintableContract.burnFrom(msg.sender, amount) {
             state.addAmount(msg.sender, amount);
             emit Burned(msg.sender, amount);
         } catch {
             revert InsufficientFunds({expected: amount, actual: 0});
         }
-    }
-
-    /**
-     * @dev Allows the caller to claim tokens
-     * @notice The caller must send enough Ether to cover the fees.
-     */
-    function claim() public payable override {
-        if (msg.value < feeToClaim[msg.sender]) {
-            revert InsufficientFunds({expected: feeToClaim[msg.sender], actual: msg.value});
-        }
-        uint256 amount = toClaim[msg.sender];
-        if (amount == 0) {
-            revert NoClaimAvailable();
-        }
-        toClaim[msg.sender] = 0;
-        IERC20MintableBurnable(token).mintTo(msg.sender, amount);
-        emit Claimed(msg.sender, amount);
     }
 }

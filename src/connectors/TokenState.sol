@@ -28,6 +28,10 @@ contract TokenState is Ownable {
         return accounts.length == 0;
     }
 
+    function getStateLength() public view returns (uint256) {
+        return accounts.length;
+    }
+
     function increaseEpoch() public onlyOwner {
         if (!empty()) {
             revert StateIsNotEmpty();

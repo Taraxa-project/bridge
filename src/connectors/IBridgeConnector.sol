@@ -17,6 +17,12 @@ interface IBridgeConnector {
     function finalize(uint256 epoch) external returns (bytes32 finalizedHash);
 
     /**
+     * @dev Applies the given state to the bridgeable contract.
+     * @param _state The state to apply.
+     */
+    function applyState(bytes calldata _state) external;
+
+    /**
      * @dev Checks if the state is empty.
      * @return true if the state is empty, false otherwise
      */
@@ -38,17 +44,12 @@ interface IBridgeConnector {
     function getContractDestination() external view returns (address);
 
     /**
-     * @dev Applies the given state with a refund to the specified receiver.
-     * @param _state The state to apply.
-     * @param receiver The address of the receiver.
-     * @param amount The amount of refund to send.
+     * @dev Returns the length of the state entries
      */
-    function applyStateWithRefund(bytes calldata _state, address payable receiver, uint256 amount) external;
+    function getStateLength() external view returns (uint256);
 
     /**
-     * @dev Refunds the given amount to the receiver
-     * @param receiver The receiver of the refund
-     * @param amount The amount to be refunded
+     * @dev Returns the address of the owner of the connector
      */
-    function refund(address payable receiver, uint256 amount) external;
+    function owner() external view returns (address);
 }

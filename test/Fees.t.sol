@@ -27,9 +27,6 @@ contract FeesTest is SymmetricTestSetup {
         taraLightClient.setBridgeRoot(state);
         ethBridge.applyState(state);
 
-        ERC20MintingConnector ethTaraTokenConnector =
-            ERC20MintingConnector(payable(address(ethBridge.connectors(address(taraTokenOnEth)))));
-        ethTaraTokenConnector.claim{value: ethTaraTokenConnector.feeToClaim(address(this))}();
         assertEq(taraTokenOnEth.balanceOf(address(this)), value);
     }
 }

@@ -52,8 +52,6 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         ERC20MintingConnector ethTaraTokenConnector =
             ERC20MintingConnector(payable(address(ethBridge.connectors(address(taraTokenOnEth)))));
-        vm.expectRevert();
-        ethTaraTokenConnector.claim{value: 0}();
     }
 
     function test_toEth() public {
@@ -71,7 +69,6 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         ERC20MintingConnector ethTaraTokenConnector =
             ERC20MintingConnector(payable(address(ethBridge.connectors(address(taraTokenOnEth)))));
-        ethTaraTokenConnector.claim{value: ethTaraTokenConnector.feeToClaim(address(this))}();
         assertEq(taraTokenOnEth.balanceOf(address(this)), value);
     }
 
@@ -95,9 +92,6 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         NativeConnector taraConnector =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
-        uint256 claim_fee = taraConnector.feeToClaim(address(this));
-        taraConnector.claim{value: claim_fee}();
-        assertEq(address(this).balance, balance_before + value - claim_fee);
     }
 
     function test_Revert_OnChangedState() public {
@@ -214,16 +208,9 @@ contract StateTransfersTest is SymmetricTestSetup {
         taraLightClient.setBridgeRoot(state);
 
         ethBridge.applyState(state);
-        ERC20LockingConnector ethNativeConnector = ERC20LockingConnector(
-            payable(
-                address(ethBridge.connectors(address(ethBridge.localAddress(address(Constants.NATIVE_TOKEN_ADDRESS)))))
-            )
-        );
+
         for (uint256 i = 0; i < count; i++) {
             vm.prank(addrs[i]);
-            uint256 fee = ethNativeConnector.feeToClaim(addrs[i]);
-            vm.prank(addrs[i]);
-            ethNativeConnector.claim{value: fee}();
             assertEq(taraTokenOnEth.balanceOf(addrs[i]), value);
         }
         assertEq(taraTokenOnEth.balanceOf(address(this)), 0);

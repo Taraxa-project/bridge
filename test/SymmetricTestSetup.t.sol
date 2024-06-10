@@ -22,6 +22,12 @@ contract SymmetricTestSetup is Test {
 
     address caller = vm.addr(0x1234);
     uint256 constant FINALIZATION_INTERVAL = 100;
+    uint256 constant FEE_MULTIPLIER_ETH = 101;
+    uint256 constant FEE_MULTIPLIER_TARA = 109;
+    uint256 constant REGISTRATION_FEE_ETH = 2 ether;
+    uint256 constant REGISTRATION_FEE_TARA = 950432 ether;
+    uint256 constant SETTLEMENT_FEE_ETH = 500 gwei;
+    uint256 constant SETTLEMENT_FEE_TARA = 50000 ether;
 
     function setUp() public {
         payable(caller).transfer(100 ether);
@@ -34,78 +40,77 @@ contract SymmetricTestSetup is Test {
 
         address taraBridgeProxy = Upgrades.deployUUPSProxy(
             "TaraBridge.sol",
-            abi.encodeCall(TaraBridge.initialize, (ethLightClient, FINALIZATION_INTERVAL))
+            abi.encodeCall(
+                TaraBridge.initialize,
+                (ethLightClient, FINALIZATION_INTERVAL, FEE_MULTIPLIER_TARA, REGISTRATION_FEE_TARA, SETTLEMENT_FEE_TARA)
+            )
         );
         taraBridge = TaraBridge(taraBridgeProxy);
         address ethBridgeProxy = Upgrades.deployUUPSProxy(
             "EthBridge.sol",
-            abi.encodeCall(EthBridge.initialize, (taraLightClient, FINALIZATION_INTERVAL))
+            abi.encodeCall(
+                EthBridge.initialize,
+                (taraLightClient, FINALIZATION_INTERVAL, FEE_MULTIPLIER_ETH, REGISTRATION_FEE_ETH, SETTLEMENT_FEE_ETH)
+            )
         );
         ethBridge = EthBridge(ethBridgeProxy);
 
         // Set Up TARA side of the bridge
         address taraConnectorProxy = Upgrades.deployUUPSProxy(
-            "NativeConnector.sol",
-            abi.encodeCall(NativeConnector.initialize, (address(taraBridge), address(taraTokenOnEth)))
+            "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (taraBridge, address(taraTokenOnEth)))
         );
         NativeConnector taraConnector = NativeConnector(payable(taraConnectorProxy));
 
-        (bool success,) = payable(taraConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
-        if (!success) {
-            revert("Failed to initialize tara native connector");
-        }
+        // give ownership to the bridge
+        taraConnector.transferOwnership(address(taraBridge));
 
+        vm.deal(caller, REGISTRATION_FEE_TARA);
         taraBridge.registerContract(taraConnector);
 
         address ethOnTaraMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
             abi.encodeCall(
-                ERC20MintingConnector.initialize, (address(taraBridge), ethTokenOnTara, Constants.NATIVE_TOKEN_ADDRESS)
+                ERC20MintingConnector.initialize, (taraBridge, ethTokenOnTara, Constants.NATIVE_TOKEN_ADDRESS)
             )
         );
         ERC20MintingConnector ethOnTaraMintingConnector = ERC20MintingConnector(payable(ethOnTaraMintingConnectorProxy));
 
-        (bool success2,) = payable(ethOnTaraMintingConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
-        if (!success2) {
-            revert("Failed to initialize tara minting connector");
-        }
+        // give ownership to the bridge
+        ethOnTaraMintingConnector.transferOwnership(address(taraBridge));
 
         // give ownership ot erc20 to the connector
         ethTokenOnTara.transferOwnership(address(ethOnTaraMintingConnector));
 
+        vm.deal(caller, REGISTRATION_FEE_TARA);
         taraBridge.registerContract(ethOnTaraMintingConnector);
 
         // Set Up ETH side of the bridge
-
         address ethConnectorProxy = Upgrades.deployUUPSProxy(
-            "NativeConnector.sol",
-            abi.encodeCall(NativeConnector.initialize, (address(ethBridge), address(ethTokenOnTara)))
+            "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (ethBridge, address(ethTokenOnTara)))
         );
         NativeConnector ethConnector = NativeConnector(payable(ethConnectorProxy));
 
-        (bool success3,) = payable(ethConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
-        if (!success3) {
-            revert("Failed to initialize eth connector");
-        }
+        // give ownership to the bridge
+        ethConnector.transferOwnership(address(ethBridge));
 
+        vm.deal(caller, REGISTRATION_FEE_ETH);
         ethBridge.registerContract(ethConnector);
 
         address taraOnEthMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
             abi.encodeCall(
-                ERC20MintingConnector.initialize, (address(ethBridge), taraTokenOnEth, Constants.NATIVE_TOKEN_ADDRESS)
+                ERC20MintingConnector.initialize, (ethBridge, taraTokenOnEth, Constants.NATIVE_TOKEN_ADDRESS)
             )
         );
         ERC20MintingConnector taraOnEthMintingConnector = ERC20MintingConnector(payable(taraOnEthMintingConnectorProxy));
 
-        (bool success4,) = payable(taraOnEthMintingConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
-        if (!success4) {
-            revert("Failed to initialize minting connector");
-        }
+        // give ownership to the bridge
+        taraOnEthMintingConnector.transferOwnership(address(ethBridge));
 
-        // give ownership ot erc20 to the connector
+        // give token ownership ot erc20 to the connector
         taraTokenOnEth.transferOwnership(address(taraOnEthMintingConnector));
 
+        vm.deal(caller, REGISTRATION_FEE_ETH);
         ethBridge.registerContract(taraOnEthMintingConnector);
 
         vm.stopPrank();
@@ -117,15 +122,14 @@ contract SymmetricTestSetup is Test {
     function test_revertOnDuplicateConnectorRegistration() public {
         vm.startPrank(caller);
         address ethConnectorProxy = Upgrades.deployUUPSProxy(
-            "NativeConnector.sol",
-            abi.encodeCall(NativeConnector.initialize, (address(ethBridge), address(ethTokenOnTara)))
+            "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (ethBridge, address(ethTokenOnTara)))
         );
         NativeConnector ethConnector = NativeConnector(payable(ethConnectorProxy));
 
-        (bool success3,) = payable(ethConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
-        if (!success3) {
-            revert("Failed to initialize eth connector");
-        }
+        // give ownership to the bridge
+        ethConnector.transferOwnership(address(ethBridge));
+
+        vm.deal(caller, REGISTRATION_FEE_ETH);
 
         vm.expectRevert();
         ethBridge.registerContract(ethConnector);
