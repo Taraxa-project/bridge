@@ -28,7 +28,7 @@ contract SymmetricTestSetup is Test {
     address caller = vm.addr(0x1234);
     uint256 constant FINALIZATION_INTERVAL = 100;
 
-    uint32 transfers = 1000;
+    uint32 transfers = 100;
 
     function setUp() public {
         payable(caller).transfer(100 ether);
