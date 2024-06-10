@@ -232,7 +232,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         vm.prank(address(taraBridge.connectors(address(ethTokenOnTara))));
         ethTokenOnTara.mintTo(caller, 12 ether);
 
-        assertEq(ethTokenOnTara.balanceOf(caller), 12 ether, "caller should have 12 ether");
+        assertEq(ethTokenOnTara.balanceOf(caller), 13 ether, "caller should have 12 + 1 ether");
 
         ERC20MintingConnector ethTestTokenConnector =
             ERC20MintingConnector(payable(address(taraBridge.connectors(address(ethTokenOnTara)))));
@@ -241,7 +241,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         vm.prank(caller);
         ethTestTokenConnector.burn(value);
 
-        assertEq(ethTokenOnTara.balanceOf(caller), 12 ether - value, "caller should have 12 ether - value");
+        assertEq(ethTokenOnTara.balanceOf(caller), 13 ether - value, "caller should have 12 ether - value");
 
         taraConnector.lock{value: value}();
         vm.prank(caller);
