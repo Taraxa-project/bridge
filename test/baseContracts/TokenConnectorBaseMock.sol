@@ -7,19 +7,9 @@ import "../../src/lib/SharedStructs.sol";
 import "../../src/lib/Constants.sol";
 import "./BridgeConnectorBaseMock.sol";
 import "../../src/connectors/TokenState.sol";
+import "../../src/connectors/TokenConnectorLogic.sol";
 
-abstract contract TokenConnectorBaseMock is BridgeConnectorBaseMock {
-    address public immutable token;
-    address public immutable otherNetworkAddress;
-    TokenState state;
-    TokenState finalizedState;
-    mapping(address => uint256) public toClaim;
-
-    /// Events
-    event Finalized(uint256 indexed epoch);
-    event ClaimAccrued(address indexed account, uint256 value);
-    event Claimed(address indexed account, uint256 value);
-
+abstract contract TokenConnectorBaseMock is BridgeConnectorBaseMock, TokenConnectorLogic {
     constructor(address bridge, address _token, address token_on_other_network)
         payable
         BridgeConnectorBaseMock(bridge)
@@ -29,23 +19,12 @@ abstract contract TokenConnectorBaseMock is BridgeConnectorBaseMock {
         state = new TokenState(0);
     }
 
-    function epoch() public view returns (uint256) {
-        return state.epoch();
-    }
-
-    function deserializeTransfers(bytes memory data) internal pure returns (Transfer[] memory) {
-        return abi.decode(data, (Transfer[]));
-    }
-
-    function finalizedSerializedTransfers() internal view returns (bytes memory) {
-        return abi.encode(finalizedState.getTransfers());
-    }
-
-    function isStateEmpty() external view override returns (bool) {
-        return state.empty();
-    }
-
-    function finalize(uint256 epoch_to_finalize) public override onlyOwner returns (bytes32) {
+    function finalize(uint256 epoch_to_finalize)
+        public
+        override(IBridgeConnector, TokenConnectorLogic)
+        onlyOwner
+        returns (bytes32)
+    {
         if (epoch_to_finalize != state.epoch()) {
             revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
         }
@@ -63,37 +42,29 @@ abstract contract TokenConnectorBaseMock is BridgeConnectorBaseMock {
     }
 
     /**
-     * @dev Retrieves the finalized state of the bridgeable contract.
-     * @return A bytes serialized finalized state
+     * @dev Refunds the specified amount to the given receiver.
+     * @param receiver The address of the receiver.
+     * @param amount The amount to be refunded.
      */
-    function getFinalizedState() public view override returns (bytes memory) {
-        if (address(finalizedState) == address(0)) {
-            revert NoFinalizedState();
-        }
-
-        if (finalizedState.empty()) {
-            return new bytes(0);
-        }
-        return finalizedSerializedTransfers();
+    function refund(address payable receiver, uint256 amount)
+        public
+        override(BridgeConnectorBaseMock, BridgeConnectorLogic)
+        onlyOwner
+    {
+        super.refund(receiver, amount);
     }
 
     /**
-     * @dev Returns the address of the underlying contract in this network
+     * @dev Applies the given state with a refund to the specified receiver.
+     * @param _state The state to apply.
+     * @param refund_receiver The address of the refund_receiver.
+     * @param common_part The common part of the refund.
      */
-    function getContractSource() public view returns (address) {
-        return address(token);
+    function applyStateWithRefund(bytes calldata _state, address payable refund_receiver, uint256 common_part)
+        public
+        override(BridgeConnectorBaseMock, BridgeConnectorLogic)
+        onlyOwner
+    {
+        super.applyStateWithRefund(_state, refund_receiver, common_part);
     }
-
-    /**
-     * @dev Returns the address of the bridged contract on the other network
-     */
-    function getContractDestination() external view returns (address) {
-        return otherNetworkAddress;
-    }
-
-    /**
-     * @dev Allows the caller to claim tokens by sending Ether to this function to cover fees.
-     * This function is virtual and must be implemented by derived contracts.
-     */
-    function claim() public payable virtual;
 }

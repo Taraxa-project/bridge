@@ -8,21 +8,13 @@ import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.s
 import {InvalidEpoch, NoFinalizedState} from "../errors/ConnectorErrors.sol";
 import "../lib/SharedStructs.sol";
 import "../lib/Constants.sol";
-import "./BridgeConnectorBase.sol";
+import {TokenConnectorLogic} from "./TokenConnectorLogic.sol";
 import "./TokenState.sol";
+import {BridgeConnectorBase} from "./BridgeConnectorBase.sol";
+import {BridgeConnectorLogic} from "./BridgeConnectorLogic.sol";
+import {IBridgeConnector} from "./IBridgeConnector.sol";
 
-abstract contract TokenConnectorBase is BridgeConnectorBase {
-    address public token; // slot 1 as slot 0 is used by BridgeConnectorBase
-    address public otherNetworkAddress; // slot 2
-    TokenState public state; // slot 3
-    TokenState public finalizedState; // slot 4
-    mapping(address => uint256) public toClaim; // slot 5
-
-    /// Events
-    event Finalized(uint256 indexed epoch);
-    event ClaimAccrued(address indexed account, uint256 value);
-    event Claimed(address indexed account, uint256 value);
-
+abstract contract TokenConnectorBase is BridgeConnectorBase, TokenConnectorLogic {
     function TokenConnectorBase_init(address bridge, address _token, address token_on_other_network)
         public
         onlyInitializing
@@ -44,23 +36,12 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
         state = new TokenState(0);
     }
 
-    function epoch() public view returns (uint256) {
-        return state.epoch();
-    }
-
-    function deserializeTransfers(bytes memory data) internal pure returns (Transfer[] memory) {
-        return abi.decode(data, (Transfer[]));
-    }
-
-    function finalizedSerializedTransfers() internal view returns (bytes memory) {
-        return abi.encode(finalizedState.getTransfers());
-    }
-
-    function isStateEmpty() external view override returns (bool) {
-        return state.empty();
-    }
-
-    function finalize(uint256 epoch_to_finalize) public override onlyOwner returns (bytes32) {
+    function finalize(uint256 epoch_to_finalize)
+        public
+        override(TokenConnectorLogic, IBridgeConnector)
+        onlyOwner
+        returns (bytes32)
+    {
         if (epoch_to_finalize != state.epoch()) {
             revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
         }
@@ -78,37 +59,29 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     }
 
     /**
-     * @dev Retrieves the finalized state of the bridgeable contract.
-     * @return A bytes serialized finalized state
+     * @dev Applies the given state with a refund to the specified receiver.
+     * @param _state The state to apply.
+     * @param refund_receiver The address of the refund_receiver.
+     * @param common_part The common part of the refund.
      */
-    function getFinalizedState() public view override returns (bytes memory) {
-        if (address(finalizedState) == address(0)) {
-            revert NoFinalizedState();
-        }
-
-        if (finalizedState.empty()) {
-            return new bytes(0);
-        }
-        return finalizedSerializedTransfers();
+    function applyStateWithRefund(bytes calldata _state, address payable refund_receiver, uint256 common_part)
+        public
+        override(BridgeConnectorBase, BridgeConnectorLogic)
+        onlyOwner
+    {
+        super.applyStateWithRefund(_state, refund_receiver, common_part);
     }
 
     /**
-     * @dev Returns the address of the underlying contract in this network
+     * @dev Refunds the specified amount to the given receiver.
+     * @param receiver The address of the receiver.
+     * @param amount The amount to be refunded.
      */
-    function getContractSource() public view returns (address) {
-        return address(token);
+    function refund(address payable receiver, uint256 amount)
+        public
+        override(BridgeConnectorBase, BridgeConnectorLogic)
+        onlyOwner
+    {
+        super.refund(receiver, amount);
     }
-
-    /**
-     * @dev Returns the address of the bridged contract on the other network
-     */
-    function getContractDestination() external view returns (address) {
-        return otherNetworkAddress;
-    }
-
-    /**
-     * @dev Allows the caller to claim tokens by sending Ether to this function to cover fees.
-     * This function is virtual and must be implemented by derived contracts.
-     */
-    function claim() public payable virtual;
 }

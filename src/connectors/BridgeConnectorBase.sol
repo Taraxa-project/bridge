@@ -5,20 +5,14 @@ pragma solidity ^0.8.17;
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import "./IBridgeConnector.sol";
 import "../lib/Constants.sol";
 import {InsufficientFunds, RefundFailed} from "../errors/ConnectorErrors.sol";
+import {BridgeConnectorLogic} from "./BridgeConnectorLogic.sol";
 
-abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, UUPSUpgradeable {
-    mapping(address => uint256) public feeToClaim; // will always be in slot 0
-
+abstract contract BridgeConnectorBase is BridgeConnectorLogic, OwnableUpgradeable, UUPSUpgradeable {
     /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
     /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
     uint256[49] __gap;
-
-    /// Events
-    event Funded(address indexed sender, address indexed connectorBase, uint256 amount);
-    event Refunded(address indexed receiver, uint256 amount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -46,15 +40,9 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, U
      * @param receiver The address of the receiver.
      * @param amount The amount to be refunded.
      */
-    function refund(address payable receiver, uint256 amount) public override onlyOwner {
-        (bool refundSuccess,) = receiver.call{value: amount}("");
-        if (!refundSuccess) {
-            revert RefundFailed({recipient: receiver, amount: amount});
-        }
-        emit Refunded(receiver, amount);
+    function refund(address payable receiver, uint256 amount) public virtual override onlyOwner {
+        super.refund(receiver, amount);
     }
-
-    function applyState(bytes calldata) internal virtual returns (address[] memory);
 
     /**
      * @dev Applies the given state with a refund to the specified receiver.
@@ -64,19 +52,10 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, U
      */
     function applyStateWithRefund(bytes calldata _state, address payable refund_receiver, uint256 common_part)
         public
+        virtual
         override
         onlyOwner
     {
-        uint256 gasLeftBefore = gasleft();
-        address[] memory addresses = applyState(_state);
-        uint256 totalFee = common_part + (gasLeftBefore - gasleft()) * tx.gasprice;
-        uint256 addressesLength = addresses.length;
-        for (uint256 i = 0; i < addressesLength;) {
-            feeToClaim[addresses[i]] += totalFee / addresses.length;
-            unchecked {
-                ++i;
-            }
-        }
-        refund(refund_receiver, totalFee);
+        super.applyStateWithRefund(_state, refund_receiver, common_part);
     }
 }
