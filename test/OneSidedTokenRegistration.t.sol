@@ -17,7 +17,7 @@ import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
-    function test_customToken() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
+    function test_customTokenRun() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
         // deploy and register token on both sides
         vm.startPrank(caller);
         taraTestToken = new TestERC20("Test", "TEST");
@@ -45,10 +45,11 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
 
         taraTestTokenConnector.transferOwnership(address(taraBridge));
 
+        uint256 settlementFee = taraBridge.settlementFee();
         vm.deal(caller, REGISTRATION_FEE_TARA);
-        taraBridge.registerContract(taraTestTokenConnector);
-
-        taraTestTokenConnector.lock(1 ether);
+        taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
+        vm.deal(address(caller), 1 ether + settlementFee);
+        taraTestTokenConnector.lock{value: 1 ether + settlementFee}(1 ether);
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
@@ -65,18 +66,20 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
     }
 
     function test_multipleContractsToEth() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
-        (taraTestToken, ethTestToken) = test_customToken();
+        (taraTestToken, ethTestToken) = test_customTokenRun();
         uint256 value = 1 ether;
-
+        uint256 settlementFee = taraBridge.settlementFee();
         ERC20LockingConnector taraTestTokenConnector =
             ERC20LockingConnector(payable(address(taraBridge.connectors(address(taraTestToken)))));
         taraTestToken.approve(address(taraTestTokenConnector), value);
-        taraTestTokenConnector.lock(value);
+        vm.deal(address(this), value + settlementFee);
+        taraTestTokenConnector.lock{value: value + settlementFee}(value);
         // uint256 tokenBalanceBefore = ethTestToken.balanceOf(address(this));
 
         NativeConnector taraBridgeTokenConnector =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
-        taraBridgeTokenConnector.lock{value: value}();
+        vm.deal(address(this), value + settlementFee);
+        taraBridgeTokenConnector.lock{value: value + settlementFee}(value);
 
         vm.roll(2 * FINALIZATION_INTERVAL);
         vm.prank(caller);
@@ -107,11 +110,12 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         // ethTestToken.approve(address(ethTestTokenConnector), value);
         // ethTestTokenConnector.burn(value);
         uint256 ethTestTokenBalanceBefore = taraTestToken.balanceOf(address(this));
-
+        uint256 settlementFee = taraBridge.settlementFee();
         ERC20MintingConnector ethTaraTokenConnector =
             ERC20MintingConnector(payable(address(ethBridge.connectors(address(taraTokenOnEth)))));
         taraTokenOnEth.approve(address(ethTaraTokenConnector), value);
-        ethTaraTokenConnector.burn(value);
+        vm.deal(address(this), value + settlementFee);
+        ethTaraTokenConnector.burn{value: value + settlementFee}(value);
         uint256 taraBalanceBefore = address(this).balance;
 
         vm.roll(3 * FINALIZATION_INTERVAL);

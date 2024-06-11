@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {TaraBridge} from "src/tara/TaraBridge.sol";
 import {NativeConnector} from "src/connectors/NativeConnector.sol";
 import {EthBridge} from "src/eth/EthBridge.sol";
@@ -22,8 +22,8 @@ contract SymmetricTestSetup is Test {
 
     address caller = vm.addr(0x1234);
     uint256 constant FINALIZATION_INTERVAL = 100;
-    uint256 constant FEE_MULTIPLIER_ETH = 101;
-    uint256 constant FEE_MULTIPLIER_TARA = 109;
+    uint256 constant FEE_MULTIPLIER_ETH = 100;
+    uint256 constant FEE_MULTIPLIER_TARA = 100;
     uint256 constant REGISTRATION_FEE_ETH = 2 ether;
     uint256 constant REGISTRATION_FEE_TARA = 950432 ether;
     uint256 constant SETTLEMENT_FEE_ETH = 500 gwei;
@@ -45,7 +45,7 @@ contract SymmetricTestSetup is Test {
                 (ethLightClient, FINALIZATION_INTERVAL, FEE_MULTIPLIER_TARA, REGISTRATION_FEE_TARA, SETTLEMENT_FEE_TARA)
             )
         );
-        taraBridge = TaraBridge(taraBridgeProxy);
+        taraBridge = TaraBridge(payable(taraBridgeProxy));
         address ethBridgeProxy = Upgrades.deployUUPSProxy(
             "EthBridge.sol",
             abi.encodeCall(
@@ -53,7 +53,7 @@ contract SymmetricTestSetup is Test {
                 (taraLightClient, FINALIZATION_INTERVAL, FEE_MULTIPLIER_ETH, REGISTRATION_FEE_ETH, SETTLEMENT_FEE_ETH)
             )
         );
-        ethBridge = EthBridge(ethBridgeProxy);
+        ethBridge = EthBridge(payable(ethBridgeProxy));
 
         // Set Up TARA side of the bridge
         address taraConnectorProxy = Upgrades.deployUUPSProxy(
@@ -61,11 +61,10 @@ contract SymmetricTestSetup is Test {
         );
         NativeConnector taraConnector = NativeConnector(payable(taraConnectorProxy));
 
-        // give ownership to the bridge
         taraConnector.transferOwnership(address(taraBridge));
 
         vm.deal(caller, REGISTRATION_FEE_TARA);
-        taraBridge.registerContract(taraConnector);
+        taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraConnector);
 
         address ethOnTaraMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
@@ -75,14 +74,13 @@ contract SymmetricTestSetup is Test {
         );
         ERC20MintingConnector ethOnTaraMintingConnector = ERC20MintingConnector(payable(ethOnTaraMintingConnectorProxy));
 
-        // give ownership to the bridge
-        ethOnTaraMintingConnector.transferOwnership(address(taraBridge));
-
-        // give ownership ot erc20 to the connector
+        // give ownership of erc20 to the connector
         ethTokenOnTara.transferOwnership(address(ethOnTaraMintingConnector));
 
-        vm.deal(caller, REGISTRATION_FEE_TARA);
-        taraBridge.registerContract(ethOnTaraMintingConnector);
+        ethOnTaraMintingConnector.transferOwnership(address(taraBridge));
+
+        vm.deal(caller, address(caller).balance + REGISTRATION_FEE_TARA);
+        taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(ethOnTaraMintingConnector);
 
         // Set Up ETH side of the bridge
         address ethConnectorProxy = Upgrades.deployUUPSProxy(
@@ -90,11 +88,10 @@ contract SymmetricTestSetup is Test {
         );
         NativeConnector ethConnector = NativeConnector(payable(ethConnectorProxy));
 
-        // give ownership to the bridge
         ethConnector.transferOwnership(address(ethBridge));
 
-        vm.deal(caller, REGISTRATION_FEE_ETH);
-        ethBridge.registerContract(ethConnector);
+        vm.deal(caller, address(caller).balance + REGISTRATION_FEE_ETH);
+        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethConnector);
 
         address taraOnEthMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
@@ -104,14 +101,13 @@ contract SymmetricTestSetup is Test {
         );
         ERC20MintingConnector taraOnEthMintingConnector = ERC20MintingConnector(payable(taraOnEthMintingConnectorProxy));
 
-        // give ownership to the bridge
-        taraOnEthMintingConnector.transferOwnership(address(ethBridge));
-
         // give token ownership ot erc20 to the connector
         taraTokenOnEth.transferOwnership(address(taraOnEthMintingConnector));
 
-        vm.deal(caller, REGISTRATION_FEE_ETH);
-        ethBridge.registerContract(taraOnEthMintingConnector);
+        taraOnEthMintingConnector.transferOwnership(address(ethBridge));
+
+        vm.deal(caller, address(caller).balance + REGISTRATION_FEE_ETH);
+        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(taraOnEthMintingConnector);
 
         vm.stopPrank();
     }
@@ -126,13 +122,10 @@ contract SymmetricTestSetup is Test {
         );
         NativeConnector ethConnector = NativeConnector(payable(ethConnectorProxy));
 
-        // give ownership to the bridge
-        ethConnector.transferOwnership(address(ethBridge));
-
-        vm.deal(caller, REGISTRATION_FEE_ETH);
+        vm.deal(caller, address(caller).balance + REGISTRATION_FEE_ETH);
 
         vm.expectRevert();
-        ethBridge.registerContract(ethConnector);
+        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethConnector);
         vm.stopPrank();
     }
 }
