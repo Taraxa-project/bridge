@@ -18,7 +18,6 @@ contract TaraClientPRNetTest is Test {
     TaraClient client;
     PillarBlock.WithChanges currentBlock;
     uint256 constant PILLAR_BLOCK_INTERVAL = 100;
-    uint32 constant PILLAR_BLOCK_THRESHOLD = 50;
 
     // {
     //     "hash": "0x659f33d940342ccbb534a745e93b3cc0d44f09f8b5f9db7d8c9ede2d047b4522",
@@ -61,8 +60,7 @@ contract TaraClientPRNetTest is Test {
         assertEq(PillarBlock.getHash(currentBlock), 0x816742a75eea9cca5530e25894135258d0a2a81d4c9701cd0d34a7fae40c9842);
 
         address taraClientProxy = Upgrades.deployUUPSProxy(
-            "TaraClientHarness.sol",
-            abi.encodeCall(TaraClientHarness.initializeIt, (PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL))
+            "TaraClientHarness.sol", abi.encodeCall(TaraClientHarness.initializeIt, (PILLAR_BLOCK_INTERVAL))
         );
         client = TaraClientHarness(taraClientProxy);
 

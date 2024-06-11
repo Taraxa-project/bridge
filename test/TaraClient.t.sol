@@ -52,8 +52,7 @@ contract TaraClientTest is Test {
         );
 
         address taraClientProxy = Upgrades.deployUUPSProxy(
-            "TaraClientHarness.sol",
-            abi.encodeCall(TaraClientHarness.initializeIt, (PILLAR_BLOCK_THRESHOLD, PILLAR_BLOCK_INTERVAL))
+            "TaraClientHarness.sol", abi.encodeCall(TaraClientHarness.initializeIt, (PILLAR_BLOCK_INTERVAL))
         );
         client = TaraClientHarness(taraClientProxy);
         PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
@@ -192,7 +191,6 @@ contract TaraClientTest is Test {
             bytes32 pk = keccak256(abi.encodePacked(i));
             changes[i] = PillarBlock.VoteCountChange(vm.addr(uint256(pk)), 10);
         }
-        client.setThreshold(1);
         client.processValidatorChangesPublic(changes);
         vm.stopBroadcast();
     }
