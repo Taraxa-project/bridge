@@ -7,7 +7,7 @@ from eth2spec.utils.ssz.ssz_typing import (
      Container, Vector, Bytes48 )
 
 
-rpc_node = "https://beacon-pr-2618.prnet.taraxa.io"
+rpc_node = "https://beacon.devnet.taraxa.io"
 
 
 headers_url = f'{rpc_node}/eth/v1/beacon/headers'

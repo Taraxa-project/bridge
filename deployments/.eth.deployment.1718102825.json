@@ -1,0 +1,21 @@
+{
+  "ethdeploy-1718102825": {
+    "RPC": "https://holesky.drpc.org",
+    "TaraClient": {
+      "implAddress": "0xB7f443e3c057a86B72E1574dD211C9472C28e2eb",
+      "proxyAddress": "0x0247aea1463d9B128826711951Ce0da3253dEB4A"
+    },
+    "EthBridge": {
+      "implAddress": "0x79Fb265371E736d1B5c6B40A1d4Dc0dc189faA42",
+      "proxyAddress": "0xf4ca7db548013f7325A7d9c1C3bBD185C9f4267E"
+    },
+    "ERC20MintingConnector": {
+      "implAddress": "0xf461160377e7DE309F116fD4446c964e6A68FA45",
+      "proxyAddress": "0x1f6Db7356F2234058414Dc49d51095BBd1c31923"
+    },
+    "NativeConnector": {
+      "implAddress": "0xc3b31fAE5f91ce2c3b6d3D66800803983937ebCe",
+      "proxyAddress": "0xd62A3E1F0b48119FB6981B7e9232A31D1Fb1c99b"
+    }
+  }
+}
