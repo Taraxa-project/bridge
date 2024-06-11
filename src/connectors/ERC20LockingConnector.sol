@@ -39,7 +39,7 @@ contract ERC20LockingConnector is TokenConnectorBase {
      * @notice The amount of tokens to burn must be approved by the sender
      * @param value The amount of tokens to lock.
      */
-    function lock(uint256 value) public payable onlySettled {
+    function lock(uint256 value) public payable onlySettled(value) {
         if (value == 0) {
             revert ZeroValueCall();
         }

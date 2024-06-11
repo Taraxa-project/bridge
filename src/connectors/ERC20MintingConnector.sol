@@ -3,9 +3,11 @@
 pragma solidity ^0.8.17;
 
 import {InsufficientFunds, ZeroValueCall, NoClaimAvailable} from "../errors/ConnectorErrors.sol";
-import "../lib/SharedStructs.sol";
-import "./TokenConnectorBase.sol";
-import "./IERC20MintableBurnable.sol";
+import {SharedStructs} from "../lib/SharedStructs.sol";
+import {TokenConnectorBase} from "./TokenConnectorBase.sol";
+import {BridgeBase} from "../lib/BridgeBase.sol";
+import {IERC20MintableBurnable} from "./IERC20MintableBurnable.sol";
+import {Transfer} from "../connectors/TokenState.sol";
 
 contract ERC20MintingConnector is TokenConnectorBase {
     /// Events
@@ -15,12 +17,7 @@ contract ERC20MintingConnector is TokenConnectorBase {
         public
         initializer
     {
-        try _token.mintTo(address(this), 0) {
-            // If the call succeeds, proceed with initialization
-            TokenConnectorBase_init(_bridge, _token, token_on_other_network);
-        } catch {
-            revert("Provided token does not implement IERC20MintableBurnable");
-        }
+        TokenConnectorBase_init(_bridge, _token, token_on_other_network);
     }
 
     /**
@@ -41,18 +38,18 @@ contract ERC20MintingConnector is TokenConnectorBase {
     /**
      * @dev Burns a specified amount of tokens to transfer them to the other network.
      * @notice The amount of tokens to burn must be approved by the sender
-     * @param amount The amount of tokens to burn.
+     * @param value The amount of tokens to burn.
      */
-    function burn(uint256 amount) public payable onlySettled {
-        if (amount == 0) {
+    function burn(uint256 value) public payable onlySettled(value) {
+        if (value == 0) {
             revert ZeroValueCall();
         }
         IERC20MintableBurnable mintableContract = IERC20MintableBurnable(address(token));
-        try mintableContract.burnFrom(msg.sender, amount) {
-            state.addAmount(msg.sender, amount);
-            emit Burned(msg.sender, amount);
+        try mintableContract.burnFrom(msg.sender, value) {
+            state.addAmount(msg.sender, value);
+            emit Burned(msg.sender, value);
         } catch {
-            revert InsufficientFunds({expected: amount, actual: 0});
+            revert InsufficientFunds({expected: value, actual: 0});
         }
     }
 }

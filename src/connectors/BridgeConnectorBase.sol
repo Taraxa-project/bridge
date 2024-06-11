@@ -21,10 +21,10 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, U
     event Funded(address indexed sender, address indexed connectorBase, uint256 amount);
     event Refunded(address indexed receiver, uint256 amount);
 
-    modifier onlySettled() {
+    modifier onlySettled(uint256 lockAmount) {
         uint256 fee = bridge.settlementFee();
-        if (msg.value < fee) {
-            revert InsufficientFunds(fee, msg.value);
+        if (msg.value < fee + lockAmount) {
+            revert InsufficientFunds(fee + lockAmount, msg.value);
         }
         _;
     }
@@ -41,7 +41,6 @@ abstract contract BridgeConnectorBase is IBridgeConnector, OwnableUpgradeable, U
     function __BridgeConnectorBase_init_unchained(BridgeBase _bridge) internal onlyInitializing {
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
-        _transferOwnership(address(_bridge));
         bridge = _bridge;
     }
 
