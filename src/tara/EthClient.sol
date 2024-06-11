@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
-
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "beacon-light-client/src/BeaconLightClient.sol";
 import "beacon-light-client/src/trie/StorageProof.sol";
@@ -31,8 +30,12 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
 
     function initialize(BeaconLightClient _client, address _eth_bridge_address) public initializer {
         require(
-            _eth_bridge_address != address(0) && address(client) != address(0),
-            "TaraClient: eth bridge or BLC address is the zero address"
+            _eth_bridge_address != address(0),
+            "TaraClient: eth bridge is the zero address"
+        );
+        require(
+            address(_client) != address(0),
+            "TaraClient: BLC address is the zero address"
         );
         bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000008;
         ethBridgeAddress = _eth_bridge_address;
