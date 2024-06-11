@@ -5,9 +5,9 @@ pragma solidity ^0.8.17;
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
-import "../lib/SharedStructs.sol";
-import "../lib/Constants.sol";
-import "../lib/IBridgeLightClient.sol";
+import {SharedStructs} from "../lib/SharedStructs.sol";
+import {Constants} from "../lib/Constants.sol";
+import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 import {
     ConnectorAlreadyRegistered,
     StateNotMatchingBridgeRoot,
@@ -18,7 +18,6 @@ import {
     UnmatchingContractAddresses,
     ZeroAddressCannotBeRegistered,
     NoStateToFinalize,
-    OwnershipOfConnectorNotPassed,
     TransferFailed
 } from "../errors/BridgeBaseErrors.sol";
 import {InsufficientFunds} from "../errors/ConnectorErrors.sol";
@@ -66,20 +65,24 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         _disableInitializers();
     }
 
+    receive() external payable {}
+
+    fallback() external payable {}
+
     function __BridgeBase_init(
-        IBridgeLightClient light_client,
+        IBridgeLightClient _lightClient,
         uint256 _finalizationInterval,
         uint256 _feeMultiplier,
         uint256 _registrationFee,
         uint256 _settlementFee
     ) internal onlyInitializing {
         __BridgeBase_init_unchained(
-            light_client, _finalizationInterval, _feeMultiplier, _registrationFee, _settlementFee
+            _lightClient, _finalizationInterval, _feeMultiplier, _registrationFee, _settlementFee
         );
     }
 
     function __BridgeBase_init_unchained(
-        IBridgeLightClient light_client,
+        IBridgeLightClient _lightClient,
         uint256 _finalizationInterval,
         uint256 _feeMultiplier,
         uint256 _registrationFee,
@@ -87,7 +90,7 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     ) internal onlyInitializing {
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
-        lightClient = light_client;
+        lightClient = _lightClient;
         finalizationInterval = _finalizationInterval;
         feeMultiplier = _feeMultiplier;
         registrationFee = _registrationFee;
@@ -126,9 +129,6 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     function registerContract(IBridgeConnector connector) public payable {
         if (msg.value < registrationFee) {
             revert InsufficientFunds(registrationFee, msg.value);
-        }
-        if (connector.owner() != address(this)) {
-            revert OwnershipOfConnectorNotPassed(connector.owner());
         }
 
         address tokenSrc = connector.getContractSource();
@@ -173,7 +173,10 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         for (uint256 i = 0; i < stateHashLength;) {
             gasleftbefore = gasleft();
             if (localAddress[state_with_proof.state_hashes[i].contractAddress] == address(0)) {
-                revert UnregisteredContract({contractAddress: state_with_proof.state_hashes[i].contractAddress});
+                unchecked {
+                    ++i;
+                }
+                continue;
             }
             if (keccak256(state_with_proof.state.states[i].state) != state_with_proof.state_hashes[i].stateHash) {
                 revert InvalidStateHash({
@@ -239,6 +242,9 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
             if (address(connector).balance < settlementFee * stateLength) {
                 delete connectors[tokenAddresses[i]];
                 emit ConnectorDelisted(address(connector), finalizedEpoch);
+                unchecked {
+                    ++i;
+                }
                 continue;
             }
             hashes[i] = SharedStructs.ContractStateHash(
