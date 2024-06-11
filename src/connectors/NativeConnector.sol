@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {ZeroValueCall} from "../errors/ConnectorErrors.sol";
-import "../connectors/TokenConnectorBase.sol";
-import "../lib/Constants.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import {ZeroValueCall, TransferFailed} from "../errors/ConnectorErrors.sol";
+import {TokenConnectorBase} from "../connectors/TokenConnectorBase.sol";
+import {BridgeBase} from "../lib/BridgeBase.sol";
+import {Constants} from "../lib/Constants.sol";
+import {Transfer} from "../connectors/TokenState.sol";
 
 contract NativeConnector is TokenConnectorBase {
     /// Events
@@ -22,7 +26,9 @@ contract NativeConnector is TokenConnectorBase {
         uint256 transfersLength = transfers.length;
         for (uint256 i = 0; i < transfersLength;) {
             (bool success,) = payable(transfers[i].account).call{value: transfers[i].amount}("");
-            require(success, "Transfer failed");
+            if (!success) {
+                revert TransferFailed(transfers[i].account, transfers[i].amount);
+            }
             unchecked {
                 ++i;
             }

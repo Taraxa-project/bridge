@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.17;
 
-import {InsufficientFunds, ZeroValueCall, NoClaimAvailable} from "../errors/ConnectorErrors.sol";
+import {InsufficientFunds, ZeroValueCall} from "../errors/ConnectorErrors.sol";
 import {SharedStructs} from "../lib/SharedStructs.sol";
 import {TokenConnectorBase} from "./TokenConnectorBase.sol";
 import {BridgeBase} from "../lib/BridgeBase.sol";
