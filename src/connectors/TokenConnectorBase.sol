@@ -5,14 +5,18 @@ pragma solidity ^0.8.17;
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {InvalidEpoch, NoFinalizedState} from "../errors/ConnectorErrors.sol";
-import "../lib/SharedStructs.sol";
-import "../lib/Constants.sol";
-import "./BridgeConnectorBase.sol";
-import "./TokenState.sol";
+import {InvalidEpoch, NoFinalizedState, TransferFailed} from "../errors/ConnectorErrors.sol";
+import {SharedStructs} from "../lib/SharedStructs.sol";
+import {Constants} from "../lib/Constants.sol";
+import {BridgeConnectorBase} from "./BridgeConnectorBase.sol";
+import {TokenState, Transfer} from "./TokenState.sol";
+import {BridgeBase} from "../lib/BridgeBase.sol";
 
 abstract contract TokenConnectorBase is BridgeConnectorBase {
+    using SafeERC20 for IERC20;
+
     IERC20 public token; // slot 1 as slot 0 is used by BridgeConnectorBase
     address public otherNetworkAddress; // slot 2
     TokenState public state; // slot 3
@@ -78,8 +82,14 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
             finalizedState = state;
             state = new TokenState(epoch_to_finalize + 1);
         }
+        Transfer[] memory epochTransfers = finalizedState.getTransfers();
+        uint256 settlementFeesToForward = bridge.settlementFee() * epochTransfers.length;
+        (bool success,) = address(bridge).call{value: settlementFeesToForward}("");
+        if (!success) {
+            revert TransferFailed(address(bridge), settlementFeesToForward);
+        }
         emit Finalized(epoch_to_finalize);
-        return keccak256(finalizedSerializedTransfers());
+        return keccak256(abi.encode(epochTransfers));
     }
 
     /**

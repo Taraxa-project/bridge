@@ -7,7 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./TokenConnectorBase.sol";
 import "../lib/SharedStructs.sol";
-import {InsufficientFunds, NoClaimAvailable, ZeroValueCall} from "../errors/ConnectorErrors.sol";
+import {InsufficientFunds, ZeroValueCall} from "../errors/ConnectorErrors.sol";
 
 contract ERC20LockingConnector is TokenConnectorBase {
     using SafeERC20 for IERC20;
