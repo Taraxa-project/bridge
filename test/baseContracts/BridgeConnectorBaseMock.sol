@@ -21,11 +21,7 @@ abstract contract BridgeConnectorBaseMock is BridgeConnectorLogic, Ownable {
      * @param amount The amount to be refunded.
      */
     function refund(address payable receiver, uint256 amount) public virtual override onlyOwner {
-        (bool refundSuccess,) = receiver.call{value: amount}("");
-        if (!refundSuccess) {
-            revert RefundFailed({recipient: receiver, amount: amount});
-        }
-        emit Refunded(receiver, amount);
+        super.refund(receiver, amount);
     }
 
     /**
@@ -40,16 +36,6 @@ abstract contract BridgeConnectorBaseMock is BridgeConnectorLogic, Ownable {
         override
         onlyOwner
     {
-        uint256 gasLeftBefore = gasleft();
-        address[] memory addresses = applyState(_state);
-        uint256 totalFee = common_part + (gasLeftBefore - gasleft()) * tx.gasprice;
-        uint256 addressesLength = addresses.length;
-        for (uint256 i = 0; i < addressesLength;) {
-            feeToClaim[addresses[i]] += totalFee / addresses.length;
-            unchecked {
-                ++i;
-            }
-        }
-        refund(refund_receiver, totalFee);
+        super.applyStateWithRefund(_state, refund_receiver, common_part);
     }
 }
