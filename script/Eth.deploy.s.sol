@@ -48,7 +48,7 @@ contract EthDeployer is Script {
         opts.defender.useDefenderDeploy = false;
 
         address taraClientProxy = Upgrades.deployUUPSProxy(
-            "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (3, finalizationInterval)), opts
+            "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (finalizationInterval)), opts
         );
 
         console.log("TaraClient.sol proxy address: %s", taraClientProxy);
@@ -56,10 +56,7 @@ contract EthDeployer is Script {
 
         address ethBridgeProxy = Upgrades.deployUUPSProxy(
             "EthBridge.sol",
-            abi.encodeCall(
-                EthBridge.initialize,
-                (IBridgeLightClient(taraClientProxy), finalizationInterval)
-            ),
+            abi.encodeCall(EthBridge.initialize, (IBridgeLightClient(taraClientProxy), finalizationInterval)),
             opts
         );
 

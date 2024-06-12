@@ -17,7 +17,6 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     mapping(uint256 => bytes32) public finalizedBridgeRoots;
     mapping(address => uint256) public validatorVoteCounts;
     uint256 public totalWeight;
-    uint256 public threshold;
     uint256 public pillarBlockInterval;
 
     /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
@@ -25,8 +24,6 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     uint256[49] __gap;
 
     /// Events
-    event ThresholdChanged(uint256 threshold);
-    event ValidatorWeightChanged(address indexed validator, uint256 weight);
     event BlockFinalized(PillarBlock.FinalizedBlock finalized);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -34,13 +31,12 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(uint256 _threshold, uint256 _pillarBlockInterval) public initializer {
-        __TaraClient_init_unchained(_threshold, _pillarBlockInterval);
+    function initialize(uint256 _pillarBlockInterval) public initializer {
+        __TaraClient_init_unchained(_pillarBlockInterval);
     }
 
-    function __TaraClient_init_unchained(uint256 _threshold, uint256 _pillarBlockInterval) internal onlyInitializing {
+    function __TaraClient_init_unchained(uint256 _pillarBlockInterval) internal onlyInitializing {
         __Ownable_init(msg.sender);
-        threshold = _threshold;
         pillarBlockInterval = _pillarBlockInterval;
     }
 
@@ -57,15 +53,6 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     }
 
     /**
-     * @dev Sets the vote weight threshold value.
-     * @param _threshold The new threshold value to be set.
-     */
-    function setThreshold(uint256 _threshold) public onlyOwner {
-        threshold = _threshold;
-        emit ThresholdChanged(threshold);
-    }
-
-    /**
      * @dev Processes the changes in validator weights.
      * @param validatorChanges An array of VoteCountChange structs representing the changes in validator vote counts.
      */
@@ -76,9 +63,6 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
             validatorVoteCounts[validatorChanges[i].validator] =
                 Maths.add(validatorVoteCounts[validatorChanges[i].validator], validatorChanges[i].change);
             totalWeight = Maths.add(totalWeight, validatorChanges[i].change);
-            emit ValidatorWeightChanged(
-                validatorChanges[i].validator, validatorVoteCounts[validatorChanges[i].validator]
-            );
             unchecked {
                 ++i;
             }
@@ -92,6 +76,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
      */
     function finalizeBlocks(PillarBlock.WithChanges[] memory blocks, CompactSignature[] memory lastBlockSigs) public {
         uint256 blocksLength = blocks.length;
+        uint256 weightThreshold = totalWeight / 2 + 1;
         for (uint256 i = 0; i < blocksLength;) {
             bytes32 pbh = PillarBlock.getHash(blocks[i]);
             if (blocks[i].block.prevHash != finalized.blockHash) {
@@ -111,11 +96,11 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
             if (finalized.block.period != 0 && i == (blocks.length - 1)) {
                 uint256 weight =
                     getSignaturesWeight(PillarBlock.getVoteHash(blocks[i].block.period, pbh), lastBlockSigs);
-                if (weight < threshold) {
-                    revert ThresholdNotMet({threshold: threshold, weight: weight});
+                if (weight < weightThreshold) {
+                    revert ThresholdNotMet({threshold: weightThreshold, weight: weight});
                 }
             }
-            finalizedBridgeRoots[blocks[i].block.period] = finalized.block.bridgeRoot;
+            finalizedBridgeRoots[blocks[i].block.epoch] = finalized.block.bridgeRoot;
             // add the last block to the single finalized block
             finalized = PillarBlock.FinalizedBlock(pbh, blocks[i].block, block.number);
             emit BlockFinalized(finalized);
