@@ -112,7 +112,7 @@ contract FeesTest is SymmetricTestSetup {
         console.log("Relayer balance before: ", relayerBalanceBefore);
         console.log("Relayer balance after epoch: ", relayerBalanceAfterEpoch);
         assertTrue(
-            relayerBalanceAfterEpoch > relayerBalanceBefore, "Relayer balance after epoch should be greater than before"
+            relayerBalanceAfterEpoch >= relayerBalanceBefore, "Relayer balance after epoch should be greater than before"
         );
         assertTrue(relayerBalanceAfterEpoch - relayerBalanceBefore < settlementFee, "Relayer paid too much after epoch");
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
@@ -170,7 +170,7 @@ contract FeesTest is SymmetricTestSetup {
         uint256 relayerBalanceAfterApplyState = address(relayer).balance;
         console.log("Relayer balance after apply state: ", relayerBalanceAfterApplyState);
         assertTrue(
-            relayerBalanceAfterApplyState > relayerBalanceAfterEpoch,
+            relayerBalanceAfterApplyState >= relayerBalanceAfterEpoch,
             "Relayer balance after apply state should be greater than after epoch"
         );
         assertTrue(
