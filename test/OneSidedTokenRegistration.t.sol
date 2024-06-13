@@ -23,7 +23,7 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         address randomEthTestAddress = vm.addr(11111);
         ethTestToken = TestERC20(randomEthTestAddress);
         ERC20LockingConnectorMock taraTestTokenConnector = new ERC20LockingConnectorMock(taraBridge, taraTestToken, randomEthTestAddress);
-        ERC20MintingConnectorMock ethTestTokenConnector = new ERC20MintingConnectorMock(ethBridge, ethTestToken, address(taraTestToken));
+        new ERC20MintingConnectorMock(ethBridge, ethTestToken, address(taraTestToken));
 
         taraTestToken.mintTo(address(caller), 10 ether);
         taraTestToken.mintTo(address(this), 10 ether);

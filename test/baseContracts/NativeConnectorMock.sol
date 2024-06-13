@@ -11,11 +11,13 @@ import {NativeConnectorLogic} from "../../src/connectors/NativeConnectorLogic.so
 import {TokenConnectorLogic} from "../../src/connectors/TokenConnectorLogic.sol";
 import {Constants} from "../../src/lib/Constants.sol";
 import {TokenState} from "../../src/connectors/TokenState.sol";
+import {BridgeBase} from "../../src/lib/BridgeBase.sol";
 
 contract NativeConnectorMock is NativeConnectorLogic, Ownable {
-    constructor(address _bridge, address token_on_other_network) Ownable(msg.sender) {
+    constructor(BridgeBase _bridge, address token_on_other_network) Ownable(msg.sender) {
         otherNetworkAddress = token_on_other_network;
         token = Constants.NATIVE_TOKEN_ADDRESS;
         state = new TokenState(0);
+        bridge = _bridge;
     }
 }
