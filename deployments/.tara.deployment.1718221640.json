@@ -1,6 +1,6 @@
 {
-  "taradeploy-1717091205": {
-    "RPC": "https://rpc-pr-2618.prnet.taraxa.io",
+  "taradeploy-1718221640": {
+    "RPC": "https://rpc.devnet.taraxa.io",
     "BeaconLightClient":  "0x3BBdc66Fa7eb51259Da29909529b65232c184519",
     "EthClient": {
       "implAddress": "0xeB372006B243e00d7a97662221D3521be1Fb9a71",
