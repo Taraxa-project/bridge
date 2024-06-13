@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "*"
+      - "feature/economics"
 
 env:
   FOUNDRY_PROFILE: ci
