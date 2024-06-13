@@ -200,10 +200,13 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
 
         uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
         uint256 payout = used * feeMultiplier / 100;
-        (bool success,) = payable(msg.sender).call{value: payout}("");
-        if (!success) {
-            revert TransferFailed(msg.sender, payout);
-        }
+        if (address(this).balance > payout) {
+            (bool success,) = payable(msg.sender).call{value: payout}("");
+            if (!success) {
+                revert TransferFailed(msg.sender, payout);
+            }
+        } 
+    
         appliedEpoch++;
     }
 
@@ -262,10 +265,12 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
 
         uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
         uint256 payout = used * feeMultiplier / 100;
-        (bool success,) = payable(msg.sender).call{value: payout}("");
-        if (!success) {
-            revert TransferFailed(msg.sender, payout);
-        }
+        if (address(this).balance > payout) {
+            (bool success,) = payable(msg.sender).call{value: payout}("");
+            if (!success) {
+                revert TransferFailed(msg.sender, payout);
+            }
+        } 
         emit Finalized(finalizedEpoch, bridgeRoot);
     }
 

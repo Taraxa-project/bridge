@@ -15,6 +15,49 @@ import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
 import {IBridgeConnector} from "src/connectors/IBridgeConnector.sol";
 
 contract FeesTest is SymmetricTestSetup {
+    function test_finalizeEpoch_toEth_BridgeDoesNotHaveEnoughEth_DoesNotGivePayout_To_Relayer() public {
+        vm.roll(FINALIZATION_INTERVAL);
+        vm.txGasPrice(1000);
+        uint256 value = 1 ether;
+        NativeConnector taraBridgeToken =
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
+
+        uint256 balanceOfNativeConnectorBefore = address(taraBridgeToken).balance;
+        uint256 settlementFee = taraBridge.settlementFee();
+        taraBridgeToken.lock{value: value + settlementFee}(value);
+
+        uint256 balanceOfNativeConnectorAfter = address(taraBridgeToken).balance;
+
+        vm.assertEq(
+            balanceOfNativeConnectorAfter,
+            balanceOfNativeConnectorBefore + settlementFee + value,
+            "Balance of native connector should be increased by settlement fee + value"
+        );
+        address sampleRelayer = vm.addr(666666);
+        vm.deal(sampleRelayer, 0.1 ether);
+        uint256 balanceOfRelayerBefore = address(sampleRelayer).balance;
+        vm.deal(address(taraBridge), 0 ether);
+        vm.txGasPrice(100000000 gwei);
+        vm.prank(sampleRelayer);
+        taraBridge.finalizeEpoch();
+        uint256 balanceOfRelayerAfterEpoch = address(sampleRelayer).balance;
+        console.log("Difference: ", balanceOfRelayerAfterEpoch - balanceOfRelayerBefore);
+        vm.assertTrue(
+            balanceOfRelayerAfterEpoch <= balanceOfRelayerBefore,
+            "Relayer should not have received payout"
+        );
+        uint256 balanceOfNativeConnectorAfterEpoch = address(taraBridgeToken).balance;
+        vm.assertEq(
+            balanceOfNativeConnectorAfterEpoch,
+            balanceOfNativeConnectorBefore + value,
+            "Native connector should've forwarded the settlement fee to the bridge"
+        );
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        taraLightClient.setBridgeRoot(state);
+        ethBridge.applyState(state);
+
+        assertEq(taraTokenOnEth.balanceOf(address(this)), value);
+    }
     function test_toEthFees() public {
         vm.roll(FINALIZATION_INTERVAL);
         vm.txGasPrice(1000);
