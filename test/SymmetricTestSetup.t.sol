@@ -26,8 +26,8 @@ contract SymmetricTestSetup is Test {
 
     address caller = vm.addr(0x1234);
     uint256 constant FINALIZATION_INTERVAL = 100;
-    uint256 constant FEE_MULTIPLIER_ETH = 100;
-    uint256 constant FEE_MULTIPLIER_TARA = 100;
+    uint256 constant FEE_MULTIPLIER_ETH = 110;
+    uint256 constant FEE_MULTIPLIER_TARA = 110;
     uint256 constant REGISTRATION_FEE_ETH = 2 ether;
     uint256 constant REGISTRATION_FEE_TARA = 950432 ether;
     uint256 constant SETTLEMENT_FEE_ETH = 500 gwei;
