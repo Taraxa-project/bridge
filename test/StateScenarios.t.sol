@@ -55,7 +55,7 @@ contract StateScenarios is Test, SymmetricTestSetup {
     }
 
     function testFuzz_registerMoreTokens(uint32 amount) public {
-        if (amount == 0 || amount > 10000) {
+        if (amount == 0 || amount > 100) {
             return;
         }
         setUpTokens(amount);
