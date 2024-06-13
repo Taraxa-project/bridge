@@ -13,10 +13,9 @@ import {
     StateNotMatchingBridgeRoot,
     NotSuccessiveEpochs,
     NotEnoughBlocksPassed,
-    UnregisteredContract,
-    InvalidStateHash,
     UnmatchingContractAddresses,
     ZeroAddressCannotBeRegistered,
+    NotAllStatesApplied,
     NoStateToFinalize
 } from "../errors/BridgeBaseErrors.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
@@ -133,44 +132,41 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
             revert NotSuccessiveEpochs({epoch: appliedEpoch, nextEpoch: state_with_proof.state.epoch});
         }
         uint256 common = (gasleftbefore - gasleft()) * tx.gasprice;
-        uint256 stateHashLength = state_with_proof.state_hashes.length;
-        for (uint256 i = 0; i < stateHashLength;) {
+        uint256 statesLength = state_with_proof.state.states.length;
+        uint256 stateHashIndex = 0;
+        uint256 stateIndex = 0;
+        while (stateIndex < statesLength) {
             gasleftbefore = gasleft();
-            if (localAddress[state_with_proof.state_hashes[i].contractAddress] == address(0)) {
-                revert UnregisteredContract({contractAddress: state_with_proof.state_hashes[i].contractAddress});
-            }
-            if (keccak256(state_with_proof.state.states[i].state) != state_with_proof.state_hashes[i].stateHash) {
-                revert InvalidStateHash({
-                    stateHash: keccak256(state_with_proof.state.states[i].state),
-                    expectedStateHash: state_with_proof.state_hashes[i].stateHash
-                });
-            }
-            if (state_with_proof.state.states[i].contractAddress != state_with_proof.state_hashes[i].contractAddress) {
-                revert UnmatchingContractAddresses({
-                    contractAddress: state_with_proof.state.states[i].contractAddress,
-                    expectedContractAddress: state_with_proof.state_hashes[i].contractAddress
-                });
-            }
-            uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
-            uint256 refund = (used + common / state_with_proof.state_hashes.length);
-            connectors[localAddress[state_with_proof.state_hashes[i].contractAddress]].applyStateWithRefund(
-                state_with_proof.state.states[i].state, payable(msg.sender), refund
-            );
-            unchecked {
-                ++i;
-            }
-        }
-        appliedEpoch++;
-    }
-
-    function shouldFinalizeEpoch() public view returns (bool) {
-        bool shouldFinalize = false;
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            if (!connectors[tokenAddresses[i]].isStateEmpty()) {
-                return true;
+            while (stateHashIndex < state_with_proof.state_hashes.length) {
+                SharedStructs.ContractStateHash calldata state_hash = state_with_proof.state_hashes[stateHashIndex];
+                SharedStructs.StateWithAddress calldata state = state_with_proof.state.states[stateIndex];
+                if (localAddress[state_hash.contractAddress] == address(0)) {
+                    unchecked {
+                        ++stateHashIndex;
+                    }
+                    continue;
+                }
+                if (keccak256(state.state) != state_hash.stateHash) {
+                    unchecked {
+                        ++stateHashIndex;
+                    }
+                    continue;
+                }
+                uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
+                uint256 refund = (used + common / state_with_proof.state_hashes.length);
+                connectors[localAddress[state_hash.contractAddress]].applyStateWithRefund(
+                    state.state, payable(msg.sender), refund
+                );
+                unchecked {
+                    ++stateHashIndex;
+                    ++stateIndex;
+                }
             }
         }
-        return shouldFinalize;
+        if (stateIndex != statesLength) {
+            revert NotAllStatesApplied(stateIndex, statesLength);
+        }
+        ++appliedEpoch;
     }
 
     /**
@@ -186,13 +182,29 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         }
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
 
-        if (!shouldFinalizeEpoch()) {
+        uint256 finalizedIndex = 0;
+        for (uint256 i = 0; i < tokenAddresses.length;) {
+            IBridgeConnector c = connectors[tokenAddresses[i]];
+            bool isStateEmpty = c.isStateEmpty();
+            bytes32 finalizedHash = c.finalize(finalizedEpoch);
+            if (isStateEmpty) {
+                ++i;
+                continue;
+            }
+            hashes[finalizedIndex] = SharedStructs.ContractStateHash(tokenAddresses[i], finalizedHash);
+            unchecked {
+                ++i;
+                ++finalizedIndex;
+            }
+        }
+
+        if (finalizedIndex == 0) {
             revert NoStateToFinalize();
         }
-        for (uint256 i = 0; i < tokenAddresses.length;) {
-            hashes[i] = SharedStructs.ContractStateHash(
-                tokenAddresses[i], connectors[tokenAddresses[i]].finalize(finalizedEpoch)
-            );
+
+        SharedStructs.ContractStateHash[] memory finalHashes = new SharedStructs.ContractStateHash[](finalizedIndex);
+        for (uint256 i = 0; i < finalizedIndex;) {
+            finalHashes[i] = hashes[i];
             unchecked {
                 ++i;
             }
@@ -201,7 +213,7 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         unchecked {
             ++finalizedEpoch;
         }
-        bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, hashes);
+        bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, finalHashes);
         emit Finalized(finalizedEpoch, bridgeRoot);
     }
 
@@ -209,14 +221,32 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
      * @return ret finalized states with proof for all tokens
      */
     function getStateWithProof() public view returns (SharedStructs.StateWithProof memory ret) {
-        ret.state.epoch = finalizedEpoch;
-        ret.state.states = new SharedStructs.StateWithAddress[](tokenAddresses.length);
-        ret.state_hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
+        uint256 proof_idx = 0;
         uint256 tokenAddressesLength = tokenAddresses.length;
+        SharedStructs.StateWithAddress[] memory states = new SharedStructs.StateWithAddress[](tokenAddresses.length);
+        SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
         for (uint256 i = 0; i < tokenAddressesLength;) {
             bytes memory state = connectors[tokenAddresses[i]].getFinalizedState();
-            ret.state_hashes[i] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));
-            ret.state.states[i] = SharedStructs.StateWithAddress(tokenAddresses[i], state);
+            if (state.length == 0) {
+                unchecked {
+                    ++i;
+                }
+                continue;
+            }
+            hashes[proof_idx] = SharedStructs.ContractStateHash(tokenAddresses[i], keccak256(state));
+            states[proof_idx] = SharedStructs.StateWithAddress(tokenAddresses[i], state);
+            unchecked {
+                ++i;
+                ++proof_idx;
+            }
+        }
+
+        ret.state.epoch = finalizedEpoch;
+        ret.state.states = new SharedStructs.StateWithAddress[](proof_idx);
+        ret.state_hashes = new SharedStructs.ContractStateHash[](proof_idx);
+        for (uint256 i = 0; i < proof_idx;) {
+            ret.state.states[i] = states[i];
+            ret.state_hashes[i] = hashes[i];
             unchecked {
                 ++i;
             }

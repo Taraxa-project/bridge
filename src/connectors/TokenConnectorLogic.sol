@@ -5,43 +5,61 @@ pragma solidity ^0.8.17;
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 
-import {InvalidEpoch, NoFinalizedState} from "../errors/ConnectorErrors.sol";
+import {InvalidEpoch, NoFinalizedState, RefundFailed} from "../errors/ConnectorErrors.sol";
 import "../lib/SharedStructs.sol";
 import "../lib/Constants.sol";
-import "./BridgeConnectorBase.sol";
 import "./TokenState.sol";
+import "./IBridgeConnector.sol";
 
-abstract contract TokenConnectorBase is BridgeConnectorBase {
+abstract contract TokenConnectorLogic is IBridgeConnector {
     address public token; // slot 1 as slot 0 is used by BridgeConnectorBase
     address public otherNetworkAddress; // slot 2
     TokenState public state; // slot 3
     TokenState public finalizedState; // slot 4
     mapping(address => uint256) public toClaim; // slot 5
+    mapping(address => uint256) public feeToClaim; // will always be in slot 6
 
     /// Events
+    event Funded(address indexed sender, address indexed connectorBase, uint256 amount);
+    event Refunded(address indexed receiver, uint256 amount);
     event Finalized(uint256 indexed epoch);
     event ClaimAccrued(address indexed account, uint256 value);
     event Claimed(address indexed account, uint256 value);
 
-    function TokenConnectorBase_init(address bridge, address _token, address token_on_other_network)
-        public
-        onlyInitializing
-    {
-        __TokenConnectorBase_init(bridge, _token, token_on_other_network);
+    /**
+     * @dev Refunds the specified amount to the given receiver.
+     * @param receiver The address of the receiver.
+     * @param amount The amount to be refunded.
+     */
+    function refund(address payable receiver, uint256 amount) public override {
+        (bool refundSuccess,) = receiver.call{value: amount}("");
+        if (!refundSuccess) {
+            revert RefundFailed({recipient: receiver, amount: amount});
+        }
+        emit Refunded(receiver, amount);
     }
 
-    function __TokenConnectorBase_init(address bridge, address _token, address token_on_other_network)
-        internal
-        onlyInitializing
+    /**
+     * @dev Applies the given state with a refund to the specified receiver.
+     * @param _state The state to apply.
+     * @param refund_receiver The address of the refund_receiver.
+     * @param common_part The common part of the refund.
+     */
+    function applyStateWithRefund(bytes calldata _state, address payable refund_receiver, uint256 common_part)
+        public
+        override
     {
-        require(
-            bridge != address(0) && _token != address(0) && token_on_other_network != address(0),
-            "TokenConnectorBase: invalid bridge, token, or token_on_other_network"
-        );
-        __BridgeConnectorBase_init(bridge);
-        otherNetworkAddress = token_on_other_network;
-        token = _token;
-        state = new TokenState(0);
+        uint256 gasLeftBefore = gasleft();
+        address[] memory addresses = applyState(_state);
+        uint256 totalFee = common_part + (gasLeftBefore - gasleft()) * tx.gasprice;
+        uint256 addressesLength = addresses.length;
+        for (uint256 i = 0; i < addressesLength;) {
+            feeToClaim[addresses[i]] += totalFee / addresses.length;
+            unchecked {
+                ++i;
+            }
+        }
+        refund(refund_receiver, totalFee);
     }
 
     function epoch() public view returns (uint256) {
@@ -60,7 +78,7 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
         return state.empty();
     }
 
-    function finalize(uint256 epoch_to_finalize) public override onlyOwner returns (bytes32) {
+    function finalize(uint256 epoch_to_finalize) public virtual override returns (bytes32) {
         if (epoch_to_finalize != state.epoch()) {
             revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
         }
@@ -86,6 +104,9 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
             revert NoFinalizedState();
         }
 
+        if (finalizedState.empty()) {
+            return new bytes(0);
+        }
         return finalizedSerializedTransfers();
     }
 
@@ -108,4 +129,6 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
      * This function is virtual and must be implemented by derived contracts.
      */
     function claim() public payable virtual;
+
+    function applyState(bytes calldata) internal virtual returns (address[] memory);
 }

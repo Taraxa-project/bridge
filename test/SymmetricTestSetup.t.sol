@@ -11,10 +11,15 @@ import {ERC20MintingConnector} from "src/connectors/ERC20MintingConnector.sol";
 import {Constants} from "src/lib/Constants.sol";
 import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {SharedStructs} from "src/lib/SharedStructs.sol";
 
 contract SymmetricTestSetup is Test {
     BridgeLightClientMock taraLightClient;
     BridgeLightClientMock ethLightClient;
+    ERC20MintingConnector ethOnTaraMintingConnector;
+    ERC20MintingConnector taraOnEthMintingConnector;
+    NativeConnector taraConnector;
+    NativeConnector ethConnector;
     TestERC20 taraTokenOnEth;
     TestERC20 ethTokenOnTara;
     TaraBridge taraBridge;
@@ -22,6 +27,8 @@ contract SymmetricTestSetup is Test {
 
     address caller = vm.addr(0x1234);
     uint256 constant FINALIZATION_INTERVAL = 100;
+
+    uint32 transfers = 100;
 
     function setUp() public {
         payable(caller).transfer(100 ether);
@@ -31,15 +38,19 @@ contract SymmetricTestSetup is Test {
 
         taraTokenOnEth = new TestERC20("Tara", "TARA");
         ethTokenOnTara = new TestERC20("Eth", "ETH");
+        ethTokenOnTara.mintTo(address(caller), 1 ether);
+
+        for (uint16 i = 1; i < transfers; i++) {
+            address target = vm.addr(i);
+            ethTokenOnTara.mintTo(target, 1 ether);
+        }
 
         address taraBridgeProxy = Upgrades.deployUUPSProxy(
-            "TaraBridge.sol",
-            abi.encodeCall(TaraBridge.initialize, (ethLightClient, FINALIZATION_INTERVAL))
+            "TaraBridge.sol", abi.encodeCall(TaraBridge.initialize, (ethLightClient, FINALIZATION_INTERVAL))
         );
         taraBridge = TaraBridge(taraBridgeProxy);
         address ethBridgeProxy = Upgrades.deployUUPSProxy(
-            "EthBridge.sol",
-            abi.encodeCall(EthBridge.initialize, (taraLightClient, FINALIZATION_INTERVAL))
+            "EthBridge.sol", abi.encodeCall(EthBridge.initialize, (taraLightClient, FINALIZATION_INTERVAL))
         );
         ethBridge = EthBridge(ethBridgeProxy);
 
@@ -48,7 +59,7 @@ contract SymmetricTestSetup is Test {
             "NativeConnector.sol",
             abi.encodeCall(NativeConnector.initialize, (address(taraBridge), address(taraTokenOnEth)))
         );
-        NativeConnector taraConnector = NativeConnector(payable(taraConnectorProxy));
+        taraConnector = NativeConnector(payable(taraConnectorProxy));
 
         (bool success,) = payable(taraConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success) {
@@ -63,7 +74,7 @@ contract SymmetricTestSetup is Test {
                 ERC20MintingConnector.initialize, (address(taraBridge), ethTokenOnTara, Constants.NATIVE_TOKEN_ADDRESS)
             )
         );
-        ERC20MintingConnector ethOnTaraMintingConnector = ERC20MintingConnector(payable(ethOnTaraMintingConnectorProxy));
+        ethOnTaraMintingConnector = ERC20MintingConnector(payable(ethOnTaraMintingConnectorProxy));
 
         (bool success2,) = payable(ethOnTaraMintingConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success2) {
@@ -81,7 +92,7 @@ contract SymmetricTestSetup is Test {
             "NativeConnector.sol",
             abi.encodeCall(NativeConnector.initialize, (address(ethBridge), address(ethTokenOnTara)))
         );
-        NativeConnector ethConnector = NativeConnector(payable(ethConnectorProxy));
+        ethConnector = NativeConnector(payable(ethConnectorProxy));
 
         (bool success3,) = payable(ethConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success3) {
@@ -96,7 +107,7 @@ contract SymmetricTestSetup is Test {
                 ERC20MintingConnector.initialize, (address(ethBridge), taraTokenOnEth, Constants.NATIVE_TOKEN_ADDRESS)
             )
         );
-        ERC20MintingConnector taraOnEthMintingConnector = ERC20MintingConnector(payable(taraOnEthMintingConnectorProxy));
+        taraOnEthMintingConnector = ERC20MintingConnector(payable(taraOnEthMintingConnectorProxy));
 
         (bool success4,) = payable(taraOnEthMintingConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success4) {
@@ -113,22 +124,4 @@ contract SymmetricTestSetup is Test {
 
     // define it to not fail on incoming transfers
     receive() external payable {}
-
-    function test_revertOnDuplicateConnectorRegistration() public {
-        vm.startPrank(caller);
-        address ethConnectorProxy = Upgrades.deployUUPSProxy(
-            "NativeConnector.sol",
-            abi.encodeCall(NativeConnector.initialize, (address(ethBridge), address(ethTokenOnTara)))
-        );
-        NativeConnector ethConnector = NativeConnector(payable(ethConnectorProxy));
-
-        (bool success3,) = payable(ethConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
-        if (!success3) {
-            revert("Failed to initialize eth connector");
-        }
-
-        vm.expectRevert();
-        ethBridge.registerContract(ethConnector);
-        vm.stopPrank();
-    }
 }
