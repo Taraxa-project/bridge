@@ -5,46 +5,28 @@ pragma solidity ^0.8.17;
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./TokenConnectorBase.sol";
-import "../lib/SharedStructs.sol";
-import {InsufficientFunds, ZeroValueCall} from "../errors/ConnectorErrors.sol";
+import {ERC20LockingConnectorLogic} from "./ERC20LockingConnectorLogic.sol";
+import {Receiver} from "./Receiver.sol";
+import {UpgradeableBase} from "./UpgradeableBase.sol";
+import {TokenState} from "./TokenState.sol";
+import {BridgeBase} from "../lib/BridgeBase.sol";
 
-contract ERC20LockingConnector is TokenConnectorBase {
+contract ERC20LockingConnector is UpgradeableBase, Receiver, ERC20LockingConnectorLogic {
     using SafeERC20 for IERC20;
-    /// Events
 
-    event Locked(address indexed account, uint256 value);
-
-    function initialize(BridgeBase _bridge, IERC20 _token, address token_on_other_network) public initializer {
-        TokenConnectorBase_init(_bridge, _token, token_on_other_network);
-    }
-
-    /**
-     * @dev Applies the given state to the token contract by transfers.
-     * @param _state The state to be applied.
-     */
-    function applyState(bytes calldata _state) external override {
-        Transfer[] memory transfers = deserializeTransfers(_state);
-        uint256 transfersLength = transfers.length;
-        for (uint256 i = 0; i < transfersLength;) {
-            IERC20(token).transfer(transfers[i].account, transfers[i].amount);
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    /**
-     * @dev Locks the specified amount of tokens to transfer them to the other network.
-     * @notice The amount of tokens to burn must be approved by the sender
-     * @param value The amount of tokens to lock.
-     */
-    function lock(uint256 value) public payable onlySettled(value) {
-        if (value == 0) {
-            revert ZeroValueCall();
-        }
-        IERC20(token).safeTransferFrom(msg.sender, address(this), value);
-        state.addAmount(msg.sender, value);
-        emit Locked(msg.sender, value);
+    function initialize(BridgeBase _bridge, IERC20 tokenAddress, address token_on_other_network)
+        public
+        payable
+        initializer
+    {
+        require(
+            address(_bridge) != address(0) && address(tokenAddress) != address(0) && token_on_other_network != address(0),
+            "TokenConnectorBase: invalid bridge, token, or token_on_other_network"
+        );
+        __BridgeConnectorBase_init(address(_bridge));
+        otherNetworkAddress = token_on_other_network;
+        token = address(tokenAddress);
+        state = new TokenState(0);
+        bridge = _bridge;
     }
 }

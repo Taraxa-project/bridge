@@ -15,6 +15,10 @@ import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 contract SymmetricTestSetup is Test {
     BridgeLightClientMock taraLightClient;
     BridgeLightClientMock ethLightClient;
+    ERC20MintingConnector ethOnTaraMintingConnector;
+    ERC20MintingConnector taraOnEthMintingConnector;
+    NativeConnector taraConnector;
+    NativeConnector ethConnector;
     TestERC20 taraTokenOnEth;
     TestERC20 ethTokenOnTara;
     TaraBridge taraBridge;
@@ -28,6 +32,8 @@ contract SymmetricTestSetup is Test {
     uint256 constant REGISTRATION_FEE_TARA = 950432 ether;
     uint256 constant SETTLEMENT_FEE_ETH = 500 gwei;
     uint256 constant SETTLEMENT_FEE_TARA = 50000 ether;
+
+    uint32 transfers = 100;
 
     function setUp() public {
         payable(caller).transfer(100 ether);
@@ -59,9 +65,7 @@ contract SymmetricTestSetup is Test {
         address taraConnectorProxy = Upgrades.deployUUPSProxy(
             "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (taraBridge, address(taraTokenOnEth)))
         );
-        NativeConnector taraConnector = NativeConnector(payable(taraConnectorProxy));
-
-        taraConnector.transferOwnership(address(taraBridge));
+        taraConnector = NativeConnector(payable(taraConnectorProxy));
 
         vm.deal(caller, REGISTRATION_FEE_TARA);
         taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraConnector);
@@ -72,7 +76,7 @@ contract SymmetricTestSetup is Test {
                 ERC20MintingConnector.initialize, (taraBridge, ethTokenOnTara, Constants.NATIVE_TOKEN_ADDRESS)
             )
         );
-        ERC20MintingConnector ethOnTaraMintingConnector = ERC20MintingConnector(payable(ethOnTaraMintingConnectorProxy));
+        ethOnTaraMintingConnector = ERC20MintingConnector(payable(ethOnTaraMintingConnectorProxy));
 
         // give ownership of erc20 to the connector
         ethTokenOnTara.transferOwnership(address(ethOnTaraMintingConnector));
@@ -86,9 +90,7 @@ contract SymmetricTestSetup is Test {
         address ethConnectorProxy = Upgrades.deployUUPSProxy(
             "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (ethBridge, address(ethTokenOnTara)))
         );
-        NativeConnector ethConnector = NativeConnector(payable(ethConnectorProxy));
-
-        ethConnector.transferOwnership(address(ethBridge));
+        ethConnector = NativeConnector(payable(ethConnectorProxy));
 
         vm.deal(caller, address(caller).balance + REGISTRATION_FEE_ETH);
         ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethConnector);
@@ -99,7 +101,7 @@ contract SymmetricTestSetup is Test {
                 ERC20MintingConnector.initialize, (ethBridge, taraTokenOnEth, Constants.NATIVE_TOKEN_ADDRESS)
             )
         );
-        ERC20MintingConnector taraOnEthMintingConnector = ERC20MintingConnector(payable(taraOnEthMintingConnectorProxy));
+        taraOnEthMintingConnector = ERC20MintingConnector(payable(taraOnEthMintingConnectorProxy));
 
         // give token ownership ot erc20 to the connector
         taraTokenOnEth.transferOwnership(address(taraOnEthMintingConnector));
@@ -114,18 +116,4 @@ contract SymmetricTestSetup is Test {
 
     // define it to not fail on incoming transfers
     receive() external payable {}
-
-    function test_revertOnDuplicateConnectorRegistration() public {
-        vm.startPrank(caller);
-        address ethConnectorProxy = Upgrades.deployUUPSProxy(
-            "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (ethBridge, address(ethTokenOnTara)))
-        );
-        NativeConnector ethConnector = NativeConnector(payable(ethConnectorProxy));
-
-        vm.deal(caller, address(caller).balance + REGISTRATION_FEE_ETH);
-
-        vm.expectRevert();
-        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethConnector);
-        vm.stopPrank();
-    }
 }

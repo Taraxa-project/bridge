@@ -4,36 +4,26 @@ pragma solidity ^0.8.17;
 import {TaraBridge} from "../src/tara/TaraBridge.sol";
 import {EthBridge} from "../src/eth/EthBridge.sol";
 import {TestERC20} from "../src/lib/TestERC20.sol";
-import {
-    StateNotMatchingBridgeRoot, NotSuccessiveEpochs, NotEnoughBlocksPassed
-} from "../src/errors/BridgeBaseErrors.sol";
 import {NativeConnector} from "../src/connectors/NativeConnector.sol";
 import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
 import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
+import {ERC20LockingConnectorMock} from "./baseContracts/ERC20LockingConnectorMock.sol";
+import {ERC20MintingConnectorMock} from "./baseContracts/ERC20MintingConnectorMock.sol";
 import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
 import {Constants} from "../src/lib/Constants.sol";
 import {SharedStructs} from "../src/lib/SharedStructs.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
+
     function test_customTokenRun() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
         // deploy and register token on both sides
         vm.startPrank(caller);
         taraTestToken = new TestERC20("Test", "TEST");
         address randomEthTestAddress = vm.addr(11111);
         ethTestToken = TestERC20(randomEthTestAddress);
-        address taraTestTokenConnectorProxy = Upgrades.deployUUPSProxy(
-            "ERC20LockingConnector.sol",
-            abi.encodeCall(ERC20LockingConnector.initialize, (taraBridge, taraTestToken, randomEthTestAddress))
-        );
-        ERC20LockingConnector taraTestTokenConnector = ERC20LockingConnector(payable(taraTestTokenConnectorProxy));
-
-        address ethTestTokenConnectorProxy = Upgrades.deployUUPSProxy(
-            "ERC20MintingConnector.sol",
-            abi.encodeCall(ERC20MintingConnector.initialize, (ethBridge, ethTestToken, address(taraTestToken)))
-        );
-        ERC20MintingConnector ethTestTokenConnector = ERC20MintingConnector(payable(ethTestTokenConnectorProxy));
+        ERC20LockingConnectorMock taraTestTokenConnector = new ERC20LockingConnectorMock(taraBridge, taraTestToken, randomEthTestAddress);
+        ERC20MintingConnectorMock ethTestTokenConnector = new ERC20MintingConnectorMock(ethBridge, ethTestToken, address(taraTestToken));
 
         taraTestToken.mintTo(address(caller), 10 ether);
         taraTestToken.mintTo(address(this), 10 ether);
@@ -55,17 +45,13 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         assertEq(state.state.epoch, 1, "epoch");
         taraLightClient.setBridgeRoot(state);
-        // assertEq(ethTestToken.balanceOf(address(caller)), 0, "token balance before");
-
+        
         ethBridge.applyState(state);
 
-        // ethTestTokenConnector.claim{value: ethTestTokenConnector.feeToClaim(address(this))}();
         vm.stopPrank();
-
-        // assertEq(ethTestToken.balanceOf(address(caller)), 1 ether, "token balance after");
     }
 
-    function test_multipleContractsToEth() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
+    function test_multipleOnesidedContractsToEth() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
         (taraTestToken, ethTestToken) = test_customTokenRun();
         uint256 value = 1 ether;
         uint256 settlementFee = taraBridge.settlementFee();
@@ -89,26 +75,18 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         taraLightClient.setBridgeRoot(state);
 
         assertEq(taraTokenOnEth.balanceOf(address(this)), 0, "tara balance before");
-        // assertEq(ethTestToken.balanceOf(address(this)), tokenBalanceBefore, "token balance before");
 
         // call from other account to not affect balances
         vm.prank(caller);
         ethBridge.applyState(state);
 
-        // ethTestTokenConnector.claim{value: ethTestTokenConnector.feeToClaim(address(this))}();
-
         assertEq(taraTokenOnEth.balanceOf(address(this)), value, "tara balance after");
-        // assertEq(ethTestToken.balanceOf(address(this)), tokenBalanceBefore + value, "token balance after");
     }
 
     function test_Revert_returnToTara_claimFails_on_onesidedRegistration() public {
-        (TestERC20 taraTestToken, TestERC20 ethTestToken) = test_multipleContractsToEth();
+        (TestERC20 taraTestToken,) = test_multipleOnesidedContractsToEth();
         uint256 value = 1 ether;
 
-        // ERC20MintingConnector ethTestTokenConnector =
-        //     ERC20MintingConnector(payable(address(ethBridge.connectors(address(ethTestToken)))));
-        // ethTestToken.approve(address(ethTestTokenConnector), value);
-        // ethTestTokenConnector.burn(value);
         uint256 ethTestTokenBalanceBefore = taraTestToken.balanceOf(address(this));
         uint256 settlementFee = taraBridge.settlementFee();
         ERC20MintingConnector ethTaraTokenConnector =

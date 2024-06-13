@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.17;
 
-import "../lib/IBridgeLightClient.sol";
-import "../connectors/ERC20MintingConnector.sol";
-import "../lib/BridgeBase.sol";
+import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
+import {ERC20MintingConnector} from "../connectors/ERC20MintingConnector.sol";
+import {BridgeBase} from "../lib/BridgeBase.sol";
 
 contract EthBridge is BridgeBase {
     function initialize(

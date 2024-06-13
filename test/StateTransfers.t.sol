@@ -13,6 +13,7 @@ import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol
 import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
 import {Constants} from "../src/lib/Constants.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
+import "forge-std/console.sol";
 
 contract StateTransfersTest is SymmetricTestSetup {
     function test_Revert_toEth_on_not_enough_blocks_passed() public {
@@ -47,9 +48,10 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         vm.roll(FINALIZATION_INTERVAL);
 
-        vm.expectRevert();
+        bytes32 bridgeRootBefore = taraBridge.getBridgeRoot();
         taraBridge.finalizeEpoch();
-        vm.expectRevert();
+        bytes32 bridgeRootAfter = taraBridge.getBridgeRoot();
+        assertEq(bridgeRootBefore, bridgeRootAfter, "Bridge root should not change");
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         taraLightClient.setBridgeRoot(state);
         vm.expectRevert();
@@ -66,9 +68,7 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         vm.roll(FINALIZATION_INTERVAL);
 
-        vm.expectRevert();
         taraBridge.finalizeEpoch();
-        vm.expectRevert();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         taraLightClient.setBridgeRoot(state);
         vm.expectRevert();
@@ -118,8 +118,6 @@ contract StateTransfersTest is SymmetricTestSetup {
     function test_Revert_OnChangedState() public {
         uint256 settlementFee = taraBridge.settlementFee();
         uint256 value = 1 ether;
-        NativeConnector taraConnector =
-            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraConnector.lock{value: value + settlementFee}(value);
 
         vm.roll(FINALIZATION_INTERVAL);
@@ -140,8 +138,6 @@ contract StateTransfersTest is SymmetricTestSetup {
     function test_Revert_OnChangedEpoch() public {
         uint256 settlementFee = taraBridge.settlementFee();
         uint256 value = 1 ether;
-        NativeConnector taraConnector =
-            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraConnector.lock{value: value + settlementFee}(value);
 
         vm.roll(FINALIZATION_INTERVAL);
@@ -163,8 +159,6 @@ contract StateTransfersTest is SymmetricTestSetup {
     function test_emptyEpoch() public {
         uint256 settlementFee = taraBridge.settlementFee();
         uint256 value = 1 ether;
-        NativeConnector taraConnector =
-            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraConnector.lock{value: value + settlementFee}(value);
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
@@ -172,21 +166,17 @@ contract StateTransfersTest is SymmetricTestSetup {
         assertEq(finalizedEpoch, 1);
         vm.roll(2 * FINALIZATION_INTERVAL);
 
-        vm.expectRevert();
         taraBridge.finalizeEpoch();
         // check that we are not finalizing empty epoch
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
-        assertEq(state.state.epoch, finalizedEpoch);
-        assertEq(state.state.states.length, 2);
-        assertEq(state.state.epoch, 1);
-        assertEq(state.state.states[0].contractAddress, Constants.NATIVE_TOKEN_ADDRESS);
+        assertEq(state.state.epoch, finalizedEpoch, "Epoch should be the same");
+        assertEq(state.state.states.length, 0, "State length should be 0");
+        assertEq(state.state.epoch, 1, "Epoch should be 1");
     }
 
     function test_futureEpoch() public {
         uint256 value = 1 ether;
         uint256 settlementFee = taraBridge.settlementFee();
-        NativeConnector taraConnector =
-            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         taraConnector.lock{value: value + settlementFee}(value);
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
@@ -195,17 +185,17 @@ contract StateTransfersTest is SymmetricTestSetup {
         vm.roll(2 * FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
-        assertFalse(state.state.epoch == state1.state.epoch);
+        assertFalse(state.state.epoch == state1.state.epoch, "Epoch should be the same");
         assertFalse(
             SharedStructs.getBridgeRoot(state.state.epoch, state.state_hashes)
                 == SharedStructs.getBridgeRoot(state1.state.epoch, state1.state_hashes),
             "States with different epoch should have different roots"
         );
-        assertEq(state1.state_hashes[0].contractAddress, state.state_hashes[0].contractAddress);
-        assertEq(state1.state_hashes[0].stateHash, state.state_hashes[0].stateHash);
-        assertEq(state.state.epoch, 2);
-        assertEq(state.state.states.length, 2);
-        assertEq(state.state.states[0].contractAddress, Constants.NATIVE_TOKEN_ADDRESS);
+        assertEq(state1.state_hashes[0].contractAddress, state.state_hashes[0].contractAddress, "Contract address should be the same");
+        assertEq(state1.state_hashes[0].stateHash, state.state_hashes[0].stateHash, "State hash should be the same");
+        assertEq(state.state.epoch, 2, "Epoch should be 2");
+        assertEq(state.state.states.length, 1, "State length should be 1");
+        assertEq(state.state.states[0].contractAddress, Constants.NATIVE_TOKEN_ADDRESS, "Contract address should be the same");
         taraLightClient.setBridgeRoot(state);
 
         vm.expectRevert(
@@ -219,8 +209,6 @@ contract StateTransfersTest is SymmetricTestSetup {
         uint256 value = 1 ether / 1000;
         uint256 count = 100;
         address[] memory addrs = new address[](count);
-        NativeConnector taraConnector =
-            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         for (uint256 i = 0; i < count; i++) {
             address payable addr = payable(address(uint160(uint256(keccak256(abi.encodePacked(i))))));
             vm.deal(addr, value + settlementFee);

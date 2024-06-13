@@ -190,6 +190,7 @@ contract FeesTest is SymmetricTestSetup {
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
 
         uint256 settlementFee = taraBridge.settlementFee();
+        vm.deal(address(this), value + settlementFee);
         taraBridgeToken.lock{value: value + settlementFee}(value);
 
         // We're consciously setting the balance of the taraBridgeToken to 0 to simulate a malicious actor

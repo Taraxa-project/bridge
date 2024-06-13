@@ -7,46 +7,41 @@ import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.s
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {InvalidEpoch, NoFinalizedState, TransferFailed} from "../errors/ConnectorErrors.sol";
+import {InvalidEpoch, NoFinalizedState, TransferFailed, InsufficientFunds} from "../errors/ConnectorErrors.sol";
 import {SharedStructs} from "../lib/SharedStructs.sol";
 import {Constants} from "../lib/Constants.sol";
-import {BridgeConnectorBase} from "./BridgeConnectorBase.sol";
 import {TokenState, Transfer} from "./TokenState.sol";
 import {BridgeBase} from "../lib/BridgeBase.sol";
+import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 
-abstract contract TokenConnectorBase is BridgeConnectorBase {
-    using SafeERC20 for IERC20;
-
-    IERC20 public token; // slot 1 as slot 0 is used by BridgeConnectorBase
-    address public otherNetworkAddress; // slot 2
-    TokenState public state; // slot 3
-    TokenState public finalizedState; // slot 4
-    mapping(address => uint256) public toClaim; // slot 5
+abstract contract TokenConnectorLogic is IBridgeConnector {
+    BridgeBase public bridge;
+    address public token;
+    address public otherNetworkAddress; 
+    TokenState public state; 
+    TokenState public finalizedState;
+    mapping(address => uint256) public toClaim;
+    mapping(address => uint256) public feeToClaim;
 
     /// Events
+    event Funded(address indexed sender, address indexed connectorBase, uint256 amount);
+    event Refunded(address indexed receiver, uint256 amount);
     event Finalized(uint256 indexed epoch);
     event ClaimAccrued(address indexed account, uint256 value);
     event Claimed(address indexed account, uint256 value);
 
-    function TokenConnectorBase_init(BridgeBase _bridge, IERC20 _token, address token_on_other_network)
-        public
-        onlyInitializing
-    {
-        __TokenConnectorBase_init(_bridge, _token, token_on_other_network);
-    }
-
-    function __TokenConnectorBase_init(BridgeBase _bridge, IERC20 _token, address token_on_other_network)
-        internal
-        onlyInitializing
-    {
-        require(
-            address(_bridge) != address(0) && address(_token) != address(0) && token_on_other_network != address(0),
-            "TokenConnectorBase: invalid bridge, token, or token_on_other_network"
-        );
-        __BridgeConnectorBase_init(_bridge);
-        otherNetworkAddress = token_on_other_network;
-        token = _token;
-        state = new TokenState(0);
+     modifier onlySettled(uint256 lockAmount, bool isNative) {
+        uint256 fee = bridge.settlementFee();
+        uint256 minAmount;
+        if(isNative){
+            minAmount = fee + lockAmount;
+        } else {
+            minAmount = fee;
+        }
+        if (msg.value < minAmount) {
+            revert InsufficientFunds(fee + lockAmount, msg.value);
+        }
+        _;
     }
 
     function epoch() public view returns (uint256) {
@@ -69,7 +64,7 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
         return state.getStateLength();
     }
 
-    function finalize(uint256 epoch_to_finalize) public override onlyOwner returns (bytes32) {
+    function finalize(uint256 epoch_to_finalize) public virtual override returns (bytes32) {
         if (epoch_to_finalize != state.epoch()) {
             revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
         }
@@ -101,6 +96,9 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
             revert NoFinalizedState();
         }
 
+        if (finalizedState.empty()) {
+            return new bytes(0);
+        }
         return finalizedSerializedTransfers();
     }
 
@@ -117,4 +115,6 @@ abstract contract TokenConnectorBase is BridgeConnectorBase {
     function getContractDestination() external view returns (address) {
         return otherNetworkAddress;
     }
+
+    function applyState(bytes calldata) external virtual;
 }

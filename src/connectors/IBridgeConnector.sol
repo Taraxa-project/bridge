@@ -27,6 +27,7 @@ interface IBridgeConnector {
      * @return true if the state is empty, false otherwise
      */
     function isStateEmpty() external view returns (bool);
+
     /**
      * @dev Retrieves the finalized state of the bridgeable contract.
      * @return A bytes serialized finalized state
@@ -47,9 +48,4 @@ interface IBridgeConnector {
      * @dev Returns the length of the state entries
      */
     function getStateLength() external view returns (uint256);
-
-    /**
-     * @dev Returns the address of the owner of the connector
-     */
-    function owner() external view returns (address);
 }

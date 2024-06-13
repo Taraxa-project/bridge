@@ -12,3 +12,4 @@ error TransferFailed(address target, uint256 amount);
 error InvalidBridgeRoot(bytes32 bridgeRoot);
 error ZeroAddressCannotBeRegistered();
 error NoStateToFinalize();
+error NotAllStatesApplied(uint256 processed, uint256 total);
