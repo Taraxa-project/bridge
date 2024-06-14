@@ -20,8 +20,9 @@ import {
 } from "../errors/BridgeBaseErrors.sol";
 import {InsufficientFunds} from "../errors/ConnectorErrors.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
+import {Receiver} from "../connectors/Receiver.sol";
 
-abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
+abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     /// Mapping of connectors to their source and destination addresses
     mapping(address => IBridgeConnector) public connectors;
     /// Mapping of source and destination addresses to the connector address
@@ -62,10 +63,6 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     constructor() {
         _disableInitializers();
     }
-
-    receive() external payable {}
-
-    fallback() external payable {}
 
     function __BridgeBase_init(
         IBridgeLightClient _lightClient,
