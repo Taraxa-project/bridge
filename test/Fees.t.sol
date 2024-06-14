@@ -8,7 +8,7 @@ import {EthBridge} from "src/eth/EthBridge.sol";
 import {TestERC20} from "src/lib/TestERC20.sol";
 import {ERC20LockingConnector} from "src/connectors/ERC20LockingConnector.sol";
 import {ERC20MintingConnector} from "src/connectors/ERC20MintingConnector.sol";
-import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
+import {BridgeLightClientMock} from "./LightClientMocks.sol";
 import {Constants} from "src/lib/Constants.sol";
 import {SharedStructs} from "src/lib/SharedStructs.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";

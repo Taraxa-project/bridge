@@ -9,7 +9,7 @@ import {TestERC20} from "src/lib/TestERC20.sol";
 import {ERC20LockingConnector} from "src/connectors/ERC20LockingConnector.sol";
 import {ERC20MintingConnector} from "src/connectors/ERC20MintingConnector.sol";
 import {Constants} from "src/lib/Constants.sol";
-import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
+import {BridgeLightClientMock} from "./LightClientMocks.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import {SharedStructs} from "src/lib/SharedStructs.sol";
 

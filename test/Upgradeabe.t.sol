@@ -13,7 +13,7 @@ import {
 } from "../src/errors/BridgeBaseErrors.sol";
 import "../src/connectors/ERC20LockingConnector.sol";
 import "../src/connectors/ERC20MintingConnector.sol";
-import "./BridgeLightClientMock.sol";
+import "./LightClientMocks.sol";
 import "../src/lib/Constants.sol";
 import "./upgradeableMocks/EthBridgeV2.sol";
 import "./upgradeableMocks/TaraBridgeV2.sol";
