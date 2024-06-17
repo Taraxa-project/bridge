@@ -10,7 +10,7 @@ import {
 import {NativeConnector} from "../src/connectors/NativeConnector.sol";
 import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
 import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
-import {BridgeLightClientMock} from "./LightClientMocks.sol";
+import {BridgeLightClientMock} from "./utils/LightClientMocks.sol";
 import {Constants} from "../src/lib/Constants.sol";
 import {SharedStructs} from "../src/lib/SharedStructs.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";

@@ -4,21 +4,21 @@ pragma solidity ^0.8.17;
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {Test, console} from "forge-std/Test.sol";
-import {EthClient} from "../src/tara/EthClient.sol";
+import {EthClientHarness} from "./utils/EthClientHarness.sol";
 import {BeaconLightClient} from "beacon-light-client/src/BeaconLightClient.sol";
-import {BeaconClientMock} from "./LightClientMocks.sol";
+import {BeaconClientMock} from "./utils/LightClientMocks.sol";
 
 contract EthClientTest is Test {
-    EthClient client;
+    EthClientHarness client;
     BeaconClientMock lightClient = new BeaconClientMock();
 
     function setUp() public {
         address ethBridgeAddress = 0x6C5ACDE68a33b39Ad4717a7a904a9b81CaaE18e3;
         address ethClientProxy = Upgrades.deployUUPSProxy(
-            "EthClient.sol",
-            abi.encodeCall(EthClient.initialize, (BeaconLightClient(address(lightClient)), ethBridgeAddress))
+            "EthClientHarness.sol",
+            abi.encodeCall(EthClientHarness.initializeIt, (BeaconLightClient(address(lightClient)), ethBridgeAddress))
         );
-        client = EthClient(ethClientProxy);
+        client = EthClientHarness(ethClientProxy);
     }
 
     function test_merkleRoot() public {
@@ -59,7 +59,7 @@ contract EthClientTest is Test {
         bridgeRootProof[1] =
             hex"f843a033f7a9fe364faab93b216da50a3214154f22a0a2b415b23a84c8169e8b636ee3a1a02a6bdefe81a8e9d36fb1a8f8fb0b3e6e5fb45aa05b8542441a4c552b51e13fa7";
 
-        client.processBridgeRoot(0, accountProof, epochProof, bridgeRootProof);
+        client.processBridgeRootPublic(accountProof, epochProof, bridgeRootProof);
 
         assertEq(client.getFinalizedBridgeRoot(1), 0x2a6bdefe81a8e9d36fb1a8f8fb0b3e6e5fb45aa05b8542441a4c552b51e13fa7);
     }
@@ -77,6 +77,6 @@ contract EthClientTest is Test {
             hex"f844a120290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563a1a02a6bdefe81a8e9d36fb1a8f8fb0b3e6e5fb45aa05b8542441a4c552b51e13fa7";
 
         vm.expectRevert("MerkleTrie: invalid root hash");
-        client.processBridgeRoot(0, accountProof, storageProof, storageProof);
+        client.processBridgeRootPublic(accountProof, storageProof, storageProof);
     }
 }
