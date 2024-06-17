@@ -47,7 +47,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
 
     /**
      * @dev Processes the bridge root by verifying account and storage proofs against state root from the light client.
-     * @param block_number The account proofs for the bridge root.
+     * @param block_number The block number to fetch the client merkle root for.
      * @param account_proof The account proofs for the bridge root.
      * @param epoch_proof The storage proofs for the bridge epoch.
      * @param root_proof The storage proofs for the bridge root.
@@ -62,12 +62,12 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
         bytes32 stateRoot = client.merkle_root(block_number);
         bytes32 storageRoot = StorageProof.verifyAccountProof(stateRoot, ethBridgeAddress, account_proof);
 
-        uint256 epoch = uint256(StorageProof.proofStorageValue(storageRoot, epochKey, epoch_proof));
+        uint256 epoch = uint256(StorageProof.proveStorageValue(storageRoot, epochKey, epoch_proof));
         if (epoch != lastEpoch + 1) {
             revert NotSuccessiveEpochs({epoch: lastEpoch, nextEpoch: epoch});
         }
 
-        bridgeRoots[epoch] = StorageProof.proofStorageValue(storageRoot, bridgeRootKey, root_proof);
+        bridgeRoots[epoch] = StorageProof.proveStorageValue(storageRoot, bridgeRootKey, root_proof);
         emit BridgeRootProcessed(epoch, bridgeRoots[epoch]);
     }
 

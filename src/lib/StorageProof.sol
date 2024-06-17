@@ -40,7 +40,7 @@ library StorageProof {
      * @param storage_proof The proof data for the storage value.
      * @return value The value of the storage value.
      */
-    function proofStorageValue(bytes32 storage_root, bytes32 storage_key, bytes[] memory storage_proof)
+    function proveStorageValue(bytes32 storage_root, bytes32 storage_key, bytes[] memory storage_proof)
         internal
         pure
         returns (bytes32 value)
