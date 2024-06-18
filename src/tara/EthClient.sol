@@ -9,7 +9,7 @@ import {InvalidBridgeRoot, NotSuccessiveEpochs} from "../errors/BridgeBaseErrors
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 
 contract EthClient is IBridgeLightClient, OwnableUpgradeable {
-    BeaconLightClient public client;
+    BeaconLightClient public beaconClient;
     address public ethBridgeAddress;
     uint256 public lastEpoch;
     mapping(uint256 => bytes32) bridgeRoots;
@@ -34,7 +34,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
         require(_eth_bridge_address != address(0), "TaraClient: eth bridge is the zero address");
         require(address(_client) != address(0), "TaraClient: BLC address is the zero address");
         ethBridgeAddress = _eth_bridge_address;
-        client = _client;
+        beaconClient = _client;
     }
 
     /**
@@ -51,7 +51,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
      * @notice Only the contract owner can call this function.
      */
     function upgradeBeaconClient(BeaconLightClient _client) external onlyOwner {
-        client = _client;
+        beaconClient = _client;
     }
 
     /**
@@ -64,7 +64,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
         internal
     {
         // add check that the previous root was exactly the one before this
-        bytes32 stateRoot = client.merkle_root();
+        bytes32 stateRoot = beaconClient.merkle_root();
         bytes32 storageRoot = StorageProof.verifyAccountProof(stateRoot, ethBridgeAddress, account_proof);
 
         uint256 epoch = uint256(StorageProof.proveStorageValue(storageRoot, epochKey, epoch_proof));
@@ -92,7 +92,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
         bytes[] memory epoch_proof,
         bytes[] memory root_proof
     ) external {
-        client.import_finalized_header(header);
+        beaconClient.import_finalized_header(header);
         processBridgeRoot(account_proof, epoch_proof, root_proof);
     }
 
@@ -101,13 +101,13 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
      * @return The Merkle root as a bytes32 value.
      */
     function getMerkleRoot() external view returns (bytes32) {
-        return client.merkle_root();
+        return beaconClient.merkle_root();
     }
 
     function import_next_sync_committee(
         BeaconLightClient.FinalizedHeaderUpdate calldata header,
         BeaconLightClient.SyncCommitteePeriodUpdate calldata sc_update
     ) external {
-        client.import_next_sync_committee(header, sc_update);
+        beaconClient.import_next_sync_committee(header, sc_update);
     }
 }
