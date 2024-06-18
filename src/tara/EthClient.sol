@@ -110,4 +110,12 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     ) external {
         beaconClient.import_next_sync_committee(header, sc_update);
     }
+
+    function slot() public view returns (uint64) {
+        return beaconClient.slot();
+    }
+
+    function sync_committee_roots(uint64 period) public view returns (bytes32) {
+        return beaconClient.sync_committee_roots(period);
+    }
 }
