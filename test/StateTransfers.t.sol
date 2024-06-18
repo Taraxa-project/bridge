@@ -10,7 +10,7 @@ import {
 import "../src/connectors/NativeConnector.sol";
 import "../src/connectors/ERC20LockingConnector.sol";
 import "../src/connectors/ERC20MintingConnector.sol";
-import "./LightClientMocks.sol";
+import "./utils/LightClientMocks.sol";
 import "../src/lib/Constants.sol";
 import "./SymmetricTestSetup.t.sol";
 

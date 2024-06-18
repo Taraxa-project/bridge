@@ -46,24 +46,32 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     }
 
     /**
+     * @dev Upgrades the beacon client to a new instance.
+     * @param _client The new beacon client instance.
+     * @notice Only the contract owner can call this function.
+     */
+    function upgradeBeaconClient(BeaconLightClient _client) external onlyOwner {
+        client = _client;
+    }
+
+    /**
      * @dev Processes the bridge root by verifying account and storage proofs against state root from the light client.
-     * @param block_number The block number to fetch the client merkle root for.
      * @param account_proof The account proofs for the bridge root.
      * @param epoch_proof The storage proofs for the bridge epoch.
      * @param root_proof The storage proofs for the bridge root.
      */
-    function processBridgeRoot(
-        uint256 block_number,
-        bytes[] memory account_proof,
-        bytes[] memory epoch_proof,
-        bytes[] memory root_proof
-    ) external {
+    function processBridgeRoot(bytes[] memory account_proof, bytes[] memory epoch_proof, bytes[] memory root_proof)
+        internal
+    {
         // add check that the previous root was exactly the one before this
-        bytes32 stateRoot = client.merkle_root(block_number);
+        bytes32 stateRoot = client.merkle_root();
         bytes32 storageRoot = StorageProof.verifyAccountProof(stateRoot, ethBridgeAddress, account_proof);
 
         uint256 epoch = uint256(StorageProof.proveStorageValue(storageRoot, epochKey, epoch_proof));
-        if (epoch != lastEpoch + 1) {
+        // Allow the same epoch to be processed multiple times, so we can update just a header
+        if (epoch == lastEpoch) {
+            return;
+        } else if (epoch != lastEpoch + 1) {
             revert NotSuccessiveEpochs({epoch: lastEpoch, nextEpoch: epoch});
         }
 
@@ -72,10 +80,34 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     }
 
     /**
+     * @dev Processes the header with proofs by importing the header and processing the bridge root and epoch.
+     * @param header The header to be imported.
+     * @param account_proof The account proofs for the bridge root.
+     * @param epoch_proof The storage proofs for the bridge epoch.
+     * @param root_proof The storage proofs for the bridge root.
+     */
+    function processHeaderWithProofs(
+        BeaconLightClient.FinalizedHeaderUpdate calldata header,
+        bytes[] memory account_proof,
+        bytes[] memory epoch_proof,
+        bytes[] memory root_proof
+    ) external {
+        client.import_finalized_header(header);
+        processBridgeRoot(account_proof, epoch_proof, root_proof);
+    }
+
+    /**
      * @dev Returns the Merkle root from the light client.
      * @return The Merkle root as a bytes32 value.
      */
     function getMerkleRoot() external view returns (bytes32) {
         return client.merkle_root();
+    }
+
+    function import_next_sync_committee(
+        BeaconLightClient.FinalizedHeaderUpdate calldata header,
+        BeaconLightClient.SyncCommitteePeriodUpdate calldata sc_update
+    ) external {
+        client.import_next_sync_committee(header, sc_update);
     }
 }

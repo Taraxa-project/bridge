@@ -31,8 +31,6 @@ contract TaraDeployer is Script {
     address taraAddressOnEth;
     address ethAddressOnTara;
 
-    BeaconLightClient beaconClient;
-
     function setUp() public {
         deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         deployerAddress = vm.envAddress("DEPLOYMENT_ADDRESS");
@@ -54,7 +52,7 @@ contract TaraDeployer is Script {
         console.log("ETH_ADDRESS_ON_TARA: %s", ethAddressOnTara);
     }
 
-    function deployBLC() public {
+    function deployBLC() public returns (BeaconLightClient beaconClient) {
         uint64 _slot = uint64(vm.envUint("SLOT"));
         uint64 _proposer_index = uint64(vm.envUint("PROPOSER_INDEX"));
         bytes32 _parent_root = vm.envBytes32("PARENT_ROOT");
@@ -83,7 +81,7 @@ contract TaraDeployer is Script {
         console.log("BeaconLightClient.sol address: %s", address(beaconClient));
     }
 
-    function deployEthClient() public returns (address ethClientProxy) {
+    function deployEthClient(BeaconLightClient beaconClient) public returns (address ethClientProxy) {
         address ethBridgeAddress = vm.envAddress("ETH_BRIDGE_ADDRESS");
         ethClientProxy = Upgrades.deployUUPSProxy(
             "EthClient.sol", abi.encodeCall(EthClient.initialize, (beaconClient, ethBridgeAddress))
@@ -101,10 +99,7 @@ contract TaraDeployer is Script {
     {
         taraBrigdeProxy = Upgrades.deployUUPSProxy(
             "TaraBridge.sol",
-            abi.encodeCall(
-                TaraBridge.initialize,
-                (IBridgeLightClient(_ethClientProxy), _finalizationInterval)
-            )
+            abi.encodeCall(TaraBridge.initialize, (IBridgeLightClient(_ethClientProxy), _finalizationInterval))
         );
 
         console.log("TaraBridge.sol proxy address: %s", taraBrigdeProxy);
@@ -115,9 +110,11 @@ contract TaraDeployer is Script {
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
 
-        deployBLC();
+        BeaconLightClient beaconClient = deployBLC();
 
-        address ethClientProxy = deployEthClient();
+        address ethClientProxy = deployEthClient(beaconClient);
+
+        beaconClient.transferOwnership(ethClientProxy);
 
         uint256 finalizationInterval = 100;
 
