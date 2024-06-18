@@ -14,41 +14,58 @@ echo "Tara RPC: $RPC_FICUS_PRNET"
 
 echo "Running deployment script for TARA on ETH"
 
-export SYMBOL="TARA"
-export NAME="Taraxa"
-# # Deploy the Tara token to Holesky using forge create
-resTara=$(forge script ./script/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_HOLESKY --broadcast --legacy --ffi | tee /dev/tty)
-
-if [ $? -ne 0 ]; then
-  echo "Error deploying Tara token"
+# Check if the RPC_URL and PRIVATE_KEY are set
+if [ -z "$RPC_HOLESKY" ] || [ -z "$RPC_FICUS_PRNET" ]; then
+  echo "Please set the RPC_HOLESKY and RPC_FICUS_PRNET in the .env file"
   exit 1
 fi
 
-# Extract the proxy and implementation addresses of the deployed contract
-taraAddress=$(echo "$resTara" | grep "TestERC20 address:" | awk '{print $3}')
+if [ -z "$TARA_ADDRESS_ON_ETH" ]; then
+  echo "Deploying TARA on ETH since TARA_ADDRESS_ON_ETH is not set"
 
-echo "TARA token on Eth deployed to: $taraAddress"
+  export SYMBOL="TARA"
+  export NAME="Taraxa"
+  # # Deploy the Tara token to Holesky using forge create
+  resTara=$(forge script ./script/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_HOLESKY --force --broadcast --legacy --ffi | tee /dev/tty)
 
-echo "TARA_ADDRESS_ON_ETH=$taraAddress" >> .env
+  if [ $? -ne 0 ]; then
+    echo "Error deploying Tara token"
+    exit 1
+  fi
 
-echo "Running deployment script for ETH on TARA"
-# Deploy the Eth token to Taraxa using forge create
-export SYMBOL="ETH"
-export NAME="Ethereum"
+  # Extract the proxy and implementation addresses of the deployed contract
+  taraAddress=$(echo "$resTara" | grep "TestERC20 address:" | awk '{print $3}')
 
-resEth=$(forge script ./script/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_FICUS_PRNET --broadcast --legacy --ffi | tee /dev/tty)
+  echo "TARA token on Eth deployed to: $taraAddress"
 
-if [ $? -ne 0 ]; then
-  echo "Error deploying Tara token"
-  exit 1
+  echo "TARA_ADDRESS_ON_ETH=$taraAddress" >> .env
+else
+  taraAddress=$TARA_ADDRESS_ON_ETH
 fi
 
-# Extract the proxy and implementation addresses of the deployed contract
-ethAddress=$(echo "$resEth" | grep "TestERC20 address:" | awk '{print $3}')
+# Check if the RPC_URL and PRIVATE_KEY are set
+if [ -z "$ETH_ADDRESS_ON_TARA" ]; then
+  echo "Running deployment script for ETH on TARA"
+  # Deploy the Eth token to Taraxa using forge create
+  export SYMBOL="ETH"
+  export NAME="Ethereum"
 
-echo "Eth token on Tara deployed to: $ethAddress"
+  resEth=$(forge script ./script/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_FICUS_PRNET --force --broadcast --legacy --ffi | tee /dev/tty)
 
-echo "ETH_ADDRESS_ON_TARA=$ethAddress" >> .env
+  if [ $? -ne 0 ]; then
+    echo "Error deploying Tara token"
+    exit 1
+  fi
+
+  # Extract the proxy and implementation addresses of the deployed contract
+  ethAddress=$(echo "$resEth" | grep "TestERC20 address:" | awk '{print $3}')
+
+  echo "Eth token on Tara deployed to: $ethAddress"
+
+  echo "ETH_ADDRESS_ON_TARA=$ethAddress" >> .env
+else 
+  ethAddress=$ETH_ADDRESS_ON_TARA
+fi
 
 currentTimestamp=$(date +%s)
 deploymentFile="./deployments/.token.deployment.$currentTimestamp.json"
