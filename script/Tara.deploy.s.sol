@@ -21,8 +21,6 @@ import {NativeConnector} from "../src/connectors/NativeConnector.sol";
 import {IBridgeConnector} from "../src/connectors/IBridgeConnector.sol";
 import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
 
-bytes32 constant GENERAL_BRIDGE_ROOT_KEY = 0x0000000000000000000000000000000000000000000000000000000000000008;
-
 contract TaraDeployer is Script {
     using Bytes for bytes;
 
@@ -101,10 +99,7 @@ contract TaraDeployer is Script {
     {
         taraBrigdeProxy = Upgrades.deployUUPSProxy(
             "TaraBridge.sol",
-            abi.encodeCall(
-                TaraBridge.initialize,
-                (IBridgeLightClient(_ethClientProxy), _finalizationInterval)
-            )
+            abi.encodeCall(TaraBridge.initialize, (IBridgeLightClient(_ethClientProxy), _finalizationInterval))
         );
 
         console.log("TaraBridge.sol proxy address: %s", taraBrigdeProxy);

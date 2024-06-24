@@ -15,8 +15,8 @@ import "../src/connectors/ERC20LockingConnector.sol";
 import "../src/connectors/ERC20MintingConnector.sol";
 import "./BridgeLightClientMock.sol";
 import "../src/lib/Constants.sol";
-import "./upgradeableMocks/EthBridgeV2.sol";
-import "./upgradeableMocks/TaraBridgeV2.sol";
+import "./utils/EthBridgeV2.sol";
+import "./utils/TaraBridgeV2.sol";
 
 contract UpgradeabilityTest is Test {
     BridgeLightClientMock taraLightClient;
