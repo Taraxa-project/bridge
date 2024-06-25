@@ -15,8 +15,8 @@ import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol
 import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
 import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
 import {Constants} from "../src/lib/Constants.sol";
-import {EthBridgeV2} from "./upgradeableMocks/EthBridgeV2.sol";
-import {TaraBridgeV2} from "./upgradeableMocks/TaraBridgeV2.sol";
+import {EthBridgeV2} from "./utils/EthBridgeV2.sol";
+import {TaraBridgeV2} from "./utils/TaraBridgeV2.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
 
 contract UpgradeabilityTest is SymmetricTestSetup {

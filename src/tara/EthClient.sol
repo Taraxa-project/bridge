@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
+
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "beacon-light-client/src/BeaconLightClient.sol";
 import "beacon-light-client/src/trie/StorageProof.sol";
 
-import {InvalidBridgeRoot} from "../errors/BridgeBaseErrors.sol";
+import {InvalidBridgeRoot, ZeroAddress} from "../errors/BridgeBaseErrors.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 
 contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     BeaconLightClient public client;
     address public ethBridgeAddress;
-    bytes32 public bridgeRootKey;
+    bytes32 public bridgeRootsMappingPosition;
 
-    bytes32 bridgeRoot;
+    uint256 public lastEpoch;
+    mapping(uint256 => bytes32) bridgeRoots;
 
     uint256 refund;
 
@@ -29,15 +31,13 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     }
 
     function initialize(BeaconLightClient _client, address _eth_bridge_address) public initializer {
-        require(
-            _eth_bridge_address != address(0),
-            "TaraClient: eth bridge is the zero address"
-        );
-        require(
-            address(_client) != address(0),
-            "TaraClient: BLC address is the zero address"
-        );
-        bridgeRootKey = 0x0000000000000000000000000000000000000000000000000000000000000008;
+        if (_eth_bridge_address == address(0)) {
+            revert ZeroAddress("EthBridge");
+        }
+        if (address(_client) == address(0)) {
+            revert ZeroAddress("BeaconLightClient");
+        }
+        bridgeRootsMappingPosition = 0x0000000000000000000000000000000000000000000000000000000000000008;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
     }
@@ -47,7 +47,12 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
      * @return The finalized bridge root as a bytes32 value.
      */
     function getFinalizedBridgeRoot(uint256 epoch) external view returns (bytes32) {
-        return bridgeRoot;
+        return bridgeRoots[epoch];
+    }
+
+    function bridgeRootKeyByEpoch(uint256 epoch) public view returns (bytes32) {
+        bytes32 paddedEpoch = bytes32(epoch);
+        return keccak256(abi.encodePacked(paddedEpoch, bridgeRootsMappingPosition));
     }
 
     /**
@@ -55,19 +60,19 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
      * @param account_proof The account proofs for the bridge root.
      * @param storage_proof The storage proofs for the bridge root.
      */
-    function processBridgeRoot(uint256 block_number, bytes[] memory account_proof, bytes[] memory storage_proof)
-        external
-    {
-        // add check that the previous root was exactly the one before this
-        bytes32 stateRoot = client.merkle_root(block_number);
+    function processBridgeRoot(bytes[] memory account_proof, bytes[] memory storage_proof) external {
+        bytes32 stateRoot = client.merkle_root();
+        uint256 epoch = lastEpoch + 1;
+        bytes32 bridgeRootKey = bridgeRootKeyByEpoch(epoch);
         bytes memory br = StorageProof.verify(stateRoot, ethBridgeAddress, account_proof, bridgeRootKey, storage_proof);
         bytes32 br32 = bytes32(br);
         if (br.length != 32) {
             revert InvalidBridgeRoot(br32);
         }
 
-        bridgeRoot = br32;
-        emit BridgeRootProcessed(bridgeRoot);
+        lastEpoch = epoch;
+        bridgeRoots[epoch] = br32;
+        emit BridgeRootProcessed(bridgeRoots[epoch]);
     }
 
     /**

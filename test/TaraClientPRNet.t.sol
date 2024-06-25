@@ -8,7 +8,7 @@ import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import {TaraClient} from "../src/eth/TaraClient.sol";
 import {CompactSignature} from "../src/lib/PillarBlock.sol";
 import {PillarBlock} from "../src/lib/PillarBlock.sol";
-import {TaraClientHarness} from "./upgradeableMocks/TaraClientHarness.sol";
+import {TaraClientHarness} from "./utils/TaraClientHarness.sol";
 
 /**
  * @title Test that Tara client accepts blocks from the PRNet

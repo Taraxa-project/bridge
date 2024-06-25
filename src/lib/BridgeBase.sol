@@ -45,8 +45,8 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     uint256 public registrationFee;
     /// Global transaction settlement fee. Connector must pay `settlementFee * numberOfTransactions` to settle the transaction
     uint256 public settlementFee;
-    /// The bridge root of the last finalized epoch
-    bytes32 public bridgeRoot;
+    /// The bridge roots of finalized epochs
+    mapping(uint256 => bytes32) public bridgeRoots;
 
     /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
     /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
@@ -111,10 +111,21 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
+     * @dev Gets the bridge root for the given epoch.
+     * @param epoch The epoch for which the bridge root is to be retrieved.
      * @return The bridge root as a bytes32 value.
      */
+    function getBridgeRoot(uint256 epoch) public view returns (bytes32) {
+        return bridgeRoots[epoch];
+    }
+
+    /**
+     * @dev Returns the latest bridge root.
+     * @dev DO NOT REMOVE! Is used by the node to put it to the pillar block
+     * @return The latest bridge root as a bytes32 value.
+     */
     function getBridgeRoot() public view returns (bytes32) {
-        return bridgeRoot;
+        return bridgeRoots[finalizedEpoch];
     }
 
 
@@ -218,6 +229,21 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
+     * @dev Checks whether the current epoch should be finalized.
+     * @dev DO NOT REMOVE! Is used by the node to identify if we need to call a finalization
+     * @return A boolean value indicating whether the current epoch should be finalized.
+     */
+    function shouldFinalizeEpoch() public view returns (bool) {
+        bool shouldFinalize = false;
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            if (!connectors[tokenAddresses[i]].isStateEmpty()) {
+                return true;
+            }
+        }
+        return shouldFinalize;
+    }
+
+    /**
      * @dev Finalizes the current epoch.
      */
     function finalizeEpoch() public {
@@ -273,7 +299,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         unchecked {
             ++finalizedEpoch;
         }
-        bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, hashes);
+        bridgeRoots[finalizedEpoch] = SharedStructs.getBridgeRoot(finalizedEpoch, finalHashes);
 
         uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
         uint256 payout = used * feeMultiplier / 100;
@@ -283,7 +309,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
                 revert TransferFailed(msg.sender, payout);
             }
         } 
-        emit Finalized(finalizedEpoch, bridgeRoot);
+        emit Finalized(finalizedEpoch, bridgeRoots[finalizedEpoch]);
     }
 
     /**

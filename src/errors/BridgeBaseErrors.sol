@@ -10,6 +10,7 @@ error InvalidStateHash(bytes32 stateHash, bytes32 expectedStateHash);
 error UnmatchingContractAddresses(address contractAddress, address expectedContractAddress);
 error TransferFailed(address target, uint256 amount);
 error InvalidBridgeRoot(bytes32 bridgeRoot);
+error ZeroAddress(string message);
 error ZeroAddressCannotBeRegistered();
 error NoStateToFinalize();
 error NotAllStatesApplied(uint256 processed, uint256 total);
