@@ -7,6 +7,7 @@ error NotSuccessiveEpochs(uint256 epoch, uint256 nextEpoch);
 error NotEnoughBlocksPassed(uint256 lastFinalizedBlock, uint256 currentInterval, uint256 requiredInterval);
 error UnmatchingContractAddresses(address contractAddress, address expectedContractAddress);
 error InvalidBridgeRoot(bytes32 bridgeRoot);
+error ZeroAddress(string message);
 error ZeroAddressCannotBeRegistered();
 error NoStateToFinalize();
 error NotAllStatesApplied(uint256 processed, uint256 total);

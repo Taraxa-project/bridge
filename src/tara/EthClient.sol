@@ -5,9 +5,8 @@ import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.s
 import "beacon-light-client/src/BeaconLightClient.sol";
 import "beacon-light-client/src/trie/StorageProof.sol";
 
-import {InvalidBridgeRoot} from "../errors/BridgeBaseErrors.sol";
+import {InvalidBridgeRoot, ZeroAddress} from "../errors/BridgeBaseErrors.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
-import "forge-std/console.sol";
 
 contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     BeaconLightClient public client;
@@ -32,8 +31,12 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
     }
 
     function initialize(BeaconLightClient _client, address _eth_bridge_address) public initializer {
-        require(_eth_bridge_address != address(0), "TaraClient: eth bridge is the zero address");
-        require(address(_client) != address(0), "TaraClient: BLC address is the zero address");
+        if (_eth_bridge_address == address(0)) {
+            revert ZeroAddress("EthBridge");
+        }
+        if (address(_client) == address(0)) {
+            revert ZeroAddress("BeaconLightClient");
+        }
         bridgeRootsMappingPosition = 0x0000000000000000000000000000000000000000000000000000000000000008;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
@@ -58,12 +61,9 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
      * @param storage_proof The storage proofs for the bridge root.
      */
     function processBridgeRoot(bytes[] memory account_proof, bytes[] memory storage_proof) external {
-        // add check that the previous root was exactly the one before this
         bytes32 stateRoot = client.merkle_root();
         uint256 epoch = lastEpoch + 1;
-        console.log("Processing bridge root for epoch %d", epoch);
         bytes32 bridgeRootKey = bridgeRootKeyByEpoch(epoch);
-        console.logBytes32(bridgeRootKey);
         bytes memory br = StorageProof.verify(stateRoot, ethBridgeAddress, account_proof, bridgeRootKey, storage_proof);
         bytes32 br32 = bytes32(br);
         if (br.length != 32) {
