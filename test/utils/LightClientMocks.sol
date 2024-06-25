@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import "../src/lib/IBridgeLightClient.sol";
-import "../src/lib/SharedStructs.sol";
+import "../../src/lib/IBridgeLightClient.sol";
+import "../../src/lib/SharedStructs.sol";
 
 contract BridgeLightClientMock is IBridgeLightClient {
     bytes32 bridgeRoot;
@@ -17,5 +17,21 @@ contract BridgeLightClientMock is IBridgeLightClient {
 
     function refundAmount() external pure returns (uint256) {
         return 1 gwei;
+    }
+}
+
+contract BeaconClientMock {
+    bytes32 merkleRoot;
+
+    function set_merkle_root(bytes32 root) external {
+        merkleRoot = root;
+    }
+
+    function merkle_root(uint256) external view returns (bytes32) {
+        return merkleRoot;
+    }
+
+    function merkle_root() external view returns (bytes32) {
+        return merkleRoot;
     }
 }

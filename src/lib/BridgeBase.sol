@@ -29,7 +29,7 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     uint256 public appliedEpoch;
     uint256 public finalizationInterval;
     uint256 public lastFinalizedBlock;
-    bytes32 public bridgeRoot;
+    mapping(uint256 => bytes32) public bridgeRoots;
 
     /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
     /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
@@ -82,10 +82,21 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
+     * @dev Gets the bridge root for the given epoch.
+     * @param epoch The epoch for which the bridge root is to be retrieved.
      * @return The bridge root as a bytes32 value.
      */
+    function getBridgeRoot(uint256 epoch) public view returns (bytes32) {
+        return bridgeRoots[epoch];
+    }
+
+    /**
+     * @dev Returns the latest bridge root.
+     * @dev DO NOT REMOVE! Is used by the node to put it to the pillar block
+     * @return The latest bridge root as a bytes32 value.
+     */
     function getBridgeRoot() public view returns (bytes32) {
-        return bridgeRoot;
+        return bridgeRoots[finalizedEpoch];
     }
 
     /**
@@ -170,6 +181,21 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
+     * @dev Checks whether the current epoch should be finalized.
+     * @dev DO NOT REMOVE! Is used by the node to identify if we need to call a finalization
+     * @return A boolean value indicating whether the current epoch should be finalized.
+     */
+    function shouldFinalizeEpoch() public view returns (bool) {
+        bool shouldFinalize = false;
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            if (!connectors[tokenAddresses[i]].isStateEmpty()) {
+                return true;
+            }
+        }
+        return shouldFinalize;
+    }
+
+    /**
      * @dev Finalizes the current epoch.
      */
     function finalizeEpoch() public {
@@ -213,8 +239,8 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         unchecked {
             ++finalizedEpoch;
         }
-        bridgeRoot = SharedStructs.getBridgeRoot(finalizedEpoch, finalHashes);
-        emit Finalized(finalizedEpoch, bridgeRoot);
+        bridgeRoots[finalizedEpoch] = SharedStructs.getBridgeRoot(finalizedEpoch, finalHashes);
+        emit Finalized(finalizedEpoch, bridgeRoots[finalizedEpoch]);
     }
 
     /**
