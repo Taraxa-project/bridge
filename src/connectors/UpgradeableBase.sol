@@ -24,7 +24,7 @@ abstract contract UpgradeableBase is OwnableUpgradeable, UUPSUpgradeable {
 
     function __BridgeConnectorBase_init_unchained(address bridge) internal onlyInitializing {
         __UUPSUpgradeable_init();
-        __Ownable_init(msg.sender);
+        __Ownable_init(bridge);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}

@@ -33,7 +33,7 @@ contract TaraDeployer is Script {
 
     uint256 constant FINALIZATION_INTERVAL = 100;
     uint256 constant FEE_MULTIPLIER_TARA = 100;
-    uint256 constant REGISTRATION_FEE_TARA = 950432 ether;
+    uint256 constant REGISTRATION_FEE_TARA = 10 ether;
     uint256 constant SETTLEMENT_FEE_TARA = 50000 ether;
 
     function setUp() public {

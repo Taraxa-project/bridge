@@ -128,9 +128,8 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         return bridgeRoots[finalizedEpoch];
     }
 
-
     function isContract(address addr) internal view returns (bool) {
-        uint size;
+        uint256 size;
         assembly {
             size := extcodesize(addr)
         }
@@ -207,7 +206,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
                 }
                 if (isContract(address(connectors[localAddress[state_hash.contractAddress]]))) {
                     try connectors[localAddress[state_hash.contractAddress]].applyState(state.state) {} catch {}
-                } else {}
+                }
                 unchecked {
                     ++stateHashIndex;
                     ++stateIndex;
@@ -224,7 +223,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
             if (!success) {
                 revert TransferFailed(msg.sender, payout);
             }
-        } 
+        }
         ++appliedEpoch;
     }
 
@@ -285,7 +284,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         }
 
         if (finalizedIndex == 0) {
-            return;
+            revert NoStateToFinalize();
         }
 
         SharedStructs.ContractStateHash[] memory finalHashes = new SharedStructs.ContractStateHash[](finalizedIndex);
@@ -308,7 +307,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
             if (!success) {
                 revert TransferFailed(msg.sender, payout);
             }
-        } 
+        }
         emit Finalized(finalizedEpoch, bridgeRoots[finalizedEpoch]);
     }
 

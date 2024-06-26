@@ -3,7 +3,6 @@ pragma solidity ^0.8.17;
 
 import "../lib/IBridgeLightClient.sol";
 import "../lib/BridgeBase.sol";
-import "../connectors/ERC20MintingConnector.sol";
 
 contract TaraBridge is BridgeBase {
     function initialize(
