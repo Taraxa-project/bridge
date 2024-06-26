@@ -27,6 +27,8 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     mapping(address => IBridgeConnector) public connectors;
     /// Mapping of source and destination addresses to the connector address
     mapping(address => address) public localAddress;
+    /// The bridge roots of finalized epochs
+    mapping(uint256 => bytes32) public bridgeRoots;
     /// The light client used to get the finalized bridge root
     IBridgeLightClient public lightClient;
     /// The addresses of the registered tokens
@@ -45,8 +47,6 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     uint256 public registrationFee;
     /// Global transaction settlement fee. Connector must pay `settlementFee * numberOfTransactions` to settle the transaction
     uint256 public settlementFee;
-    /// The bridge roots of finalized epochs
-    mapping(uint256 => bytes32) public bridgeRoots;
 
     /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
     /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
