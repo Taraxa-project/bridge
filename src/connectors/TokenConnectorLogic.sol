@@ -78,10 +78,12 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
             state = new TokenState(epoch_to_finalize + 1);
         }
         Transfer[] memory epochTransfers = finalizedState.getTransfers();
-        uint256 settlementFeesToForward = bridge.settlementFee() * epochTransfers.length;
-        (bool success,) = address(bridge).call{value: settlementFeesToForward}("");
-        if (!success) {
-            revert TransferFailed(address(bridge), settlementFeesToForward);
+        if (epochTransfers.length > 0) {
+            uint256 settlementFeesToForward = bridge.settlementFee() * epochTransfers.length;
+            (bool success,) = address(bridge).call{value: settlementFeesToForward}("");
+            if (!success) {
+                revert TransferFailed(address(bridge), settlementFeesToForward);
+            }
         }
         emit Finalized(epoch_to_finalize);
         return keccak256(abi.encode(epochTransfers));
