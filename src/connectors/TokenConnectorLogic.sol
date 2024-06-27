@@ -39,7 +39,7 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
             minAmount = fee;
         }
         if (msg.value < minAmount) {
-            revert InsufficientFunds(fee + lockAmount, msg.value);
+            revert InsufficientFunds(minAmount, msg.value);
         }
         _;
     }
