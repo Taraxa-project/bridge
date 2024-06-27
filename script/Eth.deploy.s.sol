@@ -31,19 +31,23 @@ contract EthDeployer is Script {
         console.log("Deployer address: %s", deployerAddress);
 
         if (vm.envUint("PRIVATE_KEY") == 0) {
-            console.log("Skipping deployment because PRIVATE_KEY is not set");
-            return;
+            revert("Skipping deployment because PRIVATE_KEY is not set");
         }
 
         if (address(deployerAddress).balance < (2 * REGISTRATION_FEE_ETH)) {
-            console.log("Skipping deployment because balance is less than 2 *  REGISTRATION_FEE_ETH");
-            return;
+            revert("Skipping deployment because balance is less than 2 *  REGISTRATION_FEE_ETH");
         }
 
         taraAddressOnEth = vm.envAddress("TARA_ADDRESS_ON_ETH");
+        
         console.log("TARA_ADDRESS_ON_ETH: %s", taraAddressOnEth);
         ethAddressOnTara = vm.envAddress("ETH_ADDRESS_ON_TARA");
+        
         console.log("ETH_ADDRESS_ON_TARA: %s", ethAddressOnTara);
+
+        if (ethAddressOnTara == address(0) || taraAddressOnEth == address(0)) {
+            revert("Skipping deployment because ETH_ADDRESS_ON_TARA or TARA_ADDRESS_ON_ETH is not set");
+        }
     }
 
     function run() public {

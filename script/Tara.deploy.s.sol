@@ -42,21 +42,22 @@ contract TaraDeployer is Script {
         console.log("Deployer address: %s", deployerAddress);
 
         if (vm.envUint("PRIVATE_KEY") == 0) {
-            console.log("Skipping deployment because PRIVATE_KEY is not set");
-            return;
+            revert("Skipping deployment because PRIVATE_KEY is not set");
         }
         // check if balance is at least 2 * MINIMUM_CONNECTOR_DEPOSIT
         if (address(deployerAddress).balance < (2 * REGISTRATION_FEE_TARA)) {
-            console.log(
+            revert(
                 "Skipping deployment because balance is less than 2 * MINIMUM_CONNECTOR_DEPOSIT + REGISTRATION_FEE_ETH"
             );
-            return;
         }
 
         taraAddressOnEth = vm.envAddress("TARA_ADDRESS_ON_ETH");
         console.log("TARA_ADDRESS_ON_ETH: %s", taraAddressOnEth);
         ethAddressOnTara = vm.envAddress("ETH_ADDRESS_ON_TARA");
         console.log("ETH_ADDRESS_ON_TARA: %s", ethAddressOnTara);
+        if (taraAddressOnEth == address(0) || ethAddressOnTara == address(0)) {
+            revert("Skipping deployment because TARA_ADDRESS_ON_ETH or ETH_ADDRESS_ON_TARA is not set");
+        }
     }
 
     function deployBLC() public {
