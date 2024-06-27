@@ -16,7 +16,8 @@ import {
     ZeroAddressCannotBeRegistered,
     NoStateToFinalize,
     TransferFailed,
-    NotAllStatesApplied
+    NotAllStatesApplied,
+    InvalidStateHash
 } from "../errors/BridgeBaseErrors.sol";
 import {InsufficientFunds} from "../errors/ConnectorErrors.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
@@ -184,37 +185,32 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
             revert NotSuccessiveEpochs({epoch: appliedEpoch, nextEpoch: state_with_proof.state.epoch});
         }
         uint256 statesLength = state_with_proof.state.states.length;
-        uint256 stateHashIndex = 0;
-        uint256 stateIndex = 0;
-        while (stateIndex < statesLength) {
-            while (stateHashIndex < state_with_proof.state_hashes.length) {
-                SharedStructs.ContractStateHash calldata state_hash = state_with_proof.state_hashes[stateHashIndex];
-                SharedStructs.StateWithAddress calldata state = state_with_proof.state.states[stateIndex];
-                if (localAddress[state_hash.contractAddress] == address(0)) {
-                    unchecked {
-                        ++stateHashIndex;
-                        ++stateIndex;
-                    }
-                    continue;
-                }
-                if (keccak256(state.state) != state_hash.stateHash) {
-                    unchecked {
-                        ++stateHashIndex;
-                        ++stateIndex;
-                    }
-                    continue;
-                }
-                if (isContract(address(connectors[localAddress[state_hash.contractAddress]]))) {
-                    try connectors[localAddress[state_hash.contractAddress]].applyState(state.state) {} catch {}
-                }
+        uint256 idx = 0;
+        while (idx < statesLength) {
+            SharedStructs.ContractStateHash calldata proofStateHash = state_with_proof.state_hashes[idx];
+            SharedStructs.StateWithAddress calldata state = state_with_proof.state.states[idx];
+            if (localAddress[proofStateHash.contractAddress] == address(0)) {
                 unchecked {
-                    ++stateHashIndex;
-                    ++stateIndex;
+                    ++idx;
                 }
+                continue;
+            }
+            bytes32 stateHash = keccak256(state.state);
+            if (stateHash != proofStateHash.stateHash) {
+                unchecked {
+                    ++idx;
+                }
+                revert InvalidStateHash(stateHash, proofStateHash.stateHash);
+            }
+            if (isContract(address(connectors[localAddress[proofStateHash.contractAddress]]))) {
+                try connectors[localAddress[proofStateHash.contractAddress]].applyState(state.state) {} catch {}
+            }
+            unchecked {
+                ++idx;
             }
         }
-        if (stateIndex != statesLength) {
-            revert NotAllStatesApplied(stateIndex, statesLength);
+        if (idx != statesLength) {
+            revert NotAllStatesApplied(idx, statesLength);
         }
         uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
         uint256 payout = used * feeMultiplier / 100;
