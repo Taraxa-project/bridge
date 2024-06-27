@@ -15,7 +15,7 @@ abstract contract NativeConnectorLogic is TokenConnectorLogic {
      * @dev Applies the given state to the token contract by transfers.
      * @param _state The state to be applied.
      */
-    function applyState(bytes calldata _state) public virtual override {
+    function applyState(bytes calldata _state) public virtual override onlyBridge {
         Transfer[] memory transfers = deserializeTransfers(_state);
         uint256 transfersLength = transfers.length;
         for (uint256 i = 0; i < transfersLength;) {
@@ -36,8 +36,11 @@ abstract contract NativeConnectorLogic is TokenConnectorLogic {
      */
     function lock(uint256 value) public payable onlySettled(value, true) {
         uint256 settlementFee = bridge.settlementFee();
-        uint256 lockedValue =  msg.value - settlementFee;
-        if (lockedValue == 0) {
+        bool alreadyHasBalance = state.hasBalance(msg.sender);
+        uint256 lockedValue;
+        lockedValue = alreadyHasBalance ? msg.value : msg.value - settlementFee;
+
+        if (lockedValue == 0 || value == 0) {
             revert ZeroValueCall();
         }
         state.addAmount(msg.sender, lockedValue);

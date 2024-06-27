@@ -27,14 +27,4 @@ contract ERC20MintingConnector is UpgradeableBase, Receiver, ERC20MintingConnect
         state = new TokenState(0);
         bridge = _bridge;
     }
-
-    /**
-     * @dev Allows the owner to apply a state to the connector
-     * @notice This function is only callable by the owner
-     * Simple wrapper around the super.applyState function
-     * @param _state The state to apply
-     */
-    function applyState(bytes calldata _state) public override onlyOwner {
-        super.applyState(_state);
-    }
 }

@@ -15,7 +15,7 @@ abstract contract ERC20MintingConnectorLogic is TokenConnectorLogic {
      * @dev Applies the given state to the token contract by transfers.
      * @param _state The state to be applied.
      */
-    function applyState(bytes calldata _state) public virtual override {
+    function applyState(bytes calldata _state) public virtual override onlyBridge {
         Transfer[] memory transfers = deserializeTransfers(_state);
         uint256 transfersLength = transfers.length;
         for (uint256 i = 0; i < transfersLength;) {

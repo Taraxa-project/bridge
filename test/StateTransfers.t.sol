@@ -8,7 +8,6 @@ import {
     StateNotMatchingBridgeRoot, NotSuccessiveEpochs, NotEnoughBlocksPassed
 } from "../src/errors/BridgeBaseErrors.sol";
 import {NativeConnector} from "../src/connectors/NativeConnector.sol";
-import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
 import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
 import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
 import {Constants} from "../src/lib/Constants.sol";
@@ -48,7 +47,6 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         vm.roll(FINALIZATION_INTERVAL);
 
-        bytes32 bridgeRootBefore = taraBridge.getBridgeRoot();
         vm.expectRevert();
         taraBridge.finalizeEpoch();
     }

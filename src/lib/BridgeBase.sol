@@ -209,9 +209,6 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
                 ++idx;
             }
         }
-        if (idx != statesLength) {
-            revert NotAllStatesApplied(idx, statesLength);
-        }
         uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
         uint256 payout = used * feeMultiplier / 100;
         if (address(this).balance >= payout) {
