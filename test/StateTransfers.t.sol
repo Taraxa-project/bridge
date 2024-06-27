@@ -49,13 +49,8 @@ contract StateTransfersTest is SymmetricTestSetup {
         vm.roll(FINALIZATION_INTERVAL);
 
         bytes32 bridgeRootBefore = taraBridge.getBridgeRoot();
-        taraBridge.finalizeEpoch();
-        bytes32 bridgeRootAfter = taraBridge.getBridgeRoot();
-        assertEq(bridgeRootBefore, bridgeRootAfter, "Bridge root should not change");
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
-        taraLightClient.setBridgeRoot(state);
         vm.expectRevert();
-        ethBridge.applyState(state);
+        taraBridge.finalizeEpoch();
     }
 
     function test_Revert_toEth_on_zero_value() public {
@@ -65,14 +60,6 @@ contract StateTransfersTest is SymmetricTestSetup {
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         vm.expectRevert();
         taraBridgeToken.lock{value: settlementFee}(0);
-
-        vm.roll(FINALIZATION_INTERVAL);
-
-        taraBridge.finalizeEpoch();
-        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
-        taraLightClient.setBridgeRoot(state);
-        vm.expectRevert();
-        ethBridge.applyState(state);
     }
 
     function test_toEth() public {
@@ -157,6 +144,15 @@ contract StateTransfersTest is SymmetricTestSetup {
     }
 
     function test_emptyEpoch() public {
+        vm.roll(FINALIZATION_INTERVAL);
+        vm.expectRevert();
+        taraBridge.finalizeEpoch();
+        vm.roll(2 * FINALIZATION_INTERVAL);
+        vm.expectRevert();
+        taraBridge.finalizeEpoch();
+    }
+
+    function test_benchmark_singlebridge_Epoch() public {
         uint256 settlementFee = taraBridge.settlementFee();
         uint256 value = 1 ether;
         taraConnector.lock{value: value + settlementFee}(value);
@@ -166,11 +162,12 @@ contract StateTransfersTest is SymmetricTestSetup {
         assertEq(finalizedEpoch, 1);
         vm.roll(2 * FINALIZATION_INTERVAL);
 
+        vm.expectRevert();
         taraBridge.finalizeEpoch();
         // check that we are not finalizing empty epoch
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         assertEq(state.state.epoch, finalizedEpoch, "Epoch should be the same");
-        assertEq(state.state.states.length, 0, "State length should be 0");
+        assertEq(state.state.states.length, 1, "State length should be 1");
         assertEq(state.state.epoch, 1, "Epoch should be 1");
     }
 

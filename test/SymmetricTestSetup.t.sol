@@ -81,7 +81,7 @@ contract SymmetricTestSetup is Test {
         // give ownership of erc20 to the connector
         ethTokenOnTara.transferOwnership(address(ethOnTaraMintingConnector));
 
-        ethOnTaraMintingConnector.transferOwnership(address(taraBridge));
+        // ethOnTaraMintingConnector.transferOwnership(address(taraBridge));
 
         vm.deal(caller, address(caller).balance + REGISTRATION_FEE_TARA);
         taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(ethOnTaraMintingConnector);
@@ -106,10 +106,48 @@ contract SymmetricTestSetup is Test {
         // give token ownership ot erc20 to the connector
         taraTokenOnEth.transferOwnership(address(taraOnEthMintingConnector));
 
-        taraOnEthMintingConnector.transferOwnership(address(ethBridge));
+        // taraOnEthMintingConnector.transferOwnership(address(ethBridge));
 
         vm.deal(caller, address(caller).balance + REGISTRATION_FEE_ETH);
         ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(taraOnEthMintingConnector);
+
+        vm.stopPrank();
+    }
+
+    function registerCustomTokenPair() public returns (TestERC20 erc20onTara, TestERC20 erc20onEth) {
+        vm.startPrank(caller);
+        erc20onTara = new TestERC20("TestTara", "TARATEST");
+        erc20onEth = new TestERC20("TestETH", "ETHTEST");
+        address taraTestTokenConnectorProxy = Upgrades.deployUUPSProxy(
+            "ERC20LockingConnector.sol",
+            abi.encodeWithSelector(
+                ERC20LockingConnector.initialize.selector, address(taraBridge), erc20onTara, address(erc20onEth)
+            )
+        );
+        ERC20LockingConnector taraTestTokenConnector = ERC20LockingConnector(payable(taraTestTokenConnectorProxy));
+
+        address ethTestTokenConnectorProxy = Upgrades.deployUUPSProxy(
+            "ERC20MintingConnector.sol",
+            abi.encodeWithSelector(
+                ERC20MintingConnector.initialize.selector, address(ethBridge), erc20onEth, address(erc20onTara)
+            )
+        );
+        ERC20MintingConnector ethTestTokenConnector = ERC20MintingConnector(payable(ethTestTokenConnectorProxy));
+
+        erc20onTara.mintTo(address(caller), 200 ether);
+        erc20onEth.mintTo(address(caller), 200 ether);
+        erc20onTara.approve(address(taraTestTokenConnector), 1 ether);
+        erc20onEth.approve(address(ethTestTokenConnector), 1 ether);
+        // give ownership of erc20s to the connectors
+        erc20onTara.transferOwnership(address(taraTestTokenConnector));
+        erc20onEth.transferOwnership(address(ethTestTokenConnector));
+
+        // taraTestTokenConnector.transferOwnership(address(taraBridge));
+        // ethTestTokenConnector.transferOwnership(address(ethBridge));
+        vm.deal(address(caller), REGISTRATION_FEE_TARA);
+        taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
+        vm.deal(address(caller), REGISTRATION_FEE_ETH);
+        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
 
         vm.stopPrank();
     }

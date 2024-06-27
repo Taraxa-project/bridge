@@ -16,7 +16,7 @@ import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
 
 contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
 
-    function test_customTokenRun() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
+    function test_Single_customToken() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
         // deploy and register token on both sides
         vm.startPrank(caller);
         taraTestToken = new TestERC20("Test", "TEST");
@@ -52,7 +52,7 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
     }
 
     function test_multipleOnesidedContractsToEth() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
-        (taraTestToken, ethTestToken) = test_customTokenRun();
+        (taraTestToken, ethTestToken) = test_Single_customToken();
         uint256 value = 1 ether;
         uint256 settlementFee = taraBridge.settlementFee();
         ERC20LockingConnector taraTestTokenConnector =
