@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import "beacon-light-client/src/BeaconLightClient.sol";
-import "beacon-light-client/src/trie/StorageProof.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {BeaconLightClient} from "beacon-light-client/src/BeaconLightClient.sol";
+import {StorageProof} from "beacon-light-client/src/trie/StorageProof.sol";
 
 import {InvalidBridgeRoot, ZeroAddress} from "../errors/BridgeBaseErrors.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 
-contract EthClient is IBridgeLightClient, OwnableUpgradeable {
+contract EthClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
     BeaconLightClient public client;
     address public ethBridgeAddress;
     bytes32 public bridgeRootsMappingPosition;
@@ -37,10 +38,13 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
         if (address(_client) == address(0)) {
             revert ZeroAddress("BeaconLightClient");
         }
+        __UUPSUpgradeable_init();
         bridgeRootsMappingPosition = 0x0000000000000000000000000000000000000000000000000000000000000002;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     /**
      * @dev Implements the IBridgeLightClient interface method
