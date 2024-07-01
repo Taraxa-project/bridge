@@ -19,7 +19,7 @@ import {EthBridgeV2} from "./utils/EthBridgeV2.sol";
 import {TaraBridgeV2} from "./utils/TaraBridgeV2.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
 
-contract UpgradeabilityTest is SymmetricTestSetup {
+contract EthBridgeUpgradeabilityTest is SymmetricTestSetup {
     function test_upgrade_ethBridge() public {
         vm.startPrank(caller);
         Options memory opts;
