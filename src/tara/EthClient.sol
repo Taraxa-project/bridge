@@ -37,7 +37,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable {
         if (address(_client) == address(0)) {
             revert ZeroAddress("BeaconLightClient");
         }
-        bridgeRootsMappingPosition = 0x0000000000000000000000000000000000000000000000000000000000000008;
+        bridgeRootsMappingPosition = 0x0000000000000000000000000000000000000000000000000000000000000002;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
     }

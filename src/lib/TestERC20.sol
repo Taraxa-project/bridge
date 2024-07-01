@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../connectors/IERC20MintableBurnable.sol";
 
 contract TestERC20 is ERC20, Ownable, IERC20MintableBurnable {
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) Ownable(msg.sender) {}
+    constructor(string memory _name, string memory _symbol) ERC20(_name, _symbol) Ownable(msg.sender) {}
 
     /**
      * @dev Mints a specified amount of tokens and assigns them to the specified account.

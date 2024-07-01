@@ -27,15 +27,13 @@ contract StateScenarios is Test, SymmetricTestSetup {
             TestERC20 erc20onTara = new TestERC20("TaraERC20", "TTARA");
             TestERC20 erc20onEth = new TestERC20("EthERC20", "TETH");
 
-            ERC20LockingConnectorMock taraTestTokenConnector = new ERC20LockingConnectorMock{
-                value: 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT
-            }(address(taraBridge), erc20onTara, address(erc20onEth));
-            ERC20MintingConnectorMock ethTestTokenConnector = new ERC20MintingConnectorMock{
-                value: 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT
-            }(address(ethBridge), erc20onEth, address(erc20onTara));
+            ERC20LockingConnectorMock taraTestTokenConnector = new ERC20LockingConnectorMock(taraBridge, erc20onTara, address(erc20onEth));
+            ERC20MintingConnectorMock ethTestTokenConnector = new ERC20MintingConnectorMock(ethBridge, erc20onEth, address(erc20onTara));
 
-            taraBridge.registerContract(taraTestTokenConnector);
-            ethBridge.registerContract(ethTestTokenConnector);
+            vm.deal(caller, REGISTRATION_FEE_TARA);
+            taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
+            vm.deal(caller, REGISTRATION_FEE_ETH);
+            ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
 
             // give 1000000 tokens to caller every time
             erc20onTara.mintTo(address(caller), 1000000 ether);
@@ -65,15 +63,14 @@ contract StateScenarios is Test, SymmetricTestSetup {
             TestERC20 erc20onTara = new TestERC20("TaraERC20", "TTARA");
             TestERC20 erc20onEth = new TestERC20("EthERC20", "TETH");
 
-            ERC20LockingConnectorMock taraTestTokenConnector = new ERC20LockingConnectorMock{
-                value: 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT
-            }(address(taraBridge), erc20onTara, address(erc20onEth));
-            ERC20MintingConnectorMock ethTestTokenConnector = new ERC20MintingConnectorMock{
-                value: 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT
-            }(address(ethBridge), erc20onEth, address(erc20onTara));
+            ERC20LockingConnectorMock taraTestTokenConnector = new ERC20LockingConnectorMock(taraBridge, erc20onTara, address(erc20onEth));
+            ERC20MintingConnectorMock ethTestTokenConnector = new ERC20MintingConnectorMock(ethBridge, erc20onEth, address(erc20onTara));
 
-            taraBridge.registerContract(taraTestTokenConnector);
-            ethBridge.registerContract(ethTestTokenConnector);
+            vm.deal(caller, REGISTRATION_FEE_TARA);
+            taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
+            vm.deal(caller, REGISTRATION_FEE_ETH);
+            ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
+
 
             // give 1000 tokens to caller every time
             erc20onTara.mintTo(address(caller), 1000000 ether);
@@ -91,12 +88,21 @@ contract StateScenarios is Test, SymmetricTestSetup {
             erc20ConnectorsOnEth.push(ethTestTokenConnector);
         }
 
+        uint256 settlementFeeTara = taraBridge.settlementFee();
+
         for (uint32 i = 0; i < erc20ConnectorsOnTara.length; i++) {
-            erc20ConnectorsOnTara[i].lock(1 ether);
+            vm.deal(caller, settlementFeeTara);
+            uint256 balanceOfConnectorBefore = address(erc20ConnectorsOnTara[i]).balance;
+            erc20ConnectorsOnTara[i].lock{value: settlementFeeTara}(1 ether);
             assertEq(
                 erc20sonTara[i].balanceOf(address(erc20ConnectorsOnTara[i])),
                 1 ether,
                 "connector should have 1 ether of TTARA"
+            );
+            assertEq(
+                address(erc20ConnectorsOnTara[i]).balance -  balanceOfConnectorBefore,
+                settlementFeeTara,
+                "connector should have received the settlement fee"
             );
         }
 
@@ -106,20 +112,6 @@ contract StateScenarios is Test, SymmetricTestSetup {
         assertEq(state.state.epoch, 1, "epoch should be 1");
         taraLightClient.setBridgeRoot(state);
         ethBridge.applyState(state);
-        for (uint32 i = 0; i < erc20ConnectorsOnEth.length; i++) {
-            uint256 balanceOfCallerBeforeClaim = erc20sonEth[i].balanceOf(caller);
-            erc20ConnectorsOnEth[i].claim{value: erc20ConnectorsOnEth[i].feeToClaim(address(caller))}();
-            assertEq(
-                erc20sonEth[i].balanceOf(address(erc20ConnectorsOnEth[i])),
-                0 ether,
-                "connector should have 0 ether of TTARA"
-            );
-            assertEq(
-                erc20sonEth[i].balanceOf(caller),
-                balanceOfCallerBeforeClaim + 1 ether,
-                "caller should have received 1 ether worth of TTARA on ETH"
-            );
-        }
 
         vm.stopPrank();
     }
@@ -129,7 +121,8 @@ contract StateScenarios is Test, SymmetricTestSetup {
             return;
         }
         setUpTokens(10);
-
+        uint256 settlementFeeTara = taraBridge.settlementFee();
+        uint256 settlementFeeEth = ethBridge.settlementFee();
         for (uint32 i = 0; i < erc20ConnectorsOnTara.length; i++) {
             for (uint32 j = 1; j <= tokenTransfersForEach; j++) {
                 address target = vm.addr(j);
@@ -142,8 +135,9 @@ contract StateScenarios is Test, SymmetricTestSetup {
                     erc20sonTara[i].allowance(target, address(erc20ConnectorsOnTara[i])) >= 1 ether,
                     "target should have at least 1 ether allowance"
                 );
+                vm.deal(target, 1 ether + settlementFeeTara);
                 vm.prank(target);
-                erc20ConnectorsOnTara[i].lock(1 ether);
+                erc20ConnectorsOnTara[i].lock{value: 1 ether + settlementFeeTara}(1 ether);
             }
         }
 
@@ -153,26 +147,7 @@ contract StateScenarios is Test, SymmetricTestSetup {
         assertEq(state1.state.epoch, 1, "epoch should be 1");
         taraLightClient.setBridgeRoot(state1);
         ethBridge.applyState(state1);
-        for (uint32 i = 0; i < erc20ConnectorsOnEth.length; i++) {
-            for (uint32 j = 1; j <= tokenTransfersForEach; j++) {
-                address target = vm.addr(j);
 
-                uint256 balanceOfTargetBeforeClaim = erc20sonEth[i].balanceOf(target);
-                uint256 fee = erc20ConnectorsOnEth[i].feeToClaim(address(target));
-                vm.prank(target);
-                erc20ConnectorsOnEth[i].claim{value: fee}();
-                assertEq(
-                    erc20sonEth[i].balanceOf(address(erc20ConnectorsOnEth[i])),
-                    0 ether,
-                    "connector should have 0 ether of TTARA"
-                );
-                assertEq(
-                    erc20sonEth[i].balanceOf(target),
-                    balanceOfTargetBeforeClaim + 1 ether,
-                    "caller should have received 1 ether worth of TTARA on ETH"
-                );
-            }
-        }
 
         for (uint32 i = 0; i < erc20ConnectorsOnEth.length; i++) {
             console.log("i", i);
@@ -184,8 +159,9 @@ contract StateScenarios is Test, SymmetricTestSetup {
                 vm.prank(target);
                 erc20sonEth[i].approve(address(erc20ConnectorsOnEth[i]), 1 ether);
                 assertTrue(erc20sonEth[i].balanceOf(target) >= 1 ether, "target should have at least 1 ether");
+                vm.deal(target, 1 ether + settlementFeeEth);
                 vm.prank(target);
-                erc20ConnectorsOnEth[i].burn(1 ether);
+                erc20ConnectorsOnEth[i].burn{value: 1 ether + settlementFeeEth}(1 ether);
             }
         }
 
@@ -195,15 +171,5 @@ contract StateScenarios is Test, SymmetricTestSetup {
         assertEq(state.state.epoch, 1, "epoch should be 1");
         ethLightClient.setBridgeRoot(state);
         taraBridge.applyState(state);
-
-        for (uint32 i = 0; i < erc20ConnectorsOnTara.length; i++) {
-            for (uint32 j = 1; j <= tokenTransfersForEach; j++) {
-                address target = vm.addr(j);
-                vm.prank(target);
-                uint256 fee = erc20ConnectorsOnTara[i].feeToClaim(address(target));
-                vm.prank(target);
-                erc20ConnectorsOnTara[i].claim{value: fee}();
-            }
-        }
     }
 }

@@ -24,8 +24,16 @@ contract TokenState is Ownable {
         epoch = _epoch;
     }
 
+    function hasBalance(address account) public view returns (bool) {
+        return balances[account] > 0;
+    }
+
     function empty() public view returns (bool) {
         return accounts.length == 0;
+    }
+
+    function getStateLength() public view returns (uint256) {
+        return accounts.length;
     }
 
     function increaseEpoch() public onlyOwner {

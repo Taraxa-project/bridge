@@ -14,15 +14,17 @@ import "../../src/lib/BridgeBase.sol";
 contract EthBridgeV2 is BridgeBase {
     // add new value to the storage to test upgradeability
     uint256 public newValue;
-    /// Events
 
-    event Initialized(address indexed tara, address indexed light_client, uint256 finalizationInterval);
-
-    function initialize(IERC20MintableBurnable tara, IBridgeLightClient light_client, uint256 finalizationInterval)
-        public
-        initializer
-    {
-        __initialize_EthBridge_unchained(tara, light_client, finalizationInterval);
+    function initialize(
+        IBridgeLightClient _light_client,
+        uint256 _finalizationInterval,
+        uint256 _feeMultiplier,
+        uint256 _registrationFee,
+        uint256 _settlementFee
+    ) public initializer {
+        __initialize_EthBridge_unchained(
+            _light_client, _feeMultiplier, _registrationFee, _settlementFee, _finalizationInterval
+        );
     }
 
     function reinitialize(uint256 newStorageValue) public {
@@ -30,12 +32,13 @@ contract EthBridgeV2 is BridgeBase {
     }
 
     function __initialize_EthBridge_unchained(
-        IERC20MintableBurnable tara,
         IBridgeLightClient light_client,
-        uint256 finalizationInterval
+        uint256 _feeMultiplier,
+        uint256 _registrationFee,
+        uint256 _settlementFee,
+        uint256 _finalizationInterval
     ) internal onlyInitializing {
-        __BridgeBase_init(light_client, finalizationInterval);
-        emit Initialized(address(tara), address(light_client), finalizationInterval);
+        __BridgeBase_init(light_client, _finalizationInterval, _feeMultiplier, _registrationFee, _settlementFee);
     }
 
     function getNewStorageValue() public view returns (uint256) {
@@ -44,10 +47,6 @@ contract EthBridgeV2 is BridgeBase {
 
     function registerContractOwner(IBridgeConnector connector) public onlyOwner {
         connectors[address(connector)] = connector;
-        emit ConnectorRegistered(
-            address(connector),
-            connector.getContractSource(),
-            connector.getContractDestination()
-        );
+        emit ConnectorRegistered(address(connector), connector.getContractSource(), connector.getContractDestination());
     }
 }

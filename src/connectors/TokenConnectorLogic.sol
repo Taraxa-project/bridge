@@ -4,20 +4,24 @@ pragma solidity ^0.8.17;
 
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {InvalidEpoch, NoFinalizedState, RefundFailed} from "../errors/ConnectorErrors.sol";
-import "../lib/SharedStructs.sol";
-import "../lib/Constants.sol";
-import "./TokenState.sol";
-import "./IBridgeConnector.sol";
+import {NotBridge, InvalidEpoch, NoFinalizedState, TransferFailed, InsufficientFunds} from "../errors/ConnectorErrors.sol";
+import {SharedStructs} from "../lib/SharedStructs.sol";
+import {Constants} from "../lib/Constants.sol";
+import {TokenState, Transfer} from "./TokenState.sol";
+import {BridgeBase} from "../lib/BridgeBase.sol";
+import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 
 abstract contract TokenConnectorLogic is IBridgeConnector {
-    address public token; // slot 1 as slot 0 is used by BridgeConnectorBase
-    address public otherNetworkAddress; // slot 2
-    TokenState public state; // slot 3
-    TokenState public finalizedState; // slot 4
-    mapping(address => uint256) public toClaim; // slot 5
-    mapping(address => uint256) public feeToClaim; // will always be in slot 6
+    BridgeBase public bridge;
+    address public token;
+    address public otherNetworkAddress; 
+    TokenState public state; 
+    TokenState public finalizedState;
+    mapping(address => uint256) public toClaim;
+    mapping(address => uint256) public feeToClaim;
 
     /// Events
     event Funded(address indexed sender, address indexed connectorBase, uint256 amount);
@@ -26,40 +30,26 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
     event ClaimAccrued(address indexed account, uint256 value);
     event Claimed(address indexed account, uint256 value);
 
-    /**
-     * @dev Refunds the specified amount to the given receiver.
-     * @param receiver The address of the receiver.
-     * @param amount The amount to be refunded.
-     */
-    function refund(address payable receiver, uint256 amount) public override {
-        (bool refundSuccess,) = receiver.call{value: amount}("");
-        if (!refundSuccess) {
-            revert RefundFailed({recipient: receiver, amount: amount});
+     modifier onlySettled(uint256 lockAmount, bool isNative) {
+        bool alreadyHasBalance = state.hasBalance(msg.sender);
+        uint256 fee = bridge.settlementFee();
+        uint256 minAmount;
+        if (alreadyHasBalance) {
+            minAmount = lockAmount;
+        } else {
+            minAmount = isNative ? fee + lockAmount : fee;
         }
-        emit Refunded(receiver, amount);
+        if (msg.value < minAmount) {
+            revert InsufficientFunds(minAmount, msg.value);
+        }
+        _;
     }
 
-    /**
-     * @dev Applies the given state with a refund to the specified receiver.
-     * @param _state The state to apply.
-     * @param refund_receiver The address of the refund_receiver.
-     * @param common_part The common part of the refund.
-     */
-    function applyStateWithRefund(bytes calldata _state, address payable refund_receiver, uint256 common_part)
-        public
-        override
-    {
-        uint256 gasLeftBefore = gasleft();
-        address[] memory addresses = applyState(_state);
-        uint256 totalFee = common_part + (gasLeftBefore - gasleft()) * tx.gasprice;
-        uint256 addressesLength = addresses.length;
-        for (uint256 i = 0; i < addressesLength;) {
-            feeToClaim[addresses[i]] += totalFee / addresses.length;
-            unchecked {
-                ++i;
-            }
+    modifier onlyBridge() {
+        if (msg.sender != address(bridge)) {
+            revert NotBridge(msg.sender);
         }
-        refund(refund_receiver, totalFee);
+        _;
     }
 
     function epoch() public view returns (uint256) {
@@ -78,7 +68,11 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
         return state.empty();
     }
 
-    function finalize(uint256 epoch_to_finalize) public virtual override returns (bytes32) {
+    function getStateLength() external view returns (uint256) {
+        return state.getStateLength();
+    }
+
+    function finalize(uint256 epoch_to_finalize) public virtual override onlyBridge returns (bytes32) {
         if (epoch_to_finalize != state.epoch()) {
             revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
         }
@@ -91,8 +85,16 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
             finalizedState = state;
             state = new TokenState(epoch_to_finalize + 1);
         }
+        Transfer[] memory epochTransfers = finalizedState.getTransfers();
+        if (epochTransfers.length > 0) {
+            uint256 settlementFeesToForward = bridge.settlementFee() * epochTransfers.length;
+            (bool success,) = address(bridge).call{value: settlementFeesToForward}("");
+            if (!success) {
+                revert TransferFailed(address(bridge), settlementFeesToForward);
+            }
+        }
         emit Finalized(epoch_to_finalize);
-        return keccak256(finalizedSerializedTransfers());
+        return keccak256(abi.encode(epochTransfers));
     }
 
     /**
@@ -124,11 +126,5 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
         return otherNetworkAddress;
     }
 
-    /**
-     * @dev Allows the caller to claim tokens by sending Ether to this function to cover fees.
-     * This function is virtual and must be implemented by derived contracts.
-     */
-    function claim() public payable virtual;
-
-    function applyState(bytes calldata) internal virtual returns (address[] memory);
+    function applyState(bytes calldata) external virtual;
 }
