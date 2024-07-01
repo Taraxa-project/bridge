@@ -53,11 +53,12 @@ Last deployments are stored in the `deployments` folder.
 ## Deployment Details
 
 ### Deployment from ./deployments/.token.deployment.1719603507.json
+
 ```json
 {
-  "tokendeploy-1719603507": {
+  "tokendeploy-1719841164": {
     "TARA": {
-      "address": "0xB37ed9F20ED98343F56D15836b7a2716B0638BDB",
+      "address": "0x6d13fbC0E1D86C2A6e99d2E61582981Ab77B8737",
       "RPC": "https://holesky.drpc.org"
     },
     "ETH": {
@@ -69,34 +70,36 @@ Last deployments are stored in the `deployments` folder.
 ```
 
 ### Deployment from ./deployments/.eth.deployment.1719603507.json
+
 ```json
 {
-  "ethdeploy-1719603507": {
-    "RPC": "http://127.0.0.1:8545",
+  "ethdeploy-1719841807": {
+    "RPC": "https://holesky.drpc.org",
     "TaraClient": {
-      "implAddress": "0x6BdCf4F809DAA854f3cc177B7e358015D0B8Ff2f",
-      "proxyAddress": "0xFA447c6b0E8EEb108E0c9561CdBb2f723Cfd04F4"
+      "implAddress": "0xFbe6471D41b6daC926a0c894cb2Ef4E0dDd11147",
+      "proxyAddress": "0x68bb3555Dc111095f0678bBA4fF0A01aeA362eA1"
     },
     "EthBridge": {
-      "implAddress": "0x404e3636652B808A5913CCB50974d7DE06d7728A",
-      "proxyAddress": "0xA15d562Ec431892Aa61a7433a0dbc2Ae62c35914"
+      "implAddress": "0x68164775E80D46E9bf80367C588E67ea38eCCcAE",
+      "proxyAddress": "0xef0541F2255F7621A3AFf56D8732eE02BC9dACed"
     },
     "ERC20MintingConnector": {
-      "implAddress": "0xdAb8Fd5FD327b95D07F6B9dB85562468A7436b7e",
-      "proxyAddress": "0x53fc43657473831aAD2D863BED1E198E4F6181d8"
+      "implAddress": "0xE519805ACE4F4D839efB6AF9a165FEB7f34500D7",
+      "proxyAddress": "0x733E769d6E949caD4377d3496791D20aC54D2Cd1"
     },
     "NativeConnector": {
-      "implAddress": "0x3059d1055dD49De22Dca30BBC83d7B9FcEfb2c65",
-      "proxyAddress": "0xcD07A46204Eb05d9ea791ce37AEa03122e30964a"
+      "implAddress": "0x694Aaced0945Be71A1eDa958a09fcf44999384dE",
+      "proxyAddress": "0x2236a5ac653BBc653430Ce0920c61273BB1eA76B"
     }
   }
 }
 ```
 
 ### Deployment from ./deployments/.tara.deployment.1719604246.json
+
 ```json
 {
-  "taradeploy-1719604246": {
+  "taradeploy-1719841927": {
     "RPC": "https://rpc.testnet.taraxa.io",
     "BeaconLightClient": "0x3BBdc66Fa7eb51259Da29909529b65232c184519",
     "EthClient": {
@@ -118,4 +121,3 @@ Last deployments are stored in the `deployments` folder.
   }
 }
 ```
-

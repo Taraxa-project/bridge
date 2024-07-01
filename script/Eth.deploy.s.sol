@@ -21,7 +21,7 @@ contract EthDeployer is Script {
     uint256 public deployerPrivateKey;
 
     uint256 constant FINALIZATION_INTERVAL = 100;
-    uint256 constant FEE_MULTIPLIER_ETH = 105;
+    uint256 constant FEE_MULTIPLIER_ETH = 101;
     uint256 constant REGISTRATION_FEE_ETH = 0.001 ether;
     uint256 constant SETTLEMENT_FEE_ETH = 5 gwei;
 
