@@ -64,8 +64,8 @@ ethClientProxy=$(echo "$res" | grep "EthClient.sol proxy address:" | awk '{print
 ethClientImpl=$(echo "$res" | grep "EthClient.sol implementation address:" | awk '{print $4}')
 echo "EthClient contract deployed to: $ethClientProxy"
 
-oldEthClientProxy=$(echo "$res" | grep "Old EthClient.sol proxy address:" | awk '{print $4}')
-newEthClientProxy=$(echo "$res" | grep "New EthClient.sol proxy address:" | awk '{print $4}')
+oldEthClientProxy=$(echo "$res" | grep "Old EthClient.sol proxy address:" | awk '{print $5}')
+newEthClientProxy=$(echo "$res" | grep "New EthClient.sol proxy address:" | awk '{print $5}')
 echo "EthClient address upgraded from: $oldEthClientProxy to: $newEthClientProxy"
 
 
