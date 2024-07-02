@@ -37,5 +37,7 @@ add-deployment-metadata :; bash ./script/addToDeployMarkdown.sh
 
 doge :; bash ./script/registerDoge.sh
 
+ethclient-upgrade :; bash ./script/ethClientUpgrade.sh
+
 -include ${FCT_PLUGIN_PATH}/makefile-external
 

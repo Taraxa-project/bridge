@@ -1,0 +1,14 @@
+{
+  "taradeploy-1719925836": {
+    "RPC": "https://rpc.testnet.taraxa.io",
+    "BeaconLightClient": "0x937450589aAB8A807310e493fE51f70bC65cC053",
+    "EthClient": {
+      "implAddress": "0x78410949dDEEEbfAf7527f95d873c84297F82618",
+      "proxyAddress": "0x9814b171aCa172B7a7ABDdDa6a42c0aCCa8fBABb"
+    },
+    "TaraBridge": {
+      "oldEthClientProxy": "0x9207F872B0DE6fC53b92F538494036b03B6E89f8",
+      "newEthClientProxy": "0x9814b171aCa172B7a7ABDdDa6a42c0aCCa8fBABb"
+    }
+  }
+}
