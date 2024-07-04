@@ -2,13 +2,12 @@
 
 pragma solidity ^0.8.17;
 
-import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import "../lib/Constants.sol";
-import {InsufficientFunds, RefundFailed} from "../errors/ConnectorErrors.sol";
+import {Constants} from "../lib/Constants.sol";
 
-abstract contract UpgradeableBase is OwnableUpgradeable, UUPSUpgradeable {
+abstract contract ConnectorUpgradeableBase is OwnableUpgradeable, UUPSUpgradeable {
     /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
     /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
     uint256[49] __gap;
@@ -18,11 +17,11 @@ abstract contract UpgradeableBase is OwnableUpgradeable, UUPSUpgradeable {
         _disableInitializers();
     }
 
-    function __BridgeConnectorBase_init(address bridge) public onlyInitializing {
-        __BridgeConnectorBase_init_unchained(bridge);
+    function __ConnectorUpgradeableBase_init(address bridge) public onlyInitializing {
+        __ConnectorUpgradeableBase_init_unchained(bridge);
     }
 
-    function __BridgeConnectorBase_init_unchained(address bridge) internal onlyInitializing {
+    function __ConnectorUpgradeableBase_init_unchained(address bridge) internal onlyInitializing {
         __UUPSUpgradeable_init();
         __Ownable_init(bridge);
     }

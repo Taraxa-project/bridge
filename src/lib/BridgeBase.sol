@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.17;
 
-import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import {SharedStructs} from "../lib/SharedStructs.sol";
-import {Constants} from "../lib/Constants.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
+import {TransferFailed, InsufficientFunds} from "../errors/CommonErrors.sol";
 import {
     ConnectorAlreadyRegistered,
     StateNotMatchingBridgeRoot,
@@ -15,13 +15,11 @@ import {
     NotEnoughBlocksPassed,
     ZeroAddressCannotBeRegistered,
     NoStateToFinalize,
-    TransferFailed,
-    NotAllStatesApplied,
-    InvalidStateHash
+    InvalidStateHash,
+    IncorrectOwner
 } from "../errors/BridgeBaseErrors.sol";
-import {InsufficientFunds} from "../errors/ConnectorErrors.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
-import {Receiver} from "../connectors/Receiver.sol";
+import {Receiver} from "./Receiver.sol";
 
 abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     /// Mapping of connectors to their source and destination addresses
@@ -146,23 +144,28 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
             revert InsufficientFunds(registrationFee, msg.value);
         }
 
-        address tokenSrc = connector.getContractSource();
-        address tokenDst = connector.getContractDestination();
+        address srcContract = connector.getSourceContract();
+        address dstContract = connector.getDestinationContract();
 
         if (connectors[address(connector)] != IBridgeConnector(address(0))) {
             return;
         }
-        if (tokenSrc == address(0)) {
+        if (srcContract == address(0)) {
             revert ZeroAddressCannotBeRegistered();
         }
-        if (localAddress[tokenDst] != address(0) || connectors[tokenSrc] != IBridgeConnector(address(0))) {
-            revert ConnectorAlreadyRegistered({connector: address(connector), token: tokenSrc});
+        if (localAddress[dstContract] != address(0) || address(connectors[srcContract]) != address(0)) {
+            revert ConnectorAlreadyRegistered({connector: address(connector), token: srcContract});
         }
 
-        connectors[tokenSrc] = connector;
-        localAddress[tokenDst] = tokenSrc;
-        tokenAddresses.push(tokenSrc);
-        emit ConnectorRegistered(address(connector), tokenSrc, tokenDst);
+        address owner = OwnableUpgradeable(address(connector)).owner();
+        if (owner != address(this)) {
+            revert IncorrectOwner(owner, address(this));
+        }
+
+        connectors[srcContract] = connector;
+        localAddress[dstContract] = srcContract;
+        tokenAddresses.push(srcContract);
+        emit ConnectorRegistered(address(connector), srcContract, dstContract);
     }
 
     /**

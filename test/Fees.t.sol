@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {Test, console} from "forge-std/Test.sol";
-import {TaraBridge} from "src/tara/TaraBridge.sol";
 import {NativeConnector} from "src/connectors/NativeConnector.sol";
-import {EthBridge} from "src/eth/EthBridge.sol";
 import {TestERC20} from "src/lib/TestERC20.sol";
 import {ERC20LockingConnector} from "src/connectors/ERC20LockingConnector.sol";
-import {ERC20MintingConnector} from "src/connectors/ERC20MintingConnector.sol";
-import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
 import {Constants} from "src/lib/Constants.sol";
 import {SharedStructs} from "src/lib/SharedStructs.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
 import {IBridgeConnector} from "src/connectors/IBridgeConnector.sol";
+import {console} from "forge-std/console.sol";
 
 contract FeesTest is SymmetricTestSetup {
     function test_finalizeEpoch_toEth_BridgeDoesNotHaveEnoughEth_DoesNotGivePayout_To_Relayer() public {
@@ -24,7 +20,7 @@ contract FeesTest is SymmetricTestSetup {
 
         uint256 balanceOfNativeConnectorBefore = address(taraBridgeToken).balance;
         uint256 settlementFee = taraBridge.settlementFee();
-        taraBridgeToken.lock{value: value + settlementFee}(value);
+        taraBridgeToken.lock{value: value + settlementFee}();
 
         uint256 balanceOfNativeConnectorAfter = address(taraBridgeToken).balance;
 
@@ -42,10 +38,7 @@ contract FeesTest is SymmetricTestSetup {
         taraBridge.finalizeEpoch();
         uint256 balanceOfRelayerAfterEpoch = address(sampleRelayer).balance;
         console.log("Difference: ", balanceOfRelayerAfterEpoch - balanceOfRelayerBefore);
-        vm.assertTrue(
-            balanceOfRelayerAfterEpoch <= balanceOfRelayerBefore,
-            "Relayer should not have received payout"
-        );
+        vm.assertTrue(balanceOfRelayerAfterEpoch <= balanceOfRelayerBefore, "Relayer should not have received payout");
         uint256 balanceOfNativeConnectorAfterEpoch = address(taraBridgeToken).balance;
         vm.assertEq(
             balanceOfNativeConnectorAfterEpoch,
@@ -67,8 +60,8 @@ contract FeesTest is SymmetricTestSetup {
 
         uint256 balanceOfNativeConnectorBefore = address(nativeConnector).balance;
         uint256 settlementFee = taraBridge.settlementFee();
-        nativeConnector.lock{value: value + settlementFee}(value);
-        nativeConnector.lock{value: value}(value);
+        nativeConnector.lock{value: value + settlementFee}();
+        nativeConnector.lock{value: value}();
 
         uint256 balanceOfNativeConnectorAfter = address(nativeConnector).balance;
 
@@ -88,15 +81,16 @@ contract FeesTest is SymmetricTestSetup {
         uint256 balanceOfNativeConnectorAfterEpoch = address(nativeConnector).balance;
         vm.assertEq(
             balanceOfNativeConnectorAfterEpoch,
-            2* value,
+            2 * value,
             "Native connector should've forwarded the settlement fee to the bridge"
         );
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         taraLightClient.setBridgeRoot(state);
         ethBridge.applyState(state);
 
-        assertEq(taraTokenOnEth.balanceOf(address(this)), 2* value);
+        assertEq(taraTokenOnEth.balanceOf(address(this)), 2 * value);
     }
+
     function test_toEthFees_DiffAddresses_DoubleLocksInSameEpoch_Should_Settle_Twice() public {
         vm.roll(FINALIZATION_INTERVAL);
         uint256 value = 1 ether;
@@ -105,16 +99,16 @@ contract FeesTest is SymmetricTestSetup {
 
         uint256 balanceOfNativeConnectorBefore = address(nativeConnector).balance;
         uint256 settlementFee = taraBridge.settlementFee();
-        nativeConnector.lock{value: value + settlementFee}(value);
+        nativeConnector.lock{value: value + settlementFee}();
         vm.deal(address(caller), value + settlementFee);
         vm.prank(address(caller));
-        nativeConnector.lock{value: value + settlementFee}(value);
+        nativeConnector.lock{value: value + settlementFee}();
 
         uint256 balanceOfNativeConnectorAfter = address(nativeConnector).balance;
 
         vm.assertEq(
             balanceOfNativeConnectorAfter,
-            balanceOfNativeConnectorBefore + 2* (settlementFee + value),
+            balanceOfNativeConnectorBefore + 2 * (settlementFee + value),
             "Balance of native connector should be increased by 2*(settlement fee + value)"
         );
 
@@ -122,22 +116,16 @@ contract FeesTest is SymmetricTestSetup {
         uint256 balanceOfBridgeBefore = address(taraBridge).balance;
         taraBridge.finalizeEpoch();
         uint256 balanceOfBridgeAfterEpoch = address(taraBridge).balance;
-        vm.assertGt(
-            balanceOfBridgeAfterEpoch,
-            2 * settlementFee,
-            "Bridge should've received the settlement fee"
-        );
+        vm.assertGt(balanceOfBridgeAfterEpoch, 2 * settlementFee, "Bridge should've received the settlement fee");
         uint256 balanceOfNativeConnectorAfterEpoch = address(nativeConnector).balance;
         vm.assertEq(
             balanceOfNativeConnectorAfterEpoch,
-            2* value,
+            2 * value,
             "Native connector should've forwarded the settlement fee to the bridge"
         );
         uint256 balanceOfBridge = address(taraBridge).balance;
         vm.assertEq(
-            balanceOfBridge,
-            balanceOfBridgeBefore + 2* settlementFee,
-            "Bridge should've received the settlement fee"
+            balanceOfBridge, balanceOfBridgeBefore + 2 * settlementFee, "Bridge should've received the settlement fee"
         );
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         taraLightClient.setBridgeRoot(state);
@@ -157,7 +145,7 @@ contract FeesTest is SymmetricTestSetup {
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
 
         uint256 settlementFee = taraBridge.settlementFee();
-        taraBridgeToken.lock{value: value + settlementFee}(value);
+        taraBridgeToken.lock{value: value + settlementFee}();
 
         uint256 relayerBalanceBefore = address(relayer).balance;
         vm.txGasPrice(20 gwei);
@@ -167,7 +155,8 @@ contract FeesTest is SymmetricTestSetup {
         console.log("Relayer balance before: ", relayerBalanceBefore);
         console.log("Relayer balance after epoch: ", relayerBalanceAfterEpoch);
         assertTrue(
-            relayerBalanceAfterEpoch >= relayerBalanceBefore, "Relayer balance after epoch should be greater than before"
+            relayerBalanceAfterEpoch >= relayerBalanceBefore,
+            "Relayer balance after epoch should be greater than before"
         );
         assertTrue(relayerBalanceAfterEpoch - relayerBalanceBefore < settlementFee, "Relayer paid too much after epoch");
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
@@ -198,12 +187,12 @@ contract FeesTest is SymmetricTestSetup {
         NativeConnector taraBridgeToken =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         uint256 settlementFee = taraBridge.settlementFee();
-        taraBridgeToken.lock{value: value + settlementFee}(value);
+        taraBridgeToken.lock{value: value + settlementFee}();
         for (uint256 i = 1; i <= 100; i++) {
             address locker = vm.addr(i);
             vm.deal(locker, value + settlementFee);
             vm.prank(locker);
-            taraBridgeToken.lock{value: value + settlementFee}(value);
+            taraBridgeToken.lock{value: value + settlementFee}();
         }
 
         uint256 relayerBalanceBefore = address(relayer).balance;
@@ -214,7 +203,8 @@ contract FeesTest is SymmetricTestSetup {
         console.log("Relayer balance before: ", relayerBalanceBefore);
         console.log("Relayer balance after epoch: ", relayerBalanceAfterEpoch);
         assertTrue(
-            relayerBalanceAfterEpoch >= relayerBalanceBefore, "Relayer balance after epoch should be greater than before"
+            relayerBalanceAfterEpoch >= relayerBalanceBefore,
+            "Relayer balance after epoch should be greater than before"
         );
         assertTrue(relayerBalanceAfterEpoch - relayerBalanceBefore < settlementFee, "Relayer paid too much after epoch");
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
@@ -238,7 +228,7 @@ contract FeesTest is SymmetricTestSetup {
         address relayer = vm.addr(666);
         vm.deal(relayer, 1 ether);
 
-        (TestERC20 erc20onTara2, ) = registerCustomTokenPair();
+        (TestERC20 erc20onTara2,) = registerCustomTokenPair();
 
         vm.roll(FINALIZATION_INTERVAL);
         vm.txGasPrice(1000);
@@ -247,11 +237,12 @@ contract FeesTest is SymmetricTestSetup {
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
 
         uint256 settlementFee = taraBridge.settlementFee();
-        vm.deal(address(this), 2* value + settlementFee);
-        taraBridgeToken.lock{value: value + settlementFee}(value);
+        vm.deal(address(this), 2 * value + settlementFee);
+        taraBridgeToken.lock{value: value + settlementFee}();
 
-        ERC20LockingConnector erc20onTara2Connector = ERC20LockingConnector(payable(address(taraBridge.connectors(address(erc20onTara2)))));
-        vm.deal(caller,  2* value + settlementFee);
+        ERC20LockingConnector erc20onTara2Connector =
+            ERC20LockingConnector(payable(address(taraBridge.connectors(address(erc20onTara2)))));
+        vm.deal(caller, 2 * value + settlementFee);
         uint256 balance = erc20onTara2.balanceOf(caller);
         vm.assertTrue(balance >= value, "Balance should be greater than value");
         vm.prank(caller);

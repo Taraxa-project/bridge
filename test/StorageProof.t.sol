@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {Test, console} from "forge-std/Test.sol";
-import "beacon-light-client/src/trie/StorageProof.sol";
+import {Test} from "forge-std/Test.sol";
+import {StorageProof} from "beacon-light-client/src/trie/StorageProof.sol";
 
 contract StorageOracleTest is Test {
     function test_verifyStorageProof() public pure {

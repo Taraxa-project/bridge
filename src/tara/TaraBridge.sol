@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "../lib/IBridgeLightClient.sol";
-import "../lib/BridgeBase.sol";
+import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
+import {BridgeBase} from "../lib/BridgeBase.sol";
 
 contract TaraBridge is BridgeBase {
     function initialize(

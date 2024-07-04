@@ -2,22 +2,14 @@
 pragma solidity ^0.8.17;
 
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
-import "../src/tara/TaraBridge.sol";
+import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/console.sol";
 import {NativeConnector} from "../src/connectors/NativeConnector.sol";
-import "../src/eth/EthBridge.sol";
-import "../src/lib/TestERC20.sol";
-import {
-    StateNotMatchingBridgeRoot, NotSuccessiveEpochs, NotEnoughBlocksPassed
-} from "../src/errors/BridgeBaseErrors.sol";
-import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
-import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
-import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
-import {Constants} from "../src/lib/Constants.sol";
+import {TestERC20} from "../src/lib/TestERC20.sol";
 import {EthBridgeV2} from "./utils/EthBridgeV2.sol";
 import {TaraBridgeV2} from "./utils/TaraBridgeV2.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
+import {IBridgeConnector} from "../src/connectors/IBridgeConnector.sol";
 
 contract UpgradeabilityTest is SymmetricTestSetup {
     function test_upgrade_ethBridge() public {
