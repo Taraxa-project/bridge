@@ -6,8 +6,8 @@ import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.s
 import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import {SharedStructs} from "../lib/SharedStructs.sol";
-import {Constants} from "../lib/Constants.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
+import {TransferFailed, InsufficientFunds} from "../errors/CommonErrors.sol";
 import {
     ConnectorAlreadyRegistered,
     StateNotMatchingBridgeRoot,
@@ -15,13 +15,10 @@ import {
     NotEnoughBlocksPassed,
     ZeroAddressCannotBeRegistered,
     NoStateToFinalize,
-    TransferFailed,
-    NotAllStatesApplied,
     InvalidStateHash
 } from "../errors/BridgeBaseErrors.sol";
-import {InsufficientFunds} from "../errors/ConnectorErrors.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
-import {Receiver} from "../connectors/Receiver.sol";
+import {Receiver} from "./Receiver.sol";
 
 abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     /// Mapping of connectors to their source and destination addresses
@@ -146,8 +143,8 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
             revert InsufficientFunds(registrationFee, msg.value);
         }
 
-        address tokenSrc = connector.getContractSource();
-        address tokenDst = connector.getContractDestination();
+        address tokenSrc = connector.getSourceContract();
+        address tokenDst = connector.getDestinationContract();
 
         if (connectors[address(connector)] != IBridgeConnector(address(0))) {
             return;

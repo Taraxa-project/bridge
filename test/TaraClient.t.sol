@@ -2,14 +2,12 @@
 pragma solidity ^0.8.17;
 
 import {Test, console} from "forge-std/Test.sol";
-import {TaraClient} from "../src/eth/TaraClient.sol";
 import {PillarBlock} from "../src/lib/PillarBlock.sol";
 import {TaraClientHarness} from "./utils/TaraClientHarness.sol";
 import {CompactSignature} from "../src/lib/PillarBlock.sol";
-import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../src/errors/ClientErrors.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 /**
  * @title Taraxa Client-side test contract
@@ -59,7 +57,7 @@ contract TaraClientTest is Test {
         blocks[0] = currentBlock;
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
         currentBlock.block.period += PILLAR_BLOCK_INTERVAL;
-        currentBlock.block.prevHash = client.getFinalized().blockHash;
+        currentBlock.block.prevHash = client.getFinalizedBlock().blockHash;
 
         // this should not revert
         client.getFinalizedBridgeRoot(1);

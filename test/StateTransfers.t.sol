@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import "../src/tara/TaraBridge.sol";
-import "../src/eth/EthBridge.sol";
-import "../src/lib/TestERC20.sol";
+import {InsufficientFunds} from "../src/errors/CommonErrors.sol";
 import {
     StateNotMatchingBridgeRoot, NotSuccessiveEpochs, NotEnoughBlocksPassed
 } from "../src/errors/BridgeBaseErrors.sol";
 import {NativeConnector} from "../src/connectors/NativeConnector.sol";
 import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
-import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
 import {Constants} from "../src/lib/Constants.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
-import "forge-std/console.sol";
+import {SharedStructs} from "../src/lib/SharedStructs.sol";
 
 contract StateTransfersTest is SymmetricTestSetup {
     function test_Revert_toEth_on_not_enough_blocks_passed() public {
@@ -21,7 +18,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         uint256 value = 1 ether;
         NativeConnector taraBridgeToken =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
-        taraBridgeToken.lock{value: value + settlementFee}(value);
+        taraBridgeToken.lock{value: value + settlementFee}();
 
         // vm.roll(FINALIZATION_INTERVAL);
 
@@ -41,9 +38,9 @@ contract StateTransfersTest is SymmetricTestSetup {
 
         NativeConnector taraBridgeToken =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
-        uint256 value = 1 ether;
-        vm.expectRevert(abi.encodeWithSelector(InsufficientFunds.selector, value + settlementFee, value));
-        taraBridgeToken.lock{value: value}(value);
+        uint256 value = settlementFee / 2;
+        vm.expectRevert(abi.encodeWithSelector(InsufficientFunds.selector, settlementFee, value));
+        taraBridgeToken.lock{value: value}();
 
         vm.roll(FINALIZATION_INTERVAL);
 
@@ -57,7 +54,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         NativeConnector taraBridgeToken =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         vm.expectRevert();
-        taraBridgeToken.lock{value: settlementFee}(0);
+        taraBridgeToken.lock{value: settlementFee}();
     }
 
     function test_toEth() public {
@@ -66,7 +63,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         uint256 value = 1 ether;
         NativeConnector taraBridgeToken =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
-        taraBridgeToken.lock{value: value + settlementFee}(value);
+        taraBridgeToken.lock{value: value + settlementFee}();
 
         vm.roll(FINALIZATION_INTERVAL);
 
@@ -103,7 +100,7 @@ contract StateTransfersTest is SymmetricTestSetup {
     function test_Revert_OnChangedState() public {
         uint256 settlementFee = taraBridge.settlementFee();
         uint256 value = 1 ether;
-        taraConnector.lock{value: value + settlementFee}(value);
+        taraConnector.lock{value: value + settlementFee}();
 
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
@@ -123,7 +120,7 @@ contract StateTransfersTest is SymmetricTestSetup {
     function test_Revert_OnChangedEpoch() public {
         uint256 settlementFee = taraBridge.settlementFee();
         uint256 value = 1 ether;
-        taraConnector.lock{value: value + settlementFee}(value);
+        taraConnector.lock{value: value + settlementFee}();
 
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
@@ -153,7 +150,7 @@ contract StateTransfersTest is SymmetricTestSetup {
     function test_benchmark_singlebridge_Epoch() public {
         uint256 settlementFee = taraBridge.settlementFee();
         uint256 value = 1 ether;
-        taraConnector.lock{value: value + settlementFee}(value);
+        taraConnector.lock{value: value + settlementFee}();
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         uint256 finalizedEpoch = taraBridge.getStateWithProof().state.epoch;
@@ -172,11 +169,11 @@ contract StateTransfersTest is SymmetricTestSetup {
     function test_futureEpoch() public {
         uint256 value = 1 ether;
         uint256 settlementFee = taraBridge.settlementFee();
-        taraConnector.lock{value: value + settlementFee}(value);
+        taraConnector.lock{value: value + settlementFee}();
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state1 = taraBridge.getStateWithProof();
-        taraConnector.lock{value: value + settlementFee}(value);
+        taraConnector.lock{value: value + settlementFee}();
         vm.roll(2 * FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
@@ -186,11 +183,17 @@ contract StateTransfersTest is SymmetricTestSetup {
                 == SharedStructs.getBridgeRoot(state1.state.epoch, state1.state_hashes),
             "States with different epoch should have different roots"
         );
-        assertEq(state1.state_hashes[0].contractAddress, state.state_hashes[0].contractAddress, "Contract address should be the same");
+        assertEq(
+            state1.state_hashes[0].contractAddress,
+            state.state_hashes[0].contractAddress,
+            "Contract address should be the same"
+        );
         assertEq(state1.state_hashes[0].stateHash, state.state_hashes[0].stateHash, "State hash should be the same");
         assertEq(state.state.epoch, 2, "Epoch should be 2");
         assertEq(state.state.states.length, 1, "State length should be 1");
-        assertEq(state.state.states[0].contractAddress, Constants.NATIVE_TOKEN_ADDRESS, "Contract address should be the same");
+        assertEq(
+            state.state.states[0].contractAddress, Constants.NATIVE_TOKEN_ADDRESS, "Contract address should be the same"
+        );
         taraLightClient.setBridgeRoot(state);
 
         vm.expectRevert(
@@ -209,7 +212,7 @@ contract StateTransfersTest is SymmetricTestSetup {
             vm.deal(addr, value + settlementFee);
             addrs[i] = addr;
             vm.prank(addr);
-            taraConnector.lock{value: value + settlementFee}(value);
+            taraConnector.lock{value: value + settlementFee}();
         }
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();

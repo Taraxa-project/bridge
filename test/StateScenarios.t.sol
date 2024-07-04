@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Test} from "forge-std/Test.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
 import {TestERC20} from "../src/lib/TestERC20.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import {ERC20LockingConnectorMock} from "./baseContracts/ERC20LockingConnectorMock.sol";
 import {ERC20MintingConnectorMock} from "./baseContracts/ERC20MintingConnectorMock.sol";
-import {Constants} from "../src/lib/Constants.sol";
 import {SharedStructs} from "../src/lib/SharedStructs.sol";
 import "forge-std/console.sol";
 
-contract StateScenarios is Test, SymmetricTestSetup {
+contract StateScenarios is SymmetricTestSetup {
     TestERC20[] erc20sonTara;
     TestERC20[] erc20sonEth;
     ERC20LockingConnectorMock[] erc20ConnectorsOnTara;
@@ -27,8 +24,10 @@ contract StateScenarios is Test, SymmetricTestSetup {
             TestERC20 erc20onTara = new TestERC20("TaraERC20", "TTARA");
             TestERC20 erc20onEth = new TestERC20("EthERC20", "TETH");
 
-            ERC20LockingConnectorMock taraTestTokenConnector = new ERC20LockingConnectorMock(taraBridge, erc20onTara, address(erc20onEth));
-            ERC20MintingConnectorMock ethTestTokenConnector = new ERC20MintingConnectorMock(ethBridge, erc20onEth, address(erc20onTara));
+            ERC20LockingConnectorMock taraTestTokenConnector =
+                new ERC20LockingConnectorMock(taraBridge, erc20onTara, address(erc20onEth));
+            ERC20MintingConnectorMock ethTestTokenConnector =
+                new ERC20MintingConnectorMock(ethBridge, erc20onEth, address(erc20onTara));
 
             vm.deal(caller, REGISTRATION_FEE_TARA);
             taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
@@ -63,14 +62,15 @@ contract StateScenarios is Test, SymmetricTestSetup {
             TestERC20 erc20onTara = new TestERC20("TaraERC20", "TTARA");
             TestERC20 erc20onEth = new TestERC20("EthERC20", "TETH");
 
-            ERC20LockingConnectorMock taraTestTokenConnector = new ERC20LockingConnectorMock(taraBridge, erc20onTara, address(erc20onEth));
-            ERC20MintingConnectorMock ethTestTokenConnector = new ERC20MintingConnectorMock(ethBridge, erc20onEth, address(erc20onTara));
+            ERC20LockingConnectorMock taraTestTokenConnector =
+                new ERC20LockingConnectorMock(taraBridge, erc20onTara, address(erc20onEth));
+            ERC20MintingConnectorMock ethTestTokenConnector =
+                new ERC20MintingConnectorMock(ethBridge, erc20onEth, address(erc20onTara));
 
             vm.deal(caller, REGISTRATION_FEE_TARA);
             taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
             vm.deal(caller, REGISTRATION_FEE_ETH);
             ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
-
 
             // give 1000 tokens to caller every time
             erc20onTara.mintTo(address(caller), 1000000 ether);
@@ -100,7 +100,7 @@ contract StateScenarios is Test, SymmetricTestSetup {
                 "connector should have 1 ether of TTARA"
             );
             assertEq(
-                address(erc20ConnectorsOnTara[i]).balance -  balanceOfConnectorBefore,
+                address(erc20ConnectorsOnTara[i]).balance - balanceOfConnectorBefore,
                 settlementFeeTara,
                 "connector should have received the settlement fee"
             );
@@ -147,7 +147,6 @@ contract StateScenarios is Test, SymmetricTestSetup {
         assertEq(state1.state.epoch, 1, "epoch should be 1");
         taraLightClient.setBridgeRoot(state1);
         ethBridge.applyState(state1);
-
 
         for (uint32 i = 0; i < erc20ConnectorsOnEth.length; i++) {
             console.log("i", i);

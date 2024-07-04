@@ -6,12 +6,12 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {ERC20LockingConnectorLogic} from "./ERC20LockingConnectorLogic.sol";
-import {Receiver} from "./Receiver.sol";
-import {UpgradeableBase} from "./UpgradeableBase.sol";
+import {Receiver} from "../lib/Receiver.sol";
+import {ConnectorUpgradeableBase} from "./ConnectorUpgradeableBase.sol";
 import {TokenState} from "./TokenState.sol";
 import {BridgeBase} from "../lib/BridgeBase.sol";
 
-contract ERC20LockingConnector is UpgradeableBase, Receiver, ERC20LockingConnectorLogic {
+contract ERC20LockingConnector is ConnectorUpgradeableBase, Receiver, ERC20LockingConnectorLogic {
     using SafeERC20 for IERC20;
 
     function initialize(BridgeBase _bridge, IERC20 tokenAddress, address token_on_other_network)
@@ -20,10 +20,11 @@ contract ERC20LockingConnector is UpgradeableBase, Receiver, ERC20LockingConnect
         initializer
     {
         require(
-            address(_bridge) != address(0) && address(tokenAddress) != address(0) && token_on_other_network != address(0),
+            address(_bridge) != address(0) && address(tokenAddress) != address(0)
+                && token_on_other_network != address(0),
             "TokenConnectorBase: invalid bridge, token, or token_on_other_network"
         );
-        __BridgeConnectorBase_init(address(_bridge));
+        __ConnectorUpgradeableBase_init(address(_bridge));
         otherNetworkAddress = token_on_other_network;
         token = address(tokenAddress);
         state = new TokenState(0);

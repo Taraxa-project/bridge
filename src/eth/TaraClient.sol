@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.17;
 
-import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-import "../lib/Maths.sol";
+import {Maths} from "../lib/Maths.sol";
 import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../errors/ClientErrors.sol";
-import "../lib/IBridgeLightClient.sol";
-import "../lib/PillarBlock.sol";
+import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
+import {CompactSignature, PillarBlock} from "../lib/PillarBlock.sol";
 
 contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
     /// Contains the last finalized block
@@ -40,7 +40,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
         pillarBlockInterval = _pillarBlockInterval;
     }
 
-    function getFinalized() public view returns (PillarBlock.FinalizedBlock memory) {
+    function getFinalizedBlock() public view returns (PillarBlock.FinalizedBlock memory) {
         return finalized;
     }
 

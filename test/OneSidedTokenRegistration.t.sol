@@ -1,28 +1,25 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {TaraBridge} from "../src/tara/TaraBridge.sol";
-import {EthBridge} from "../src/eth/EthBridge.sol";
 import {TestERC20} from "../src/lib/TestERC20.sol";
 import {NativeConnector} from "../src/connectors/NativeConnector.sol";
 import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
 import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
 import {ERC20LockingConnectorMock} from "./baseContracts/ERC20LockingConnectorMock.sol";
 import {ERC20MintingConnectorMock} from "./baseContracts/ERC20MintingConnectorMock.sol";
-import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
 import {Constants} from "../src/lib/Constants.sol";
 import {SharedStructs} from "../src/lib/SharedStructs.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
 
 contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
-
     function test_Single_customToken() public returns (TestERC20 taraTestToken, TestERC20 ethTestToken) {
         // deploy and register token on both sides
         vm.startPrank(caller);
         taraTestToken = new TestERC20("Test", "TEST");
         address randomEthTestAddress = vm.addr(11111);
         ethTestToken = TestERC20(randomEthTestAddress);
-        ERC20LockingConnectorMock taraTestTokenConnector = new ERC20LockingConnectorMock(taraBridge, taraTestToken, randomEthTestAddress);
+        ERC20LockingConnectorMock taraTestTokenConnector =
+            new ERC20LockingConnectorMock(taraBridge, taraTestToken, randomEthTestAddress);
         new ERC20MintingConnectorMock(ethBridge, ethTestToken, address(taraTestToken));
 
         taraTestToken.mintTo(address(caller), 10 ether);
@@ -45,7 +42,7 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
         assertEq(state.state.epoch, 1, "epoch");
         taraLightClient.setBridgeRoot(state);
-        
+
         ethBridge.applyState(state);
 
         vm.stopPrank();
@@ -65,7 +62,7 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         NativeConnector taraBridgeTokenConnector =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         vm.deal(address(this), value + settlementFee);
-        taraBridgeTokenConnector.lock{value: value + settlementFee}(value);
+        taraBridgeTokenConnector.lock{value: value + settlementFee}();
 
         vm.roll(2 * FINALIZATION_INTERVAL);
         vm.prank(caller);

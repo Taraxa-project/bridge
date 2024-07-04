@@ -2,12 +2,13 @@
 
 pragma solidity ^0.8.17;
 
-import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {NotBridge, InvalidEpoch, NoFinalizedState, TransferFailed, InsufficientFunds} from "../errors/ConnectorErrors.sol";
+import {TransferFailed, InsufficientFunds} from "../errors/CommonErrors.sol";
+import {NotBridge, InvalidEpoch, NoFinalizedState} from "../errors/ConnectorErrors.sol";
 import {SharedStructs} from "../lib/SharedStructs.sol";
 import {Constants} from "../lib/Constants.sol";
 import {TokenState, Transfer} from "./TokenState.sol";
@@ -17,8 +18,8 @@ import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 abstract contract TokenConnectorLogic is IBridgeConnector {
     BridgeBase public bridge;
     address public token;
-    address public otherNetworkAddress; 
-    TokenState public state; 
+    address public otherNetworkAddress;
+    TokenState public state;
     TokenState public finalizedState;
     mapping(address => uint256) public toClaim;
     mapping(address => uint256) public feeToClaim;
@@ -30,17 +31,13 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
     event ClaimAccrued(address indexed account, uint256 value);
     event Claimed(address indexed account, uint256 value);
 
-     modifier onlySettled(uint256 lockAmount, bool isNative) {
+    modifier onlySettled() {
         bool alreadyHasBalance = state.hasBalance(msg.sender);
         uint256 fee = bridge.settlementFee();
-        uint256 minAmount;
-        if (alreadyHasBalance) {
-            minAmount = lockAmount;
-        } else {
-            minAmount = isNative ? fee + lockAmount : fee;
-        }
-        if (msg.value < minAmount) {
-            revert InsufficientFunds(minAmount, msg.value);
+        if (!alreadyHasBalance) {
+            if (msg.value < fee) {
+                revert InsufficientFunds(fee, msg.value);
+            }
         }
         _;
     }
@@ -56,12 +53,8 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
         return state.epoch();
     }
 
-    function deserializeTransfers(bytes memory data) internal pure returns (Transfer[] memory) {
+    function decodeTransfers(bytes memory data) internal pure returns (Transfer[] memory) {
         return abi.decode(data, (Transfer[]));
-    }
-
-    function finalizedSerializedTransfers() internal view returns (bytes memory) {
-        return abi.encode(finalizedState.getTransfers());
     }
 
     function isStateEmpty() external view override returns (bool) {
@@ -109,20 +102,20 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
         if (finalizedState.empty()) {
             return new bytes(0);
         }
-        return finalizedSerializedTransfers();
+        return abi.encode(finalizedState.getTransfers());
     }
 
     /**
      * @dev Returns the address of the underlying contract in this network
      */
-    function getContractSource() public view returns (address) {
-        return address(token);
+    function getSourceContract() external view returns (address) {
+        return token;
     }
 
     /**
      * @dev Returns the address of the bridged contract on the other network
      */
-    function getContractDestination() external view returns (address) {
+    function getDestinationContract() external view returns (address) {
         return otherNetworkAddress;
     }
 

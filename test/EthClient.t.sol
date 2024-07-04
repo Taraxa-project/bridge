@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {EthClient} from "../src/tara/EthClient.sol";
 import {BeaconLightClient} from "beacon-light-client/src/BeaconLightClient.sol";
 import {BeaconClientMock} from "./utils/LightClientMocks.sol";

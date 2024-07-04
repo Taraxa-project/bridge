@@ -1,8 +1,6 @@
 //// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {TaraBridge} from "../src/tara/TaraBridge.sol";
-import {EthBridge} from "../src/eth/EthBridge.sol";
 import {TestERC20} from "../src/lib/TestERC20.sol";
 import {NativeConnector} from "../src/connectors/NativeConnector.sol";
 import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
@@ -33,7 +31,7 @@ contract ConnectorAccessLevelTest is SymmetricTestSetup {
     }
 
     function test_Revert_LockingConnector_ApplyState_NonBridge() public {
-        (TestERC20 erc20onTara, ) = registerCustomTokenPair();
+        (TestERC20 erc20onTara,) = registerCustomTokenPair();
         ERC20LockingConnector nativeLockingConnector =
             ERC20LockingConnector(payable(address(taraBridge.connectors(address(erc20onTara)))));
         vm.expectRevert(abi.encodeWithSelector(NotBridge.selector, address(this)));
@@ -41,7 +39,7 @@ contract ConnectorAccessLevelTest is SymmetricTestSetup {
         vm.expectRevert(abi.encodeWithSelector(NotBridge.selector, address(this)));
         nativeLockingConnector.finalize(1);
 
-         address relayer = vm.addr(666);
+        address relayer = vm.addr(666);
         vm.deal(relayer, 1 ether);
 
         vm.roll(FINALIZATION_INTERVAL);
@@ -51,11 +49,12 @@ contract ConnectorAccessLevelTest is SymmetricTestSetup {
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
 
         uint256 settlementFee = taraBridge.settlementFee();
-        vm.deal(address(this), 2* value + settlementFee);
-        taraBridgeToken.lock{value: value + settlementFee}(value);
+        vm.deal(address(this), 2 * value + settlementFee);
+        taraBridgeToken.lock{value: value + settlementFee}();
 
-        ERC20LockingConnector erc20onTaraConnector = ERC20LockingConnector(payable(address(taraBridge.connectors(address(erc20onTara)))));
-        vm.deal(caller,  2* value + settlementFee);
+        ERC20LockingConnector erc20onTaraConnector =
+            ERC20LockingConnector(payable(address(taraBridge.connectors(address(erc20onTara)))));
+        vm.deal(caller, 2 * value + settlementFee);
         uint256 balance = erc20onTara.balanceOf(caller);
         vm.assertTrue(balance >= value, "Balance should be greater than value");
         vm.prank(caller);
@@ -75,14 +74,13 @@ contract ConnectorAccessLevelTest is SymmetricTestSetup {
         vm.assertEq(address(br2), address(0), "Bridge connector should be 0");
     }
 
-
     function test_Plain_toEth() public {
         uint256 settlementFee = taraBridge.settlementFee();
 
         uint256 value = 1 ether;
         NativeConnector taraBridgeToken =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
-        taraBridgeToken.lock{value: value + settlementFee}(value);
+        taraBridgeToken.lock{value: value + settlementFee}();
 
         vm.roll(FINALIZATION_INTERVAL);
 
@@ -93,6 +91,4 @@ contract ConnectorAccessLevelTest is SymmetricTestSetup {
 
         assertEq(taraTokenOnEth.balanceOf(address(this)), value);
     }
-
 }
-

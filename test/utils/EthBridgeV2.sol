@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.17;
 
-import "../../src/lib/SharedStructs.sol";
-import "../../src/lib/IBridgeLightClient.sol";
-import "../../src/connectors/IBridgeConnector.sol";
-import "../../src/connectors/ERC20MintingConnector.sol";
-import "../../src/lib/TestERC20.sol";
-import "../../src/lib/Constants.sol";
-import "../../src/lib/BridgeBase.sol";
+import {SharedStructs} from "../../src/lib/SharedStructs.sol";
+import {IBridgeLightClient} from "../../src/lib/IBridgeLightClient.sol";
+import {IBridgeConnector} from "../../src/connectors/IBridgeConnector.sol";
+import {ERC20MintingConnector} from "../../src/connectors/ERC20MintingConnector.sol";
+import {TestERC20} from "../../src/lib/TestERC20.sol";
+import {Constants} from "../../src/lib/Constants.sol";
+import {BridgeBase} from "../../src/lib/BridgeBase.sol";
 
 /// @custom:oz-upgrades-from EthBridge
 contract EthBridgeV2 is BridgeBase {
@@ -47,6 +47,6 @@ contract EthBridgeV2 is BridgeBase {
 
     function registerContractOwner(IBridgeConnector connector) public onlyOwner {
         connectors[address(connector)] = connector;
-        emit ConnectorRegistered(address(connector), connector.getContractSource(), connector.getContractDestination());
+        emit ConnectorRegistered(address(connector), connector.getSourceContract(), connector.getDestinationContract());
     }
 }

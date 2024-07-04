@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {ZeroValueCall, TransferFailed} from "../errors/ConnectorErrors.sol";
+import {ZeroValueCall} from "../errors/ConnectorErrors.sol";
+import {TransferFailed, InsufficientFunds} from "../errors/CommonErrors.sol";
 import {SharedStructs} from "../lib/SharedStructs.sol";
 import {TokenConnectorLogic} from "./TokenConnectorLogic.sol";
 import {Constants} from "../lib/Constants.sol";
@@ -16,7 +17,7 @@ abstract contract NativeConnectorLogic is TokenConnectorLogic {
      * @param _state The state to be applied.
      */
     function applyState(bytes calldata _state) public virtual override onlyBridge {
-        Transfer[] memory transfers = deserializeTransfers(_state);
+        Transfer[] memory transfers = decodeTransfers(_state);
         uint256 transfersLength = transfers.length;
         for (uint256 i = 0; i < transfersLength;) {
             (bool success,) = payable(transfers[i].account).call{value: transfers[i].amount}("");
@@ -28,22 +29,27 @@ abstract contract NativeConnectorLogic is TokenConnectorLogic {
             }
         }
     }
-    
+
     /**
      * @dev Locks the specified amount of tokens to transfer them to the other network.
      * @notice This function is payable, meaning it can receive TARA.
-     * @param value The amount of tokens to lock.
      */
-    function lock(uint256 value) public payable onlySettled(value, true) {
-        uint256 settlementFee = bridge.settlementFee();
-        bool alreadyHasBalance = state.hasBalance(msg.sender);
-        uint256 lockedValue;
-        lockedValue = alreadyHasBalance ? msg.value : msg.value - settlementFee;
+    function lock() public payable {
+        uint256 fee = bridge.settlementFee();
+        uint256 lockingValue = msg.value;
 
-        if (lockedValue == 0 || value == 0) {
+        // Charge the fee only if the user has no balance in current state
+        if (!state.hasBalance(msg.sender)) {
+            if (msg.value < fee) {
+                revert InsufficientFunds(fee, lockingValue);
+            }
+            lockingValue -= fee;
+        }
+
+        if (lockingValue == 0) {
             revert ZeroValueCall();
         }
-        state.addAmount(msg.sender, lockedValue);
-        emit Locked(msg.sender, lockedValue);
+        state.addAmount(msg.sender, lockingValue);
+        emit Locked(msg.sender, lockingValue);
     }
 }

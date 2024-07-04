@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "../../src/lib/IBridgeLightClient.sol";
-import "../../src/lib/Constants.sol";
-import "../../src/lib/BridgeBase.sol";
+import {IBridgeLightClient} from "../../src/lib/IBridgeLightClient.sol";
+import {Constants} from "../../src/lib/Constants.sol";
+import {BridgeBase} from "../../src/lib/BridgeBase.sol";
 
 /// @custom:oz-upgrades-from TaraBridge
 contract TaraBridgeV2 is BridgeBase {

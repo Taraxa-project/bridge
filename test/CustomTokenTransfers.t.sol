@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {TaraBridge} from "../src/tara/TaraBridge.sol";
-import {EthBridge} from "../src/eth/EthBridge.sol";
 import {TestERC20} from "../src/lib/TestERC20.sol";
-import {
-    StateNotMatchingBridgeRoot, NotSuccessiveEpochs, NotEnoughBlocksPassed
-} from "../src/errors/BridgeBaseErrors.sol";
 import {NativeConnector} from "../src/connectors/NativeConnector.sol";
 import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
 import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
-import {BridgeLightClientMock} from "./BridgeLightClientMock.sol";
 import {Constants} from "../src/lib/Constants.sol";
 import {SharedStructs} from "../src/lib/SharedStructs.sol";
 import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
@@ -83,7 +77,7 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         NativeConnector taraBridgeTokenConnector =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         vm.deal(address(caller), settlementFee + 1 ether);
-        taraBridgeTokenConnector.lock{value: value + settlementFee}(value);
+        taraBridgeTokenConnector.lock{value: value + settlementFee}();
 
         vm.roll(2 * FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();

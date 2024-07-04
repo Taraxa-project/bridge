@@ -7,7 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {TokenConnectorLogic} from "./TokenConnectorLogic.sol";
 import {Transfer} from "../connectors/TokenState.sol";
-import {InsufficientFunds, TransferFailed, ZeroValueCall} from "../errors/ConnectorErrors.sol";
+import {ZeroValueCall} from "../errors/ConnectorErrors.sol";
 
 abstract contract ERC20LockingConnectorLogic is TokenConnectorLogic {
     using SafeERC20 for IERC20;
@@ -20,7 +20,7 @@ abstract contract ERC20LockingConnectorLogic is TokenConnectorLogic {
      * @param _state The state to be applied.
      */
     function applyState(bytes calldata _state) public virtual override onlyBridge {
-        Transfer[] memory transfers = deserializeTransfers(_state);
+        Transfer[] memory transfers = decodeTransfers(_state);
         uint256 transfersLength = transfers.length;
         for (uint256 i = 0; i < transfersLength;) {
             IERC20(token).transfer(transfers[i].account, transfers[i].amount);
@@ -35,7 +35,7 @@ abstract contract ERC20LockingConnectorLogic is TokenConnectorLogic {
      * @notice The amount of tokens to burn must be approved by the sender
      * @param value The amount of tokens to lock.
      */
-    function lock(uint256 value) public payable onlySettled(value, false) {
+    function lock(uint256 value) public payable onlySettled {
         if (value == 0) {
             revert ZeroValueCall();
         }
