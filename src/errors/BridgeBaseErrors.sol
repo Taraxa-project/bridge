@@ -10,3 +10,4 @@ error InvalidBridgeRoot(bytes32 bridgeRoot);
 error ZeroAddress(string message);
 error ZeroAddressCannotBeRegistered();
 error NoStateToFinalize();
+error IncorrectOwner(address owner, address expected);

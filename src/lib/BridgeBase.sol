@@ -15,7 +15,8 @@ import {
     NotEnoughBlocksPassed,
     ZeroAddressCannotBeRegistered,
     NoStateToFinalize,
-    InvalidStateHash
+    InvalidStateHash,
+    IncorrectOwner
 } from "../errors/BridgeBaseErrors.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 import {Receiver} from "./Receiver.sol";
@@ -154,6 +155,11 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         }
         if (localAddress[dstContract] != address(0) || address(connectors[srcContract]) != address(0)) {
             revert ConnectorAlreadyRegistered({connector: address(connector), token: srcContract});
+        }
+
+        address owner = OwnableUpgradeable(address(connector)).owner();
+        if (owner != address(this)) {
+            revert IncorrectOwner(owner, address(this));
         }
 
         connectors[srcContract] = connector;
