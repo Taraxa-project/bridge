@@ -143,23 +143,23 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
             revert InsufficientFunds(registrationFee, msg.value);
         }
 
-        address tokenSrc = connector.getSourceContract();
-        address tokenDst = connector.getDestinationContract();
+        address srcContract = connector.getSourceContract();
+        address dstContract = connector.getDestinationContract();
 
         if (connectors[address(connector)] != IBridgeConnector(address(0))) {
             return;
         }
-        if (tokenSrc == address(0)) {
+        if (srcContract == address(0)) {
             revert ZeroAddressCannotBeRegistered();
         }
-        if (localAddress[tokenDst] != address(0) || connectors[tokenSrc] != IBridgeConnector(address(0))) {
-            revert ConnectorAlreadyRegistered({connector: address(connector), token: tokenSrc});
+        if (localAddress[dstContract] != address(0) || address(connectors[srcContract]) != address(0)) {
+            revert ConnectorAlreadyRegistered({connector: address(connector), token: srcContract});
         }
 
-        connectors[tokenSrc] = connector;
-        localAddress[tokenDst] = tokenSrc;
-        tokenAddresses.push(tokenSrc);
-        emit ConnectorRegistered(address(connector), tokenSrc, tokenDst);
+        connectors[srcContract] = connector;
+        localAddress[dstContract] = srcContract;
+        tokenAddresses.push(srcContract);
+        emit ConnectorRegistered(address(connector), srcContract, dstContract);
     }
 
     /**

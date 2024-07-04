@@ -57,7 +57,7 @@ contract TaraClientTest is Test {
         blocks[0] = currentBlock;
         client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
         currentBlock.block.period += PILLAR_BLOCK_INTERVAL;
-        currentBlock.block.prevHash = client.getFinalizedBlock().blockHash;
+        currentBlock.block.prevHash = client.getFinalized().blockHash;
 
         // this should not revert
         client.getFinalizedBridgeRoot(1);

@@ -32,7 +32,7 @@ abstract contract ERC20MintingConnectorLogic is TokenConnectorLogic {
     /**
      * @dev Burns a specified amount of tokens to transfer them to the other network.
      * @notice The amount of tokens to burn must be approved by the sender
-     * @param value The amount of tokens to burnonlySettledtoken
+     * @param value The amount of tokens to burn
      */
     function burn(uint256 value) public payable onlySettled {
         if (value == 0) {

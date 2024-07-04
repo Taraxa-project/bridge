@@ -40,7 +40,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable {
         pillarBlockInterval = _pillarBlockInterval;
     }
 
-    function getFinalizedBlock() public view returns (PillarBlock.FinalizedBlock memory) {
+    function getFinalized() public view returns (PillarBlock.FinalizedBlock memory) {
         return finalized;
     }
 
