@@ -28,9 +28,6 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
 
         // give ownership of erc20s to the connectors
         taraTestToken.transferOwnership(address(taraTestTokenConnector));
-        // ethTestToken.transferOwnership(address(ethTestTokenConnector));
-
-        taraTestTokenConnector.transferOwnership(address(taraBridge));
 
         uint256 settlementFee = taraBridge.settlementFee();
         vm.deal(caller, REGISTRATION_FEE_TARA);

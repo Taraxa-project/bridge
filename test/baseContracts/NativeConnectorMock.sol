@@ -9,7 +9,7 @@ import {TokenState} from "../../src/connectors/TokenState.sol";
 import {BridgeBase} from "../../src/lib/BridgeBase.sol";
 
 contract NativeConnectorMock is NativeConnectorLogic, Ownable {
-    constructor(BridgeBase _bridge, address token_on_other_network) Ownable(msg.sender) {
+    constructor(BridgeBase _bridge, address token_on_other_network) Ownable(address(_bridge)) {
         otherNetworkAddress = token_on_other_network;
         token = Constants.NATIVE_TOKEN_ADDRESS;
         state = new TokenState(0);

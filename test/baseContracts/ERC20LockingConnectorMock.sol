@@ -13,7 +13,7 @@ import {BridgeBase} from "../../src/lib/BridgeBase.sol";
 contract ERC20LockingConnectorMock is ERC20LockingConnectorLogic, Ownable {
     using SafeERC20 for IERC20;
 
-    constructor(BridgeBase _bridge, IERC20 _token, address token_on_other_network) Ownable(msg.sender) {
+    constructor(BridgeBase _bridge, IERC20 _token, address token_on_other_network) Ownable(address(_bridge)) {
         otherNetworkAddress = token_on_other_network;
         token = address(_token);
         state = new TokenState(0);

@@ -64,6 +64,7 @@ contract StateScenarios is SymmetricTestSetup {
 
             ERC20LockingConnectorMock taraTestTokenConnector =
                 new ERC20LockingConnectorMock(taraBridge, erc20onTara, address(erc20onEth));
+
             ERC20MintingConnectorMock ethTestTokenConnector =
                 new ERC20MintingConnectorMock(ethBridge, erc20onEth, address(erc20onTara));
 

@@ -10,7 +10,7 @@ import {BridgeBase} from "../../src/lib/BridgeBase.sol";
 import {TokenState} from "../../src/connectors/TokenState.sol";
 
 contract ERC20MintingConnectorMock is ERC20MintingConnectorLogic, Ownable {
-    constructor(BridgeBase _bridge, IERC20 _token, address token_on_other_network) Ownable(msg.sender) {
+    constructor(BridgeBase _bridge, IERC20 _token, address token_on_other_network) Ownable(address(_bridge)) {
         otherNetworkAddress = token_on_other_network;
         token = address(_token);
         state = new TokenState(0);
