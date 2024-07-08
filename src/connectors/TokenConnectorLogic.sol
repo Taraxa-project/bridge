@@ -32,12 +32,9 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
     event Claimed(address indexed account, uint256 value);
 
     modifier onlySettled() {
-        bool alreadyHasBalance = state.hasBalance(msg.sender);
-        uint256 fee = bridge.settlementFee();
-        if (!alreadyHasBalance) {
-            if (msg.value < fee) {
-                revert InsufficientFunds(fee, msg.value);
-            }
+        uint256 fee = estimateSettlementFee(msg.sender);
+        if (msg.value < fee) {
+            revert InsufficientFunds(fee, msg.value);
         }
         _;
     }
@@ -47,6 +44,15 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
             revert NotBridge(msg.sender);
         }
         _;
+    }
+
+    function estimateSettlementFee(address locker) public view returns (uint256) {
+        bool alreadyHasBalance = state.hasBalance(locker);
+        uint256 fee = bridge.settlementFee();
+        if (!alreadyHasBalance) {
+            return fee;
+        }
+        return 0;
     }
 
     function epoch() public view returns (uint256) {

@@ -193,7 +193,7 @@ contract TaraClientTest is Test {
         vm.stopBroadcast();
     }
 
-    function test_blockEncodeDecode() public view {
+    function test_blockEncodeDecode() public pure {
         PillarBlock.VoteCountChange[] memory changes = new PillarBlock.VoteCountChange[](10);
         changes[0] = PillarBlock.VoteCountChange(address(uint160(1)), -1);
         changes[1] = PillarBlock.VoteCountChange(address(uint160(2)), 2);
