@@ -8,10 +8,6 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {Constants} from "../lib/Constants.sol";
 
 abstract contract ConnectorUpgradeableBase is OwnableUpgradeable, UUPSUpgradeable {
-    /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
-    /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
-    uint256[49] __gap;
-
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
