@@ -53,8 +53,8 @@ Once a registration is done, the bridge will be able to handle the bridging of t
 In the [connectors directory](./src/connectors/), you can find a set of examples for the different types of tokens that can be bridged. For the sake of simplicty, we implemented only connectors for the ERC20 token standard as Ficus bridge will first and foremost serve as a bridge for classic tokens per se.
 
 - 1. Native Connector(s): [They](./src/connectors/NativeConnector.sol) are used to lock and release native tokens on their native chain.
-- 2. ERC20 Connector(s): [They](./src/connectors/ERC20LockingConnector.sol) are used to lock and release ERC20 tokens on their respective chain.
-- 3. ERC721 Connector(s): [They](./src/connectors/ERC20MintingConnector.sol) are used to burn and mint ERC20 tokens on their respective chain.
+- 2. ERC20 Locking Connector(s): [They](./src/connectors/ERC20LockingConnector.sol) are used to lock and release ERC20 tokens on their respective chain.
+- 3. ERC20 Minting Connector(s): [They](./src/connectors/ERC20MintingConnector.sol) are used to burn and mint ERC20 tokens on their respective chain.
 
 ## Native Token Bridging
 
