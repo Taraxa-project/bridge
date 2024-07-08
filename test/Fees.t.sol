@@ -59,9 +59,13 @@ contract FeesTest is SymmetricTestSetup {
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
 
         uint256 balanceOfNativeConnectorBefore = address(nativeConnector).balance;
-        uint256 settlementFee = taraBridge.settlementFee();
+        uint256 bridgeSettlementFee = taraBridge.settlementFee();
+        uint256 settlementFee = nativeConnector.estimateSettlementFee(address(this));
+        vm.assertEq(settlementFee, bridgeSettlementFee, "Settlement fee should be the same as the bridge's");
         nativeConnector.lock{value: value + settlementFee}();
-        nativeConnector.lock{value: value}();
+        uint256 newSettlementFee = nativeConnector.estimateSettlementFee(address(this));
+        vm.assertEq(newSettlementFee, 0, "Settlement fee should be 0");
+        nativeConnector.lock{value: value + newSettlementFee}();
 
         uint256 balanceOfNativeConnectorAfter = address(nativeConnector).balance;
 
