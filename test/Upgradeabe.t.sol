@@ -2,162 +2,60 @@
 pragma solidity ^0.8.17;
 
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
-import "forge-std/Test.sol";
-
-import "../src/tara/TaraBridge.sol";
+import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/console.sol";
 import {NativeConnector} from "../src/connectors/NativeConnector.sol";
-import "../src/eth/EthBridge.sol";
-import "../src/lib/TestERC20.sol";
-import {
-    StateNotMatchingBridgeRoot, NotSuccessiveEpochs, NotEnoughBlocksPassed
-} from "../src/errors/BridgeBaseErrors.sol";
-import "../src/connectors/ERC20LockingConnector.sol";
-import "../src/connectors/ERC20MintingConnector.sol";
-import "./BridgeLightClientMock.sol";
-import "../src/lib/Constants.sol";
-import "./utils/EthBridgeV2.sol";
-import "./utils/TaraBridgeV2.sol";
+import {TestERC20} from "../src/lib/TestERC20.sol";
+import {EthBridgeV2} from "./utils/EthBridgeV2.sol";
+import {TaraBridgeV2} from "./utils/TaraBridgeV2.sol";
+import {SymmetricTestSetup} from "./SymmetricTestSetup.t.sol";
+import {IBridgeConnector} from "../src/connectors/IBridgeConnector.sol";
 
-contract UpgradeabilityTest is Test {
-    BridgeLightClientMock taraLightClient;
-    BridgeLightClientMock ethLightClient;
-    TestERC20 taraTokenOnEth;
-    TestERC20 ethTokenOnTara;
-    TaraBridge taraBridge;
-    EthBridge ethBridge;
-
-    address caller = vm.addr(0x1234);
-    uint256 constant FINALIZATION_INTERVAL = 100;
-
-    function setUp() public {
-        payable(caller).transfer(100 ether);
-        taraLightClient = new BridgeLightClientMock();
-        ethLightClient = new BridgeLightClientMock();
-        taraTokenOnEth = new TestERC20("Tara", "TARA");
-        ethTokenOnTara = new TestERC20("Eth", "ETH");
-        taraBridge = TaraBridge(
-            Upgrades.deployUUPSProxy(
-                "TaraBridge.sol", abi.encodeCall(TaraBridge.initialize, (ethLightClient, FINALIZATION_INTERVAL))
-            )
-        );
-        ethBridge = EthBridge(
-            Upgrades.deployUUPSProxy(
-                "EthBridge.sol", abi.encodeCall(EthBridge.initialize, (taraLightClient, FINALIZATION_INTERVAL))
-            )
-        );
-
-        // Set Up TARA side of the bridge
-
-        NativeConnector taraConnector = NativeConnector(
-            payable(
-                Upgrades.deployUUPSProxy(
-                    "NativeConnector.sol",
-                    abi.encodeCall(NativeConnector.initialize, (address(taraBridge), address(taraTokenOnEth)))
-                )
-            )
-        );
-        (bool success,) = payable(taraConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
-        if (!success) {
-            revert("Failed to initialize tara native connector");
-        }
-
-        taraBridge.registerContract(taraConnector);
-
-        ERC20MintingConnector ethOnTaraMintingConnector = ERC20MintingConnector(
-            payable(
-                Upgrades.deployUUPSProxy(
-                    "ERC20MintingConnector.sol",
-                    abi.encodeCall(
-                        ERC20MintingConnector.initialize,
-                        (address(taraBridge), taraTokenOnEth, Constants.NATIVE_TOKEN_ADDRESS)
-                    )
-                )
-            )
-        );
-
-        (bool success2,) = payable(ethOnTaraMintingConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
-        if (!success2) {
-            revert("Failed to initialize tara minting connector");
-        }
-
-        taraBridge.registerContract(ethOnTaraMintingConnector);
-
-        // Set Up ETH side of the bridge
-
-        NativeConnector ethConnector = NativeConnector(
-            payable(
-                Upgrades.deployUUPSProxy(
-                    "NativeConnector.sol",
-                    abi.encodeCall(NativeConnector.initialize, (address(ethBridge), address(ethTokenOnTara)))
-                )
-            )
-        );
-        (bool success3,) = payable(ethConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
-        if (!success3) {
-            revert("Failed to initialize eth connector");
-        }
-
-        ethBridge.registerContract(ethConnector);
-
-        ERC20MintingConnector taraOnEthMintingConnector = ERC20MintingConnector(
-            payable(
-                Upgrades.deployUUPSProxy(
-                    "ERC20MintingConnector.sol",
-                    abi.encodeCall(
-                        ERC20MintingConnector.initialize,
-                        (address(ethBridge), taraTokenOnEth, Constants.NATIVE_TOKEN_ADDRESS)
-                    )
-                )
-            )
-        );
-
-        (bool success4,) = payable(taraOnEthMintingConnector).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
-        if (!success4) {
-            revert("Failed to initialize minting connector");
-        }
-
-        ethBridge.registerContract(taraOnEthMintingConnector);
-    }
-
-    // define it to not fail on incoming transfers
-    receive() external payable {}
-
+contract UpgradeabilityTest is SymmetricTestSetup {
     function test_upgrade_ethBridge() public {
+        vm.startPrank(caller);
         Options memory opts;
         opts.referenceContract = "EthBridge.sol";
 
         uint256 newFinalizationInterval = 6666;
 
         address implAddressV1 = Upgrades.getImplementationAddress(address(ethBridge));
-        vm.prank(caller);
+
         Upgrades.upgradeProxy(
             address(ethBridge), "EthBridgeV2.sol", (abi.encodeCall(EthBridgeV2.reinitialize, newFinalizationInterval))
         );
         address implAddressV2 = Upgrades.getImplementationAddress(address(ethBridge));
-        assertNotEq(implAddressV1, implAddressV2, "Implementation address should not change after upgrade");
-        EthBridgeV2 upgradedBridge = EthBridgeV2(address(ethBridge));
+        assertNotEq(implAddressV1, implAddressV2, "Implementation address should change after upgrade");
+        EthBridgeV2 upgradedBridge = EthBridgeV2(payable(address(ethBridge)));
         assertEq(upgradedBridge.getNewStorageValue(), newFinalizationInterval);
+        vm.stopPrank();
     }
 
-    function test_Revert_ConnectorRegistration_By_Not_Owner() public {
-        EthBridgeV2 upgradedBridge = EthBridgeV2(address(ethBridge));
-
+    function test_Revert_ConnectorRegistration_Not_By_Owner() public {
+        vm.startPrank(caller);
+        Upgrades.upgradeProxy(address(ethBridge), "EthBridgeV2.sol", (abi.encodeCall(EthBridgeV2.reinitialize, 6666)));
+        EthBridgeV2 upgradedBridge = EthBridgeV2(payable(address(ethBridge)));
+        vm.stopPrank();
         address newNativeConnectorProxy = Upgrades.deployUUPSProxy(
-            "NativeConnector.sol",
-            abi.encodeCall(NativeConnector.initialize, (address(taraBridge), address(taraTokenOnEth)))
+            "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (taraBridge, address(taraTokenOnEth)))
         );
-        // vm.prank(caller);
+        address ownerOfUpgradedBridge = upgradedBridge.owner();
+        console.log("Owner of upgraded bridge: ", ownerOfUpgradedBridge);
+        address caller3 = vm.addr(666669);
+        console.log("Caller: ", caller3);
+        vm.startPrank(caller3);
         vm.expectRevert();
         upgradedBridge.registerContractOwner(IBridgeConnector(newNativeConnectorProxy));
+        vm.stopPrank();
     }
 
     function test_upgrade_taraBridge() public {
+        vm.startPrank(caller);
         Options memory opts;
         opts.referenceContract = "TaraBridge.sol";
 
         uint256 newFinalizationInterval = 6666;
         address implAddressV1 = Upgrades.getImplementationAddress(address(taraBridge));
-        vm.prank(caller);
         Upgrades.upgradeProxy(
             address(taraBridge),
             "TaraBridgeV2.sol",
@@ -165,7 +63,8 @@ contract UpgradeabilityTest is Test {
         );
         address implAddressV2 = Upgrades.getImplementationAddress(address(taraBridge));
         assertNotEq(implAddressV1, implAddressV2, "Implementation address should not change after upgrade");
-        TaraBridgeV2 upgradedBridge = TaraBridgeV2(address(taraBridge));
+        TaraBridgeV2 upgradedBridge = TaraBridgeV2(payable(address(taraBridge)));
         assertEq(upgradedBridge.getNewStorageValue(), newFinalizationInterval);
+        vm.stopPrank();
     }
 }

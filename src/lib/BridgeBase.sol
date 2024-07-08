@@ -2,34 +2,50 @@
 
 pragma solidity ^0.8.17;
 
-import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
-import "../lib/SharedStructs.sol";
-import "../lib/Constants.sol";
-import "../lib/IBridgeLightClient.sol";
+import {SharedStructs} from "../lib/SharedStructs.sol";
+import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
+import {TransferFailed, InsufficientFunds} from "../errors/CommonErrors.sol";
 import {
     ConnectorAlreadyRegistered,
     StateNotMatchingBridgeRoot,
     NotSuccessiveEpochs,
     NotEnoughBlocksPassed,
-    UnmatchingContractAddresses,
     ZeroAddressCannotBeRegistered,
-    NotAllStatesApplied,
-    NoStateToFinalize
+    NoStateToFinalize,
+    InvalidStateHash,
+    IncorrectOwner
 } from "../errors/BridgeBaseErrors.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
+import {Receiver} from "./Receiver.sol";
 
-abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
+abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
+    /// Mapping of connectors to their source and destination addresses
     mapping(address => IBridgeConnector) public connectors;
+    /// Mapping of source and destination addresses to the connector address
     mapping(address => address) public localAddress;
-    IBridgeLightClient public lightClient;
-    address[] public tokenAddresses;
-    uint256 public finalizedEpoch;
-    uint256 public appliedEpoch;
-    uint256 public finalizationInterval;
-    uint256 public lastFinalizedBlock;
+    /// The bridge roots of finalized epochs
     mapping(uint256 => bytes32) public bridgeRoots;
+    /// The light client used to get the finalized bridge root
+    IBridgeLightClient public lightClient;
+    /// The addresses of the registered tokens
+    address[] public tokenAddresses;
+    /// The epoch of the last finalized epoch
+    uint256 public finalizedEpoch;
+    /// The epoch of the last applied epoch
+    uint256 public appliedEpoch;
+    /// The interval between epoch finalizations
+    uint256 public finalizationInterval;
+    /// The block number of the last finalized epoch
+    uint256 public lastFinalizedBlock;
+    /// This multiplier is used to calculate the proper part of the relaying cost for bridging actions(state finalization vs aplying state)
+    uint256 public feeMultiplier;
+    /// Global connector registration fee. Connectors must pay this fee to register
+    uint256 public registrationFee;
+    /// Global transaction settlement fee. Connector must pay `settlementFee * numberOfTransactions` to settle the transaction
+    uint256 public settlementFee;
 
     /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
     /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
@@ -40,27 +56,39 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
     event ConnectorRegistered(
         address indexed connector, address indexed token_source, address indexed token_destination
     );
+    event ConnectorDelisted(address indexed connector, uint256 indexed epoch);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function __BridgeBase_init(IBridgeLightClient light_client, uint256 _finalizationInterval)
-        internal
-        onlyInitializing
-    {
-        __BridgeBase_init_unchained(light_client, _finalizationInterval);
+    function __BridgeBase_init(
+        IBridgeLightClient _lightClient,
+        uint256 _finalizationInterval,
+        uint256 _feeMultiplier,
+        uint256 _registrationFee,
+        uint256 _settlementFee
+    ) internal onlyInitializing {
+        __BridgeBase_init_unchained(
+            _lightClient, _finalizationInterval, _feeMultiplier, _registrationFee, _settlementFee
+        );
     }
 
-    function __BridgeBase_init_unchained(IBridgeLightClient light_client, uint256 _finalizationInterval)
-        internal
-        onlyInitializing
-    {
+    function __BridgeBase_init_unchained(
+        IBridgeLightClient _lightClient,
+        uint256 _finalizationInterval,
+        uint256 _feeMultiplier,
+        uint256 _registrationFee,
+        uint256 _settlementFee
+    ) internal onlyInitializing {
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
-        lightClient = light_client;
+        lightClient = _lightClient;
         finalizationInterval = _finalizationInterval;
+        feeMultiplier = _feeMultiplier;
+        registrationFee = _registrationFee;
+        settlementFee = _settlementFee;
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -99,28 +127,45 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         return bridgeRoots[finalizedEpoch];
     }
 
+    function isContract(address addr) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(addr)
+        }
+        return size > 0;
+    }
+
     /**
      * @dev Registers a contract with the EthBridge by providing a connector contract.
      * @param connector The address of the connector contract.
      */
-    function registerContract(IBridgeConnector connector) public {
-        address tokenSrc = connector.getContractSource();
-        address tokenDst = connector.getContractDestination();
+    function registerContract(IBridgeConnector connector) public payable {
+        if (msg.value < registrationFee) {
+            revert InsufficientFunds(registrationFee, msg.value);
+        }
+
+        address srcContract = connector.getSourceContract();
+        address dstContract = connector.getDestinationContract();
 
         if (connectors[address(connector)] != IBridgeConnector(address(0))) {
             return;
         }
-        if (tokenSrc == address(0)) {
+        if (srcContract == address(0)) {
             revert ZeroAddressCannotBeRegistered();
         }
-        if (localAddress[tokenDst] != address(0) || connectors[tokenSrc] != IBridgeConnector(address(0))) {
-            revert ConnectorAlreadyRegistered({connector: address(connector), token: tokenSrc});
+        if (localAddress[dstContract] != address(0) || address(connectors[srcContract]) != address(0)) {
+            revert ConnectorAlreadyRegistered({connector: address(connector), token: srcContract});
         }
 
-        connectors[tokenSrc] = connector;
-        localAddress[tokenDst] = tokenSrc;
-        tokenAddresses.push(tokenSrc);
-        emit ConnectorRegistered(address(connector), tokenSrc, tokenDst);
+        address owner = OwnableUpgradeable(address(connector)).owner();
+        if (owner != address(this)) {
+            revert IncorrectOwner(owner, address(this));
+        }
+
+        connectors[srcContract] = connector;
+        localAddress[dstContract] = srcContract;
+        tokenAddresses.push(srcContract);
+        emit ConnectorRegistered(address(connector), srcContract, dstContract);
     }
 
     /**
@@ -142,40 +187,38 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         if (state_with_proof.state.epoch != appliedEpoch + 1) {
             revert NotSuccessiveEpochs({epoch: appliedEpoch, nextEpoch: state_with_proof.state.epoch});
         }
-        uint256 common = (gasleftbefore - gasleft()) * tx.gasprice;
         uint256 statesLength = state_with_proof.state.states.length;
-        uint256 stateHashIndex = 0;
-        uint256 stateIndex = 0;
-        while (stateIndex < statesLength) {
-            gasleftbefore = gasleft();
-            while (stateHashIndex < state_with_proof.state_hashes.length) {
-                SharedStructs.ContractStateHash calldata state_hash = state_with_proof.state_hashes[stateHashIndex];
-                SharedStructs.StateWithAddress calldata state = state_with_proof.state.states[stateIndex];
-                if (localAddress[state_hash.contractAddress] == address(0)) {
-                    unchecked {
-                        ++stateHashIndex;
-                    }
-                    continue;
-                }
-                if (keccak256(state.state) != state_hash.stateHash) {
-                    unchecked {
-                        ++stateHashIndex;
-                    }
-                    continue;
-                }
-                uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
-                uint256 refund = (used + common / state_with_proof.state_hashes.length);
-                connectors[localAddress[state_hash.contractAddress]].applyStateWithRefund(
-                    state.state, payable(msg.sender), refund
-                );
+        uint256 idx = 0;
+        while (idx < statesLength) {
+            SharedStructs.ContractStateHash calldata proofStateHash = state_with_proof.state_hashes[idx];
+            SharedStructs.StateWithAddress calldata state = state_with_proof.state.states[idx];
+            if (localAddress[proofStateHash.contractAddress] == address(0)) {
                 unchecked {
-                    ++stateHashIndex;
-                    ++stateIndex;
+                    ++idx;
                 }
+                continue;
+            }
+            bytes32 stateHash = keccak256(state.state);
+            if (stateHash != proofStateHash.stateHash) {
+                unchecked {
+                    ++idx;
+                }
+                revert InvalidStateHash(stateHash, proofStateHash.stateHash);
+            }
+            if (isContract(address(connectors[localAddress[proofStateHash.contractAddress]]))) {
+                try connectors[localAddress[proofStateHash.contractAddress]].applyState(state.state) {} catch {}
+            }
+            unchecked {
+                ++idx;
             }
         }
-        if (stateIndex != statesLength) {
-            revert NotAllStatesApplied(stateIndex, statesLength);
+        uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
+        uint256 payout = used * feeMultiplier / 100;
+        if (address(this).balance >= payout) {
+            (bool success,) = payable(msg.sender).call{value: payout}("");
+            if (!success) {
+                revert TransferFailed(msg.sender, payout);
+            }
         }
         ++appliedEpoch;
     }
@@ -199,6 +242,8 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
      * @dev Finalizes the current epoch.
      */
     function finalizeEpoch() public {
+        uint256 gasleftbefore = gasleft();
+
         if (block.number - lastFinalizedBlock < finalizationInterval) {
             revert NotEnoughBlocksPassed({
                 lastFinalizedBlock: lastFinalizedBlock,
@@ -211,6 +256,16 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
         uint256 finalizedIndex = 0;
         for (uint256 i = 0; i < tokenAddresses.length;) {
             IBridgeConnector c = connectors[tokenAddresses[i]];
+            uint256 stateLength = c.getStateLength();
+            // check if the connector has settlement fee * stateLength
+            if (address(c).balance < settlementFee * stateLength) {
+                delete connectors[tokenAddresses[i]];
+                emit ConnectorDelisted(address(c), finalizedEpoch);
+                unchecked {
+                    ++i;
+                }
+                continue;
+            }
             bool isStateEmpty = c.isStateEmpty();
             bytes32 finalizedHash = c.finalize(finalizedEpoch);
             if (isStateEmpty) {
@@ -240,6 +295,15 @@ abstract contract BridgeBase is OwnableUpgradeable, UUPSUpgradeable {
             ++finalizedEpoch;
         }
         bridgeRoots[finalizedEpoch] = SharedStructs.getBridgeRoot(finalizedEpoch, finalHashes);
+
+        uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
+        uint256 payout = used * feeMultiplier / 100;
+        if (address(this).balance > payout) {
+            (bool success,) = payable(msg.sender).call{value: payout}("");
+            if (!success) {
+                revert TransferFailed(msg.sender, payout);
+            }
+        }
         emit Finalized(finalizedEpoch, bridgeRoots[finalizedEpoch]);
     }
 

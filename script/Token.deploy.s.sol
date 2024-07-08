@@ -13,8 +13,7 @@ contract TokenDeployer is Script {
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         if (vm.envUint("PRIVATE_KEY") == 0) {
-            console.log("Skipping deployment because PRIVATE_KEY is not set");
-            return;
+            revert("Skipping deployment because PRIVATE_KEY is not set");
         }
         address deployerAddress = vm.envAddress("DEPLOYMENT_ADDRESS");
         string memory symbol = vm.envString("SYMBOL");

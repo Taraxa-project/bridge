@@ -31,25 +31,33 @@ contract TaraDeployer is Script {
 
     BeaconLightClient beaconClient;
 
+    uint256 constant FINALIZATION_INTERVAL = 100;
+    uint256 constant FEE_MULTIPLIER_TARA = 105;
+    uint256 constant REGISTRATION_FEE_TARA = 1 ether;
+    uint256 constant SETTLEMENT_FEE_TARA = 500 gwei;
+
     function setUp() public {
         deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         deployerAddress = vm.envAddress("DEPLOYMENT_ADDRESS");
         console.log("Deployer address: %s", deployerAddress);
 
         if (vm.envUint("PRIVATE_KEY") == 0) {
-            console.log("Skipping deployment because PRIVATE_KEY is not set");
-            return;
+            revert("Skipping deployment because PRIVATE_KEY is not set");
         }
         // check if balance is at least 2 * MINIMUM_CONNECTOR_DEPOSIT
-        if (address(deployerAddress).balance < 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT) {
-            console.log("Skipping deployment because balance is less than 2 * MINIMUM_CONNECTOR_DEPOSIT");
-            return;
+        if (address(deployerAddress).balance < (2 * REGISTRATION_FEE_TARA)) {
+            revert(
+                "Skipping deployment because balance is less than 2 * MINIMUM_CONNECTOR_DEPOSIT + REGISTRATION_FEE_ETH"
+            );
         }
 
         taraAddressOnEth = vm.envAddress("TARA_ADDRESS_ON_ETH");
         console.log("TARA_ADDRESS_ON_ETH: %s", taraAddressOnEth);
         ethAddressOnTara = vm.envAddress("ETH_ADDRESS_ON_TARA");
         console.log("ETH_ADDRESS_ON_TARA: %s", ethAddressOnTara);
+        if (taraAddressOnEth == address(0) || ethAddressOnTara == address(0)) {
+            revert("Skipping deployment because TARA_ADDRESS_ON_ETH or ETH_ADDRESS_ON_TARA is not set");
+        }
     }
 
     function deployBLC() public {
@@ -99,7 +107,16 @@ contract TaraDeployer is Script {
     {
         taraBrigdeProxy = Upgrades.deployUUPSProxy(
             "TaraBridge.sol",
-            abi.encodeCall(TaraBridge.initialize, (IBridgeLightClient(_ethClientProxy), _finalizationInterval))
+            abi.encodeCall(
+                TaraBridge.initialize,
+                (
+                    IBridgeLightClient(_ethClientProxy),
+                    _finalizationInterval,
+                    FEE_MULTIPLIER_TARA,
+                    REGISTRATION_FEE_TARA,
+                    SETTLEMENT_FEE_TARA
+                )
+            )
         );
 
         console.log("TaraBridge.sol proxy address: %s", taraBrigdeProxy);
@@ -116,10 +133,11 @@ contract TaraDeployer is Script {
 
         uint256 finalizationInterval = 100;
 
-        address taraBrigdeProxy = deployTaraBridge(ethClientProxy, finalizationInterval);
+        address payable taraBrigdeProxy = payable(deployTaraBridge(ethClientProxy, finalizationInterval));
 
         address taraConnectorProxy = Upgrades.deployUUPSProxy(
-            "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (taraBrigdeProxy, taraAddressOnEth))
+            "NativeConnector.sol",
+            abi.encodeCall(NativeConnector.initialize, (TaraBridge(taraBrigdeProxy), taraAddressOnEth))
         );
 
         // Fund TaraConnector with 2 ETH
@@ -135,13 +153,13 @@ contract TaraDeployer is Script {
         );
 
         // Initialize TaraConnector
-        TaraBridge(taraBrigdeProxy).registerContract(IBridgeConnector(taraConnectorProxy));
+        TaraBridge(taraBrigdeProxy).registerContract{value: REGISTRATION_FEE_TARA}(IBridgeConnector(taraConnectorProxy));
 
         address ethMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
             abi.encodeCall(
                 ERC20MintingConnector.initialize,
-                (address(taraBrigdeProxy), TestERC20(ethAddressOnTara), Constants.NATIVE_TOKEN_ADDRESS)
+                (TaraBridge(taraBrigdeProxy), TestERC20(ethAddressOnTara), Constants.NATIVE_TOKEN_ADDRESS)
             )
         );
 
@@ -151,15 +169,10 @@ contract TaraDeployer is Script {
             Upgrades.getImplementationAddress(ethMintingConnectorProxy)
         );
 
-        // Fund TaraConnector with 2 ETH
-        (bool success2,) = payable(ethMintingConnectorProxy).call{value: 2 ether}("");
-
-        if (!success2) {
-            revert("Failed to fund the ethMintingConnectorProxy");
-        }
-
         // Initialize EthMintingConnectorProxy
-        TaraBridge(taraBrigdeProxy).registerContract(IBridgeConnector(ethMintingConnectorProxy));
+        TaraBridge(taraBrigdeProxy).registerContract{value: REGISTRATION_FEE_TARA}(
+            IBridgeConnector(ethMintingConnectorProxy)
+        );
 
         // give ownership of erc20 to the connector
         TestERC20(ethAddressOnTara).transferOwnership(ethMintingConnectorProxy);

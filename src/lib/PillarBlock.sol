@@ -2,10 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-struct CompactSignature {
-    bytes32 r;
-    bytes32 vs;
-}
+import {CompactSignature} from "./CompactSignature.sol";
 
 library PillarBlock {
     /**
