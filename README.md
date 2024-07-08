@@ -2,6 +2,8 @@
 
 Bridge smart contracts that allow users to move states between Ethereum and Taraxa chains.
 
+Generated Foundry smart contract specs are available at: https://taraxa-project.github.io/bridge/index.html
+
 ## Official Testnet Deployment
 
 At the end of June 2024, the bridge was deployed on the official Taraxa testnet and serves as an active avenue to bridge tokens from ETH Holes to TARA and vice versa.
