@@ -1,0 +1,10 @@
+@startuml REGISTER
+actor TokenDeployer
+
+TokenDeployer -> TARA: deploy the ERC20 token on Taraxa
+TokenDeployer -> TARA: deploy the ERC20LockingConnector on Taraxa and set the locking connector as the owner of the token contract
+TokenDeployer -> ETH: deploy an IERC20MintableBurnable token on Ethereum
+TokenDeployer -> ETH: deploy an ERC20MintingConnector on Ethereum and set the minting connector as the owner of the token contract
+TokenDeployer -> ETH: register the ERC20MintingConnector to the ETHBridge contract on Ethereum
+TokenDeployer -> TARA: register the ERC20LockingConnector to the TaraBridge contract on Taraxa
+@enduml

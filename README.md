@@ -2,15 +2,27 @@
 
 Bridge smart contracts that allow users to move states between Ethereum and Taraxa chains.
 
+## Official Testnet Deployment
+
+At the end of June 2024, the bridge was deployed on the official Taraxa testnet and serves as an active avenue to bridge tokens from ETH Holes to TARA and vice versa.
+
+You can find out more about the deployment details in the [TESTNET.md](TESTNET.md) file.
+
 ## Where to find important information
 
 - [DEPLOY.md](DEPLOY.md) - Deployment addresses
+- [FLOWS.md](FLOWS.md) - Description of main flows
 - [INTEGRATION.md](INTEGRATION.md) - Integration manual
 
 ### Main contracts
 
+- [BridgeBase.sol](src/lib/BridgeBase.sol)
 - [EthBridge.sol](src/eth/EthBridge.sol)
 - [TaraBridge.sol](src/tara/TaraBridge.sol)
+- [TokenConnectorLogic.sol](src/connectors/TokenConnectorLogic.sol)
+- [NativeConnector.sol](src/connectors/NativeConnector.sol)
+- [ERC20LockingConnector.sol](src/connectors/ERC20LockingConnector.sol)
+- [ERC20MintingConnector.sol](src/connectors/ERC20MintingConnector.sol)
 
 There are main contracts on both chains that are finalizing states(changes list) and applies state changes from the other chain. Changes are verified against the Bridge Root that is requested from the light clients and is verified against the other chain consensus.
 
@@ -44,14 +56,12 @@ Examples of connectors:
 - [ERC20LockingConnector.sol](./src/connectors/ERC20LockingConnector.sol)
 - [ERC20MintingConnector.sol](./src/connectors/ERC20MintingConnector.sol)
 
-## Foundry Documentation
+### Scripts
 
-https://book.getfoundry.sh/
-
-## Usage
-
-### Test
+The root [Makefile](./Makefile) contains a few useful commands that are used for development and testing.
 
 ```shell
-$ forge test --via-ir
+make test
 ```
+
+The [scripts folder](./scripts) contains a few useful scripts that are used for development, deployment, contract registration and testing.

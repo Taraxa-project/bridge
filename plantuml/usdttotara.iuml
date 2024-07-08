@@ -1,0 +1,11 @@
+@startuml USDT
+actor User
+
+User -> ERC20LockingConnector: lock USDT on ETH
+Relayer -> ETHBridge: finalizeState (collect TX-es on ETH into an epoch)
+Relayer -> TaraBridge: applyState (compressed epoch data)
+TaraBridge -> ETHClient: validate (with ETH state)
+loop over each user
+    TaraBridge -> ERC20MintingConnector: mint USDT on TARA to user's wallet
+end loop
+@enduml
