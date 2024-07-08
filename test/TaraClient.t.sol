@@ -251,4 +251,22 @@ contract TaraClientTest is Test {
             0x00ec94cd6076f5d010620194cc66952562bc3ba027026bdd156000479a7754b1
         );
     }
+
+    function test_epochCheck() public {
+        PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
+        currentBlock.block.epoch += 1;
+        blocks[0] = currentBlock;
+        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+    }
+
+    function test_revertOnFutureEpoch() public {
+        test_epochCheck();
+
+        PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
+        currentBlock.block.epoch += 2;
+        blocks[0] = currentBlock;
+
+        vm.expectRevert();
+        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+    }
 }

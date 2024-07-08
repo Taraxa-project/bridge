@@ -7,7 +7,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/prox
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import {Maths} from "../lib/Maths.sol";
-import {HashesNotMatching, InvalidBlockInterval, ThresholdNotMet} from "../errors/ClientErrors.sol";
+import {HashesNotMatching, InvalidBlockInterval, InvalidEpoch, ThresholdNotMet} from "../errors/ClientErrors.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 import {CompactSignature, PillarBlock} from "../lib/PillarBlock.sol";
 
@@ -92,6 +92,9 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
                     expected: finalized.block.period + pillarBlockInterval,
                     actual: blocks[i].block.period
                 });
+            }
+            if (finalized.block.epoch != blocks[i].block.epoch && finalized.block.epoch + 1 != blocks[i].block.epoch) {
+                revert InvalidEpoch({expected: finalized.block.epoch + 1, actual: blocks[i].block.epoch});
             }
 
             // this should be processed before the signatures verification to have a proper weights
