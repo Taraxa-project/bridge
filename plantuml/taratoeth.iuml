@@ -1,0 +1,11 @@
+@startuml TARA
+actor User
+
+User -> NativeConnector: lock in TARA
+Relayer -> TaraBridge: finalizeState (collect TX-es on TARA into an epoch)
+Relayer -> EthBridge: applyState (compressed epoch data)
+EthBridge -> TaraClient: validate (with ETH state)
+loop over each user
+    EthBridge -> ERC20MintingConnector: mint TARA on ETH to user's wallet
+end loop
+@enduml

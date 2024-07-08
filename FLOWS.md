@@ -4,18 +4,7 @@ This document describes setup, maintenance and user flows for the Ficus Bridge.
 
 ## General Flow & Setup Requirements
 
-```plantuml
-@startuml
-actor Relayer
-
-Relayer -> TaraClient: update state (from ETH state)
-Relayer -> EthClient: update state (from TARA state)
-Relayer -> TaraBridge: finalizeState (collect TX-es on TARA into an epoch)
-TaraBridge -> EthClient: validate (with ETH state)
-Relayer -> EthBridge: applyState (compressed epoch data)
-EthBridge -> TaraClient: validate (with ETH state)
-@enduml
-```
+![Setup Flow](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/Taraxa-project/bridge/master/plantuml/setup.iuml)
 
 The system is set up by 2 main contracts on both ends:
 
@@ -57,18 +46,7 @@ Once a registration is done, the bridge will be able to handle the bridging of t
 
 #### Connector registration for a token on TARA <> ETH
 
-```plantuml
-@startuml
-actor TokenDeployer
-
-TokenDeployer -> TARA: deploy the ERC20 token on Taraxa
-TokenDeployer -> TARA: deploy the ERC20LockingConnector on Taraxa and set the locking connector as the owner of the token contract
-TokenDeployer -> ETH: deploy an IERC20MintableBurnable token on Ethereum
-TokenDeployer -> ETH: deploy an ERC20MintingConnector on Ethereum and set the minting connector as the owner of the token contract
-TokenDeployer -> ETH: register the ERC20MintingConnector to the ETHBridge contract on Ethereum
-TokenDeployer -> TARA: register the ERC20LockingConnector to the TaraBridge contract on Taraxa
-@enduml
-```
+![Token Registration Flow](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/Taraxa-project/bridge/master/plantuml/registertoken.iuml)
 
 ### Setting up a connector
 
@@ -90,19 +68,7 @@ In order to make this happen, besides the classic building blocks, the bridge re
 
 ### Bridging TARA to ETH
 
-```plantuml
-@startuml
-actor User
-
-User -> NativeConnector: lock in TARA
-Relayer -> TaraBridge: finalizeState (collect TX-es on TARA into an epoch)
-Relayer -> EthBridge: applyState (compressed epoch data)
-EthBridge -> TaraClient: validate (with ETH state)
-loop over each user
-    EthBridge -> ERC20MintingConnector: mint TARA on ETH to user's wallet
-end loop
-@enduml
-```
+![TARA to ETH](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/Taraxa-project/bridge/master/plantuml/taratoeth.iuml)
 
 ## ERC20 Token Bridging
 
@@ -116,16 +82,4 @@ In order to make this happen, besides the classic building blocks, the bridge re
 
 ### Bridging USDT from ETH to TARA
 
-```plantuml
-@startuml
-actor User
-
-User -> ERC20LockingConnector: lock USDT on ETH
-Relayer -> ETHBridge: finalizeState (collect TX-es on ETH into an epoch)
-Relayer -> TaraBridge: applyState (compressed epoch data)
-TaraBridge -> ETHClient: validate (with ETH state)
-loop over each user
-    TaraBridge -> ERC20MintingConnector: mint USDT on TARA to user's wallet
-end loop
-@enduml
-```
+![USDT to TARA](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/Taraxa-project/bridge/master/plantuml/usdttotara.iuml)

@@ -1,0 +1,10 @@
+@startuml SETUP
+actor Relayer
+
+Relayer -> TaraClient: update state (from ETH state)
+Relayer -> EthClient: update state (from TARA state)
+Relayer -> TaraBridge: finalizeState (collect TX-es on TARA into an epoch)
+TaraBridge -> EthClient: validate (with ETH state)
+Relayer -> EthBridge: applyState (compressed epoch data)
+EthBridge -> TaraClient: validate (with ETH state)
+@enduml
