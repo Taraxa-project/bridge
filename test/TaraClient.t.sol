@@ -206,10 +206,6 @@ contract TaraClientTest is Test {
         changes[8] = PillarBlock.VoteCountChange(address(0xc2575a0E9E593c00f959F8C92f12dB2869C3395a), 997698769);
         changes[9] = PillarBlock.VoteCountChange(address(0x8a35AcfbC15Ff81A39Ae7d344fD709f28e8600B4), 465876798);
 
-        for (uint256 i = 0; i < changes.length; i++) {
-            console.logBytes32(keccak256(abi.encodePacked(i)));
-        }
-
         PillarBlock.WithChanges memory b = PillarBlock.WithChanges(
             PillarBlock.FinalizationData(11, bytes32(uint256(22)), bytes32(uint256(33)), bytes32(uint256(44)), 55),
             changes
