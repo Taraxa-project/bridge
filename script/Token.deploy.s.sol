@@ -27,9 +27,6 @@ contract TokenDeployer is Script {
         console.log("TestERC20 address: %s", address(te));
         address owner = te.owner();
         console.log("Owner: %s", owner);
-        te.transferOwnership(deployerAddress);
-        address newOwner = te.owner();
-        console.log("New owner: %s", newOwner);
 
         // call symbol to check if the token was deployed successfully
         string memory tokenSymbol = te.symbol();
