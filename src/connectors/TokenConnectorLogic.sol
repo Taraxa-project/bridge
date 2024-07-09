@@ -72,7 +72,8 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
     }
 
     function finalize(uint256 epoch_to_finalize) public virtual override onlyBridge returns (bytes32) {
-        if (epoch_to_finalize != state.epoch()) {
+        // if epoch == 0 then it is the first epoch for this connector and epoch sohuld be synced with the bridge contract
+        if (state.epoch() != 0 && epoch_to_finalize != state.epoch()) {
             revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
         }
 
