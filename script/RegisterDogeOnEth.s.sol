@@ -26,11 +26,6 @@ contract RegisterDogeOnEth is Script {
             console.log("Skipping deployment because PRIVATE_KEY is not set");
             return;
         }
-        // check if balance is at least 2 * MINIMUM_CONNECTOR_DEPOSIT
-        if (address(deployerAddress).balance < 2 * Constants.MINIMUM_CONNECTOR_DEPOSIT) {
-            console.log("Skipping deployment because balance is less than 2 * MINIMUM_CONNECTOR_DEPOSIT");
-            return;
-        }
 
         address payable ethBridgeAddress = payable(vm.envAddress("ETH_BRIDGE_ADDRESS"));
         console.log("ETH_BRIDGE_ADDRESS: %s", ethBridgeAddress);
