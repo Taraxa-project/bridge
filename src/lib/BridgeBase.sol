@@ -157,9 +157,9 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
             revert ConnectorAlreadyRegistered({connector: address(connector), token: srcContract});
         }
 
-        address owner = OwnableUpgradeable(address(connector)).owner();
-        if (owner != address(this)) {
-            revert IncorrectOwner(owner, address(this));
+        address connector_owner = OwnableUpgradeable(address(connector)).owner();
+        if (connector_owner != address(this)) {
+            revert IncorrectOwner(connector_owner, address(this));
         }
 
         connectors[srcContract] = connector;

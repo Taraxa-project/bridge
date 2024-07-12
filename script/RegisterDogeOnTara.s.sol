@@ -46,14 +46,15 @@ contract RegisterDogeOnTara is Script {
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
 
+        TestERC20 dogeToken = TestERC20(dogeAddressOnTara);
         // Deploy ERC20MintingConnector on TARA
         address dogeMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
-            abi.encodeCall(
-                ERC20MintingConnector.initialize, (taraBridge, TestERC20(dogeAddressOnTara), dogeAddressOnEth)
-            )
+            abi.encodeCall(ERC20MintingConnector.initialize, (taraBridge, dogeToken, dogeAddressOnEth))
         );
 
+        // Transfer token ownership to the MintingConnector
+        dogeToken.transferOwnership(dogeMintingConnectorProxy);
         console.log("ERC20MintingConnector.sol proxy address: %s", dogeMintingConnectorProxy);
         console.log(
             "ERC20MintingConnector.sol implementation address: %s",
