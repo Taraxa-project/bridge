@@ -79,6 +79,8 @@ echo "EthMintingConnector contract deployed to: $ethMintingConnectorProxy"
 currentTimestamp=$(date +%s)
 deploymentFile="./deployments/.tara.deployment.$currentTimestamp.json"
 
+echo "TARA_BRIDGE_ADDRESS=$taraBridgeProxy" >> .env
+
 echo "{" > $deploymentFile
 echo "  \"taradeploy-$currentTimestamp\": {" >> $deploymentFile
 echo "    \"RPC\": \"$RPC_FICUS_PRNET\"," >> $deploymentFile

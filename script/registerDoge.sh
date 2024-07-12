@@ -33,13 +33,12 @@ else
   dogeAddressOnEth=$(echo "$dogeDeploy" | grep "Deployed to:" | awk '{print $3}')
   echo "DOGE_ON_ETH=$dogeAddressOnEth" >> .env
 
-  echo "DOGE_ON_ETH is already set in .env, skipping deployment."
-  exit 0
+  echo "DOGE_ON_ETH deployed at $dogeAddressOnEth"
 fi
 
 
 
-  echo "Deploying DOGE synthetic token on $RPC_FICUS_PRNET"
+echo "Deploying DOGE synthetic token on $RPC_FICUS_PRNET"
 
 if [ ! -z "$DOGE_ON_TARA" ]; then
   echo "DOGE_ON_TARA is already set in .env, skipping deployment."

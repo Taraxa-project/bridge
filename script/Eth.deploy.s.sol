@@ -39,10 +39,10 @@ contract EthDeployer is Script {
         }
 
         taraAddressOnEth = vm.envAddress("TARA_ADDRESS_ON_ETH");
-        
+
         console.log("TARA_ADDRESS_ON_ETH: %s", taraAddressOnEth);
         ethAddressOnTara = vm.envAddress("ETH_ADDRESS_ON_TARA");
-        
+
         console.log("ETH_ADDRESS_ON_TARA: %s", ethAddressOnTara);
 
         if (ethAddressOnTara == address(0) || taraAddressOnEth == address(0)) {
