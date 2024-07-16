@@ -23,7 +23,7 @@ abstract contract ERC20LockingConnectorLogic is TokenConnectorLogic {
         Transfer[] memory transfers = decodeTransfers(_state);
         uint256 transfersLength = transfers.length;
         for (uint256 i = 0; i < transfersLength;) {
-            IERC20(token).transfer(transfers[i].account, transfers[i].amount);
+            IERC20(token).safeTransfer(transfers[i].account, transfers[i].amount);
             unchecked {
                 ++i;
             }
