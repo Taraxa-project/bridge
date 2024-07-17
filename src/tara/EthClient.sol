@@ -39,6 +39,7 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
             revert ZeroAddress("BeaconLightClient");
         }
         __UUPSUpgradeable_init();
+        __Ownable_init(msg.sender);
         bridgeRootsMappingPosition = 0x0000000000000000000000000000000000000000000000000000000000000002;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
