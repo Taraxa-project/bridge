@@ -7,7 +7,14 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/prox
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import {Maths} from "../lib/Maths.sol";
-import {HashesNotMatching, InvalidBlockInterval, InvalidEpoch, ThresholdNotMet} from "../errors/ClientErrors.sol";
+import {
+    HashesNotMatching,
+    InvalidBlockInterval,
+    InvalidEpoch,
+    ThresholdNotMet,
+    DuplicateSignatures,
+    SignaturesNotSorted
+} from "../errors/ClientErrors.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 import {CompactSignature, PillarBlock} from "../lib/PillarBlock.sol";
 
@@ -130,6 +137,16 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
     {
         uint256 signaturesLength = signatures.length;
         for (uint256 i = 0; i < signaturesLength; i++) {
+            if (i > 0) {
+                if (uint256(signatures[i - 1].r) == uint256(signatures[i].r)) {
+                    // this is some possibility of equal r part for different signatures, so we need to check the v part
+                    if (signatures[i - 1].vs == signatures[i].vs) {
+                        revert DuplicateSignatures(ECDSA.recover(h, signatures[i].r, signatures[i].vs));
+                    }
+                } else if (uint256(signatures[i - 1].r) < uint256(signatures[i].r)) {
+                    revert SignaturesNotSorted();
+                }
+            }
             address signer = ECDSA.recover(h, signatures[i].r, signatures[i].vs);
             weight += validatorVoteCounts[signer];
         }
