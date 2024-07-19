@@ -54,12 +54,11 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
         taraTestToken.approve(address(taraTestTokenConnector), value);
         vm.deal(address(this), value + settlementFee);
         taraTestTokenConnector.lock{value: value + settlementFee}(value);
-        // uint256 tokenBalanceBefore = ethTestToken.balanceOf(address(this));
 
         NativeConnector taraBridgeTokenConnector =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         vm.deal(address(this), value + settlementFee);
-        taraBridgeTokenConnector.lock{value: value + settlementFee}();
+        taraBridgeTokenConnector.lock{value: value + settlementFee}(value);
 
         vm.roll(2 * FINALIZATION_INTERVAL);
         vm.prank(caller);

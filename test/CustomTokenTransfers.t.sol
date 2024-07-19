@@ -77,7 +77,7 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         NativeConnector taraBridgeTokenConnector =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         vm.deal(address(caller), settlementFee + 1 ether);
-        taraBridgeTokenConnector.lock{value: value + settlementFee}();
+        taraBridgeTokenConnector.lock{value: value + settlementFee}(value);
 
         vm.roll(2 * FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
