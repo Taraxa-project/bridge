@@ -65,7 +65,7 @@ library PillarBlock {
     }
 
     function getVoteHash(WithChanges memory b) internal pure returns (bytes32) {
-        return keccak256(abi.encode(b.block.period, getHash(b)));
+        return getVoteHash(b.block.period + 1, getHash(b));
     }
 
     function getVoteHash(uint256 period, bytes32 bh) internal pure returns (bytes32) {
