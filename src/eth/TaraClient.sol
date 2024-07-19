@@ -109,7 +109,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
             // skip verification for the first(genesis) block. And verify signatures only for the last block in the batch
             if (finalized.block.period != 0 && i == (blocks.length - 1)) {
                 uint256 weight =
-                    getSignaturesWeight(PillarBlock.getVoteHash(blocks[i].block.period, pbh), lastBlockSigs);
+                    getSignaturesWeight(PillarBlock.getVoteHash(blocks[i].block.period + 1, pbh), lastBlockSigs);
                 if (weight < weightThreshold) {
                     revert ThresholdNotMet({threshold: weightThreshold, weight: weight});
                 }
