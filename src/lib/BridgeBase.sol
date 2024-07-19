@@ -147,9 +147,6 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         address srcContract = connector.getSourceContract();
         address dstContract = connector.getDestinationContract();
 
-        if (connectors[address(connector)] != IBridgeConnector(address(0))) {
-            return;
-        }
         if (srcContract == address(0)) {
             revert ZeroAddressCannotBeRegistered();
         }
