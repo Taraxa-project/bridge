@@ -4,6 +4,8 @@ pragma solidity ^0.8.17;
 
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
 
 import {SharedStructs} from "../lib/SharedStructs.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
@@ -21,7 +23,7 @@ import {
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 import {Receiver} from "./Receiver.sol";
 
-abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
+abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
     /// Mapping of connectors to their source and destination addresses
     mapping(address => IBridgeConnector) public connectors;
     /// Mapping of source and destination addresses to the connector address
@@ -83,6 +85,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         uint256 _settlementFee
     ) internal onlyInitializing {
         __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
         __Ownable_init(msg.sender);
         lightClient = _lightClient;
         finalizationInterval = _finalizationInterval;
@@ -169,7 +172,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
      * @dev Applies the given state with proof to the contracts.
      * @param state_with_proof The state with proof to be applied.
      */
-    function applyState(SharedStructs.StateWithProof calldata state_with_proof) public {
+    function applyState(SharedStructs.StateWithProof calldata state_with_proof) public nonReentrant {
         uint256 gasleftbefore = gasleft();
         // get bridge root from light client and compare it (it should be proved there)
         if (
@@ -184,6 +187,8 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         if (state_with_proof.state.epoch != appliedEpoch + 1) {
             revert NotSuccessiveEpochs({epoch: appliedEpoch, nextEpoch: state_with_proof.state.epoch});
         }
+        // increment applied epoch before applying the state to avoid reentrancy
+        ++appliedEpoch;
         uint256 statesLength = state_with_proof.state.states.length;
         uint256 idx = 0;
         while (idx < statesLength) {
@@ -217,7 +222,6 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
                 revert TransferFailed(msg.sender, payout);
             }
         }
-        ++appliedEpoch;
     }
 
     /**
@@ -238,7 +242,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     /**
      * @dev Finalizes the current epoch.
      */
-    function finalizeEpoch() public {
+    function finalizeEpoch() public nonReentrant {
         uint256 gasleftbefore = gasleft();
 
         if (block.number - lastFinalizedBlock < finalizationInterval) {
