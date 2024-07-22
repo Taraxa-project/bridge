@@ -13,7 +13,7 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
     address public token;
     address public otherNetworkAddress;
     TokenState public state;
-    TokenState public finalizedState;
+    bytes public finalizedState;
 
     /// Events
     event Finalized(uint256 indexed epoch);
@@ -64,24 +64,22 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
             revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
         }
 
-        // increase epoch if there are no pending transfers
-        if (state.empty() && address(finalizedState) != address(0) && finalizedState.empty()) {
-            state.increaseEpoch();
-            finalizedState.increaseEpoch();
+        Transfer[] memory transfers = state.getTransfers();
+        state.increaseEpoch();
+        // if no transfers was made, then the finalized state should be empty
+        if (transfers.length == 0) {
+            finalizedState = new bytes(0);
         } else {
-            finalizedState = state;
-            state = new TokenState(epoch_to_finalize + 1);
-        }
-        Transfer[] memory epochTransfers = finalizedState.getTransfers();
-        if (epochTransfers.length > 0) {
-            uint256 settlementFeesToForward = bridge.settlementFee() * epochTransfers.length;
+            finalizedState = abi.encode(transfers);
+            state.cleanup();
+            uint256 settlementFeesToForward = bridge.settlementFee() * transfers.length;
             (bool success,) = address(bridge).call{value: settlementFeesToForward}("");
             if (!success) {
                 revert TransferFailed(address(bridge), settlementFeesToForward);
             }
         }
         emit Finalized(epoch_to_finalize);
-        return keccak256(abi.encode(epochTransfers));
+        return keccak256(finalizedState);
     }
 
     /**
@@ -89,14 +87,7 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
      * @return A bytes serialized finalized state
      */
     function getFinalizedState() public view override returns (bytes memory) {
-        if (address(finalizedState) == address(0)) {
-            revert NoFinalizedState();
-        }
-
-        if (finalizedState.empty()) {
-            return new bytes(0);
-        }
-        return abi.encode(finalizedState.getTransfers());
+        return finalizedState;
     }
 
     /**

@@ -33,7 +33,7 @@ contract FeesTest is SymmetricTestSetup {
         vm.deal(sampleRelayer, 0.1 ether);
         uint256 balanceOfRelayerBefore = address(sampleRelayer).balance;
         vm.deal(address(taraBridge), 0 ether);
-        vm.txGasPrice(100000000 gwei);
+        vm.txGasPrice(1000000000 gwei);
         vm.prank(sampleRelayer);
         taraBridge.finalizeEpoch();
         uint256 balanceOfRelayerAfterEpoch = address(sampleRelayer).balance;
