@@ -45,7 +45,7 @@ contract EthBridgeV2 is BridgeBase {
         return newValue;
     }
 
-    function registerContractOwner(IBridgeConnector connector) public onlyOwner {
+    function registerConnectorOwner(IBridgeConnector connector) public onlyOwner {
         connectors[address(connector)] = connector;
         emit ConnectorRegistered(address(connector), connector.getSourceContract(), connector.getDestinationContract());
     }

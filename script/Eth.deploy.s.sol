@@ -104,14 +104,14 @@ contract EthDeployer is Script {
         TestERC20(taraAddressOnEth).transferOwnership(mintingConnectorProxy);
 
         // Add the connector to the bridge
-        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(IBridgeConnector(mintingConnectorProxy));
+        ethBridge.registerConnector{value: REGISTRATION_FEE_ETH}(IBridgeConnector(mintingConnectorProxy));
 
         // Instantiate and register the NativeConnector
         address nativeConnectorProxy = Upgrades.deployUUPSProxy(
             "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (ethBridge, ethAddressOnTara)), opts
         );
 
-        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(IBridgeConnector(nativeConnectorProxy));
+        ethBridge.registerConnector{value: REGISTRATION_FEE_ETH}(IBridgeConnector(nativeConnectorProxy));
         console.log("NativeConnector.sol proxy address: %s", nativeConnectorProxy);
         console.log(
             "NativeConnector.sol implementation address: %s", Upgrades.getImplementationAddress(nativeConnectorProxy)

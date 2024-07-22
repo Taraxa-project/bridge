@@ -31,7 +31,7 @@ contract OneSidedTokenRegistrationTest is SymmetricTestSetup {
 
         uint256 settlementFee = taraBridge.settlementFee();
         vm.deal(caller, REGISTRATION_FEE_TARA);
-        taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
+        taraBridge.registerConnector{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
         vm.deal(address(caller), 1 ether + settlementFee);
         taraTestTokenConnector.lock{value: 1 ether + settlementFee}(1 ether);
         vm.roll(FINALIZATION_INTERVAL);
