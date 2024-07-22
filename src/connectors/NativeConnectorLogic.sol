@@ -49,6 +49,9 @@ abstract contract NativeConnectorLogic is TokenConnectorLogic {
         if (lockingValue == 0) {
             revert ZeroValueCall();
         }
+
+        state.addAmount(msg.sender, amount);
+
         if (lockingValue < amount) {
             revert InsufficientFunds(amount, lockingValue);
         } else if (lockingValue > amount) {
@@ -58,7 +61,6 @@ abstract contract NativeConnectorLogic is TokenConnectorLogic {
                 revert TransferFailed(msg.sender, lockingValue - amount);
             }
         }
-        state.addAmount(msg.sender, amount);
         emit Locked(msg.sender, amount);
     }
 }
