@@ -184,6 +184,8 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         if (state_with_proof.state.epoch != appliedEpoch + 1) {
             revert NotSuccessiveEpochs({epoch: appliedEpoch, nextEpoch: state_with_proof.state.epoch});
         }
+        // increment applied epoch before applying the state to avoid reentrancy
+        ++appliedEpoch;
         uint256 statesLength = state_with_proof.state.states.length;
         uint256 idx = 0;
         while (idx < statesLength) {
@@ -217,7 +219,6 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
                 revert TransferFailed(msg.sender, payout);
             }
         }
-        ++appliedEpoch;
     }
 
     /**
