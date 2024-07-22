@@ -14,7 +14,7 @@ contract ConnectorRegistrationTest is SymmetricTestSetup {
         NativeConnector ethConnector2 = NativeConnector(payable(ethConnectorProxy));
         vm.deal(caller, REGISTRATION_FEE_ETH);
         vm.expectRevert();
-        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethConnector2);
+        ethBridge.registerConnector{value: REGISTRATION_FEE_ETH}(ethConnector2);
         vm.stopPrank();
     }
 }

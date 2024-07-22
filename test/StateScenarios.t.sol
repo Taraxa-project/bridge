@@ -30,9 +30,9 @@ contract StateScenarios is SymmetricTestSetup {
                 new ERC20MintingConnectorMock(ethBridge, erc20onEth, address(erc20onTara));
 
             vm.deal(caller, REGISTRATION_FEE_TARA);
-            taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
+            taraBridge.registerConnector{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
             vm.deal(caller, REGISTRATION_FEE_ETH);
-            ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
+            ethBridge.registerConnector{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
 
             // give 1000000 tokens to caller every time
             erc20onTara.mintTo(address(caller), 1000000 ether);
@@ -69,9 +69,9 @@ contract StateScenarios is SymmetricTestSetup {
                 new ERC20MintingConnectorMock(ethBridge, erc20onEth, address(erc20onTara));
 
             vm.deal(caller, REGISTRATION_FEE_TARA);
-            taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
+            taraBridge.registerConnector{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
             vm.deal(caller, REGISTRATION_FEE_ETH);
-            ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
+            ethBridge.registerConnector{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
 
             // give 1000 tokens to caller every time
             erc20onTara.mintTo(address(caller), 1000000 ether);

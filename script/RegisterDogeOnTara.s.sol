@@ -62,7 +62,7 @@ contract RegisterDogeOnTara is Script {
             revert("Failed to fund the MintingConnector");
         }
 
-        taraBridge.registerContract{value: taraBridge.registrationFee()}(IBridgeConnector(dogeMintingConnectorProxy));
+        taraBridge.registerConnector{value: taraBridge.registrationFee()}(IBridgeConnector(dogeMintingConnectorProxy));
 
         vm.stopBroadcast();
     }

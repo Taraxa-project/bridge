@@ -45,7 +45,7 @@ contract UpgradeabilityTest is SymmetricTestSetup {
         console.log("Caller: ", caller3);
         vm.startPrank(caller3);
         vm.expectRevert();
-        upgradedBridge.registerContractOwner(IBridgeConnector(newNativeConnectorProxy));
+        upgradedBridge.registerConnectorOwner(IBridgeConnector(newNativeConnectorProxy));
         vm.stopPrank();
     }
 
