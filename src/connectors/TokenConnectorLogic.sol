@@ -2,15 +2,8 @@
 
 pragma solidity ^0.8.17;
 
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import {TransferFailed, InsufficientFunds} from "../errors/CommonErrors.sol";
 import {NotBridge, InvalidEpoch, NoFinalizedState} from "../errors/ConnectorErrors.sol";
-import {SharedStructs} from "../lib/SharedStructs.sol";
-import {Constants} from "../lib/Constants.sol";
 import {TokenState, Transfer} from "./TokenState.sol";
 import {BridgeBase} from "../lib/BridgeBase.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";

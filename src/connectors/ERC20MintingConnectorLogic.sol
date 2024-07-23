@@ -4,7 +4,6 @@ pragma solidity ^0.8.17;
 
 import {InsufficientFunds} from "../errors/CommonErrors.sol";
 import {ZeroValueCall} from "../errors/ConnectorErrors.sol";
-import {SharedStructs} from "../lib/SharedStructs.sol";
 
 import {Transfer} from "./TokenState.sol";
 import {TokenConnectorLogic} from "./TokenConnectorLogic.sol";

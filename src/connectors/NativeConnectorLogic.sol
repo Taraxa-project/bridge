@@ -3,9 +3,7 @@ pragma solidity ^0.8.17;
 
 import {ZeroValueCall} from "../errors/ConnectorErrors.sol";
 import {TransferFailed, InsufficientFunds} from "../errors/CommonErrors.sol";
-import {SharedStructs} from "../lib/SharedStructs.sol";
 import {TokenConnectorLogic} from "./TokenConnectorLogic.sol";
-import {Constants} from "../lib/Constants.sol";
 import {Transfer} from "../connectors/TokenState.sol";
 
 abstract contract NativeConnectorLogic is TokenConnectorLogic {
