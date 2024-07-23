@@ -32,7 +32,8 @@ contract TaraDeployer is Script {
     BeaconLightClient beaconClient;
 
     uint256 constant FINALIZATION_INTERVAL = 1000;
-    uint256 constant FEE_MULTIPLIER_TARA = 105;
+    uint256 constant FEE_MULTIPLIER_TARA_FINALIZE = 105;
+    uint256 constant FEE_MULTIPLIER_TARA_APPLY = 205;
     uint256 constant REGISTRATION_FEE_TARA = 1 ether;
     uint256 constant SETTLEMENT_FEE_TARA = 500 gwei;
 
@@ -112,7 +113,8 @@ contract TaraDeployer is Script {
                 (
                     IBridgeLightClient(_ethClientProxy),
                     _finalizationInterval,
-                    FEE_MULTIPLIER_TARA,
+                    FEE_MULTIPLIER_TARA_FINALIZE,
+                    FEE_MULTIPLIER_TARA_APPLY,
                     REGISTRATION_FEE_TARA,
                     SETTLEMENT_FEE_TARA
                 )

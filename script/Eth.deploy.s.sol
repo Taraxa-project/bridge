@@ -22,7 +22,8 @@ contract EthDeployer is Script {
 
     uint256 constant PILLAR_BLOCK_INTERVAL = 1000;
     uint256 constant FINALIZATION_INTERVAL = 1000;
-    uint256 constant FEE_MULTIPLIER_ETH = 101;
+    uint256 constant FEE_MULTIPLIER_ETH_FINALIZE = 101;
+    uint256 constant FEE_MULTIPLIER_ETH_APPLY = 201;
     uint256 constant REGISTRATION_FEE_ETH = 0.001 ether;
     uint256 constant SETTLEMENT_FEE_ETH = 5 gwei;
 
@@ -70,7 +71,8 @@ contract EthDeployer is Script {
                 (
                     IBridgeLightClient(taraClientProxy),
                     FINALIZATION_INTERVAL,
-                    FEE_MULTIPLIER_ETH,
+                    FEE_MULTIPLIER_ETH_FINALIZE,
+                    FEE_MULTIPLIER_ETH_APPLY,
                     REGISTRATION_FEE_ETH,
                     SETTLEMENT_FEE_ETH
                 )

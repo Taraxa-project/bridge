@@ -14,12 +14,18 @@ contract EthBridgeV2 is BridgeBase {
     function initialize(
         IBridgeLightClient _light_client,
         uint256 _finalizationInterval,
-        uint256 _feeMultiplier,
+        uint256 _feeMultiplierFinalize,
+        uint256 _feeMultiplierApply,
         uint256 _registrationFee,
         uint256 _settlementFee
     ) public initializer {
         __initialize_EthBridge_unchained(
-            _light_client, _feeMultiplier, _registrationFee, _settlementFee, _finalizationInterval
+            _light_client,
+            _feeMultiplierFinalize,
+            _feeMultiplierApply,
+            _registrationFee,
+            _settlementFee,
+            _finalizationInterval
         );
     }
 
@@ -29,12 +35,20 @@ contract EthBridgeV2 is BridgeBase {
 
     function __initialize_EthBridge_unchained(
         IBridgeLightClient light_client,
-        uint256 _feeMultiplier,
+        uint256 _feeMultiplierFinalize,
+        uint256 _feeMultiplierApply,
         uint256 _registrationFee,
         uint256 _settlementFee,
         uint256 _finalizationInterval
     ) internal onlyInitializing {
-        __BridgeBase_init(light_client, _finalizationInterval, _feeMultiplier, _registrationFee, _settlementFee);
+        __BridgeBase_init(
+            light_client,
+            _finalizationInterval,
+            _feeMultiplierFinalize,
+            _feeMultiplierApply,
+            _registrationFee,
+            _settlementFee
+        );
     }
 
     function getNewStorageValue() public view returns (uint256) {
