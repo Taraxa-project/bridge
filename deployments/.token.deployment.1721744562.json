@@ -1,8 +1,8 @@
 {
-  "tokendeploy-1719841164": {
+  "tokendeploy-1721744562": {
     "TARA": {
-      "address": "0x6d13fbC0E1D86C2A6e99d2E61582981Ab77B8737",
-      "RPC": "https://holesky.drpc.org"
+      "address": "0x7E6676e36D60B187fF8453Fa0D53F6f0CBCf358B",
+      "RPC": "http://127.0.0.1:8545"
     },
     "ETH": {
       "address": "0xdB0698D2c8FbE2C3c36941ccEC488834BbcAf151",

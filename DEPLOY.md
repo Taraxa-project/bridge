@@ -38,7 +38,7 @@ All commands that you need to deploy the bridge are in the `Makefile` but to dep
 
 ```bash
     make tokens-deploy
-    make eth-delpoy
+    make eth-deploy
     make tara-deploy
 ```
 
@@ -52,14 +52,38 @@ Last deployments are stored in the `deployments` folder.
 
 ## Deployment Details
 
-### Deployment from ./deployments/.token.deployment.1719603507.json
-
+### Deployment from ./deployments/.eth.deployment.1721744738.json
 ```json
 {
-  "tokendeploy-1719841164": {
+  "ethdeploy-1721744738": {
+    "RPC": "http://127.0.0.1:8545",
+    "TaraClient": {
+      "implAddress": "0x1833FC66B62Ac041792010F2ab5Ec286CeA7268D",
+      "proxyAddress": "0x81f2A5BEB025461F8F4ed88Db1a37C642C3D769A"
+    },
+    "EthBridge": {
+      "implAddress": "0x443E0B28A9f74c79B969B29560929558E1bC6113",
+      "proxyAddress": "0x19934742B3EC8e647Bfd0fB4f3e39630d44a4978"
+    },
+    "ERC20MintingConnector": {
+      "implAddress": "0x1bcFE19B3e0AC93fBc28676b2D5cFc6E5a018fDF",
+      "proxyAddress": "0x65562b866d50FEb5f9CE282c1D09d49e4897a5b0"
+    },
+    "NativeConnector": {
+      "implAddress": "0x55d5AD3F575f145a73bD46649b8D24344b6c803C",
+      "proxyAddress": "0xaA7c342CFA5AaB0edd4e2d66C33E7DB42E633230"
+    }
+  }
+}
+```
+
+### Deployment from ./deployments/.token.deployment.1721744562.json
+```json
+{
+  "tokendeploy-1721744562": {
     "TARA": {
-      "address": "0x6d13fbC0E1D86C2A6e99d2E61582981Ab77B8737",
-      "RPC": "https://holesky.drpc.org"
+      "address": "0x7E6676e36D60B187fF8453Fa0D53F6f0CBCf358B",
+      "RPC": "http://127.0.0.1:8545"
     },
     "ETH": {
       "address": "0xdB0698D2c8FbE2C3c36941ccEC488834BbcAf151",
@@ -69,37 +93,10 @@ Last deployments are stored in the `deployments` folder.
 }
 ```
 
-### Deployment from ./deployments/.eth.deployment.1719603507.json
-
+### Deployment from ./deployments/.tara.deployment.1721744970.json
 ```json
 {
-  "ethdeploy-1719841807": {
-    "RPC": "https://holesky.drpc.org",
-    "TaraClient": {
-      "implAddress": "0xFbe6471D41b6daC926a0c894cb2Ef4E0dDd11147",
-      "proxyAddress": "0x68bb3555Dc111095f0678bBA4fF0A01aeA362eA1"
-    },
-    "EthBridge": {
-      "implAddress": "0x68164775E80D46E9bf80367C588E67ea38eCCcAE",
-      "proxyAddress": "0xef0541F2255F7621A3AFf56D8732eE02BC9dACed"
-    },
-    "ERC20MintingConnector": {
-      "implAddress": "0xE519805ACE4F4D839efB6AF9a165FEB7f34500D7",
-      "proxyAddress": "0x733E769d6E949caD4377d3496791D20aC54D2Cd1"
-    },
-    "NativeConnector": {
-      "implAddress": "0x694Aaced0945Be71A1eDa958a09fcf44999384dE",
-      "proxyAddress": "0x2236a5ac653BBc653430Ce0920c61273BB1eA76B"
-    }
-  }
-}
-```
-
-### Deployment from ./deployments/.tara.deployment.1719604246.json
-
-```json
-{
-  "taradeploy-1719841927": {
+  "taradeploy-1721744970": {
     "RPC": "https://rpc.testnet.taraxa.io",
     "BeaconLightClient": "0x3BBdc66Fa7eb51259Da29909529b65232c184519",
     "EthClient": {
@@ -121,3 +118,4 @@ Last deployments are stored in the `deployments` folder.
   }
 }
 ```
+

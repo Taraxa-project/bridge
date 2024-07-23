@@ -1,0 +1,21 @@
+{
+  "ethdeploy-1721744738": {
+    "RPC": "http://127.0.0.1:8545",
+    "TaraClient": {
+      "implAddress": "0x1833FC66B62Ac041792010F2ab5Ec286CeA7268D",
+      "proxyAddress": "0x81f2A5BEB025461F8F4ed88Db1a37C642C3D769A"
+    },
+    "EthBridge": {
+      "implAddress": "0x443E0B28A9f74c79B969B29560929558E1bC6113",
+      "proxyAddress": "0x19934742B3EC8e647Bfd0fB4f3e39630d44a4978"
+    },
+    "ERC20MintingConnector": {
+      "implAddress": "0x1bcFE19B3e0AC93fBc28676b2D5cFc6E5a018fDF",
+      "proxyAddress": "0x65562b866d50FEb5f9CE282c1D09d49e4897a5b0"
+    },
+    "NativeConnector": {
+      "implAddress": "0x55d5AD3F575f145a73bD46649b8D24344b6c803C",
+      "proxyAddress": "0xaA7c342CFA5AaB0edd4e2d66C33E7DB42E633230"
+    }
+  }
+}
