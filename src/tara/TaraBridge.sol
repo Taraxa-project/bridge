@@ -8,10 +8,18 @@ contract TaraBridge is BridgeBase {
     function initialize(
         IBridgeLightClient _lightClient,
         uint256 _finalizationInterval,
-        uint256 _feeMultiplier,
+        uint256 _feeMultiplierFinalize,
+        uint256 _feeMultiplierApply,
         uint256 _registrationFee,
         uint256 _settlementFee
     ) public initializer {
-        __BridgeBase_init(_lightClient, _finalizationInterval, _feeMultiplier, _registrationFee, _settlementFee);
+        __BridgeBase_init(
+            _lightClient,
+            _finalizationInterval,
+            _feeMultiplierFinalize,
+            _feeMultiplierApply,
+            _registrationFee,
+            _settlementFee
+        );
     }
 }

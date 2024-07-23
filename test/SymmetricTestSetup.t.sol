@@ -26,8 +26,10 @@ contract SymmetricTestSetup is Test {
 
     address caller = vm.addr(0x1234);
     uint256 constant FINALIZATION_INTERVAL = 100;
-    uint256 constant FEE_MULTIPLIER_ETH = 110;
-    uint256 constant FEE_MULTIPLIER_TARA = 110;
+    uint256 constant FEE_MULTIPLIER_ETH_FINALIZE = 110;
+    uint256 constant FEE_MULTIPLIER_ETH_APPLY = 210;
+    uint256 constant FEE_MULTIPLIER_TARA_FINALIZE = 110;
+    uint256 constant FEE_MULTIPLIER_TARA_APPLY = 210;
     uint256 constant REGISTRATION_FEE_ETH = 2 ether;
     uint256 constant REGISTRATION_FEE_TARA = 950432 ether;
     uint256 constant SETTLEMENT_FEE_ETH = 500 gwei;
@@ -48,7 +50,14 @@ contract SymmetricTestSetup is Test {
             "TaraBridge.sol",
             abi.encodeCall(
                 TaraBridge.initialize,
-                (ethLightClient, FINALIZATION_INTERVAL, FEE_MULTIPLIER_TARA, REGISTRATION_FEE_TARA, SETTLEMENT_FEE_TARA)
+                (
+                    ethLightClient,
+                    FINALIZATION_INTERVAL,
+                    FEE_MULTIPLIER_TARA_FINALIZE,
+                    FEE_MULTIPLIER_TARA_APPLY,
+                    REGISTRATION_FEE_TARA,
+                    SETTLEMENT_FEE_TARA
+                )
             )
         );
         taraBridge = TaraBridge(payable(taraBridgeProxy));
@@ -56,7 +65,14 @@ contract SymmetricTestSetup is Test {
             "EthBridge.sol",
             abi.encodeCall(
                 EthBridge.initialize,
-                (taraLightClient, FINALIZATION_INTERVAL, FEE_MULTIPLIER_ETH, REGISTRATION_FEE_ETH, SETTLEMENT_FEE_ETH)
+                (
+                    taraLightClient,
+                    FINALIZATION_INTERVAL,
+                    FEE_MULTIPLIER_ETH_FINALIZE,
+                    FEE_MULTIPLIER_ETH_APPLY,
+                    REGISTRATION_FEE_ETH,
+                    SETTLEMENT_FEE_ETH
+                )
             )
         );
         ethBridge = EthBridge(payable(ethBridgeProxy));
