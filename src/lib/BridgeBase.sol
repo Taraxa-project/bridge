@@ -40,8 +40,10 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     uint256 public finalizationInterval;
     /// The block number of the last finalized epoch
     uint256 public lastFinalizedBlock;
-    /// This multiplier is used to calculate the proper part of the relaying cost for bridging actions(state finalization vs aplying state)
-    uint256 public feeMultiplier;
+    /// This multiplier is used to calculate the proper part of the relaying cost for bridging actions(state finalization)
+    uint256 public feeMultiplierFinalize;
+    /// This multiplier is used to calculate the proper part of the relaying cost for bridging actions(state application)
+    uint256 public feeMultiplierApply;
     /// Global connector registration fee. Connectors must pay this fee to register
     uint256 public registrationFee;
     /// Global transaction settlement fee. Connector must pay `settlementFee * numberOfTransactions` to settle the transaction
@@ -66,19 +68,26 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     function __BridgeBase_init(
         IBridgeLightClient _lightClient,
         uint256 _finalizationInterval,
-        uint256 _feeMultiplier,
+        uint256 _feeMultiplierFinalize,
+        uint256 _feeMultiplierApply,
         uint256 _registrationFee,
         uint256 _settlementFee
     ) internal onlyInitializing {
         __BridgeBase_init_unchained(
-            _lightClient, _finalizationInterval, _feeMultiplier, _registrationFee, _settlementFee
+            _lightClient,
+            _finalizationInterval,
+            _feeMultiplierFinalize,
+            _feeMultiplierApply,
+            _registrationFee,
+            _settlementFee
         );
     }
 
     function __BridgeBase_init_unchained(
         IBridgeLightClient _lightClient,
         uint256 _finalizationInterval,
-        uint256 _feeMultiplier,
+        uint256 _feeMultiplierFinalize,
+        uint256 _feeMultiplierApply,
         uint256 _registrationFee,
         uint256 _settlementFee
     ) internal onlyInitializing {
@@ -86,12 +95,31 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         __Ownable_init(msg.sender);
         lightClient = _lightClient;
         finalizationInterval = _finalizationInterval;
-        feeMultiplier = _feeMultiplier;
+        feeMultiplierFinalize = _feeMultiplierFinalize;
+        feeMultiplierApply = _feeMultiplierApply;
         registrationFee = _registrationFee;
         settlementFee = _settlementFee;
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    /**
+     * @dev Sets the fee multiplier for finalizing epochs.
+     * @param _feeMultiplierFinalize The fee multiplier for finalizing epochs.
+     * @notice Only the owner can call this function.
+     */
+    function setFeeMultiplierFinalize(uint256 _feeMultiplierFinalize) public onlyOwner {
+        feeMultiplierFinalize = _feeMultiplierFinalize;
+    }
+
+    /**
+     * @dev Sets the fee multiplier for applying epochs.
+     * @param _feeMultiplierApply The fee multiplier for applying epochs.
+     * @notice Only the owner can call this function.
+     */
+    function setFeeMultiplierApply(uint256 _feeMultiplierApply) public onlyOwner {
+        feeMultiplierApply = _feeMultiplierApply;
+    }
 
     /**
      * @dev Sets the finalization interval.
@@ -202,7 +230,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
             }
         }
         uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
-        uint256 payout = used * feeMultiplier / 100;
+        uint256 payout = used * feeMultiplierApply / 100;
         if (address(this).balance >= payout) {
             (bool success,) = payable(msg.sender).call{value: payout}("");
             if (!success) {
@@ -284,7 +312,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         bridgeRoots[finalizedEpoch] = SharedStructs.getBridgeRoot(finalizedEpoch, finalHashes);
 
         uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
-        uint256 payout = used * feeMultiplier / 100;
+        uint256 payout = used * feeMultiplierFinalize / 100;
         if (address(this).balance > payout) {
             (bool success,) = payable(msg.sender).call{value: payout}("");
             if (!success) {
