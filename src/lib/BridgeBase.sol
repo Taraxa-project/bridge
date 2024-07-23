@@ -122,6 +122,15 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
+     * @dev Sets the settlement fee.
+     * @param _settlementFee The settlement fee to be set.
+     * @notice Only the owner can call this function.
+     */
+    function setSettlementFee(uint256 _settlementFee) public onlyOwner {
+        settlementFee = _settlementFee;
+    }
+
+    /**
      * @dev Sets the finalization interval.
      * @param _finalizationInterval The finalization interval to be set.
      * @notice Only the owner can call this function.
