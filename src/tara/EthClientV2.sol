@@ -18,8 +18,6 @@ contract EthClientV2 is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable 
     uint256 public lastEpoch;
     mapping(uint256 => bytes32) bridgeRoots;
 
-    uint256 refund;
-
     /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
     /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
     uint256[49] __gap;

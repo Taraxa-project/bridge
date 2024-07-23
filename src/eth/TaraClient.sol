@@ -32,7 +32,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
     uint256[49] __gap;
 
     /// Events
-    event BlockFinalized(PillarBlock.FinalizedBlock finalized);
+    event BlockFinalized(PillarBlock.FinalizedBlock indexed finalized);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {

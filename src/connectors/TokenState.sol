@@ -13,8 +13,8 @@ struct Transfer {
 
 contract TokenState is Ownable {
     uint256 public epoch;
-    address[] accounts;
-    mapping(address => uint256) balances;
+    address[] public accounts;
+    mapping(address => uint256) public balances;
 
     /// Events
     event TransferAdded(address indexed account, uint256 amount);

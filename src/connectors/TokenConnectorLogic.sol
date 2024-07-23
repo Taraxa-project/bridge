@@ -14,15 +14,9 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
     address public otherNetworkAddress;
     TokenState public state;
     TokenState public finalizedState;
-    mapping(address => uint256) public toClaim;
-    mapping(address => uint256) public feeToClaim;
 
     /// Events
-    event Funded(address indexed sender, address indexed connectorBase, uint256 amount);
-    event Refunded(address indexed receiver, uint256 amount);
     event Finalized(uint256 indexed epoch);
-    event ClaimAccrued(address indexed account, uint256 value);
-    event Claimed(address indexed account, uint256 value);
 
     modifier onlySettled() {
         uint256 fee = estimateSettlementFee(msg.sender);

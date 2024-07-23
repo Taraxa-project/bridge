@@ -2,7 +2,6 @@
 pragma solidity ^0.8.17;
 
 import {IBridgeLightClient} from "../../src/lib/IBridgeLightClient.sol";
-import {Constants} from "../../src/lib/Constants.sol";
 import {BridgeBase} from "../../src/lib/BridgeBase.sol";
 
 /// @custom:oz-upgrades-from TaraBridge
