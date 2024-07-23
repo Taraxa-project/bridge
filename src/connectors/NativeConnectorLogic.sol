@@ -3,9 +3,7 @@ pragma solidity ^0.8.17;
 
 import {ZeroValueCall} from "../errors/ConnectorErrors.sol";
 import {TransferFailed, InsufficientFunds} from "../errors/CommonErrors.sol";
-import {SharedStructs} from "../lib/SharedStructs.sol";
 import {TokenConnectorLogic} from "./TokenConnectorLogic.sol";
-import {Constants} from "../lib/Constants.sol";
 import {Transfer} from "../connectors/TokenState.sol";
 
 abstract contract NativeConnectorLogic is TokenConnectorLogic {
@@ -34,13 +32,13 @@ abstract contract NativeConnectorLogic is TokenConnectorLogic {
      * @dev Locks the specified amount of tokens to transfer them to the other network.
      * @notice This function is payable, meaning it can receive TARA.
      */
-    function lock() public payable {
+    function lock(uint256 amount) public payable {
         uint256 fee = bridge.settlementFee();
         uint256 lockingValue = msg.value;
 
         // Charge the fee only if the user has no balance in current state
         if (!state.hasBalance(msg.sender)) {
-            if (msg.value < fee) {
+            if (lockingValue < fee) {
                 revert InsufficientFunds(fee, lockingValue);
             }
             lockingValue -= fee;
@@ -49,7 +47,18 @@ abstract contract NativeConnectorLogic is TokenConnectorLogic {
         if (lockingValue == 0) {
             revert ZeroValueCall();
         }
-        state.addAmount(msg.sender, lockingValue);
-        emit Locked(msg.sender, lockingValue);
+
+        state.addAmount(msg.sender, amount);
+
+        if (lockingValue < amount) {
+            revert InsufficientFunds(amount, lockingValue);
+        } else if (lockingValue > amount) {
+            (bool success,) = msg.sender.call{value: lockingValue - amount}("");
+            // shouldn't really fail, but just in case
+            if (!success) {
+                revert TransferFailed(msg.sender, lockingValue - amount);
+            }
+        }
+        emit Locked(msg.sender, amount);
     }
 }

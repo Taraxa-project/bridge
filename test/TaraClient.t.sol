@@ -82,6 +82,18 @@ contract TaraClientTest is Test {
         return CompactSignature(r, (bytes32(uint256(v)) << 255) | s);
     }
 
+    function sortSignatures(CompactSignature[] memory signatures) public pure returns (CompactSignature[] memory) {
+        // sort signatures
+        for (uint256 i = 0; i < signatures.length; i++) {
+            for (uint256 j = i + 1; j < signatures.length; j++) {
+                if (signatures[i].r < signatures[j].r) {
+                    (signatures[i], signatures[j]) = (signatures[j], signatures[i]);
+                }
+            }
+        }
+        return signatures;
+    }
+
     function getSignatures(uint32 count) public view returns (CompactSignature[] memory signatures) {
         signatures = new CompactSignature[](count);
         for (uint32 i = 0; i < count; i++) {
@@ -89,6 +101,11 @@ contract TaraClientTest is Test {
             CompactSignature memory sig = getCompactSig(pk, PillarBlock.getVoteHash(currentBlock));
             signatures[uint256(i)] = sig;
         }
+    }
+
+    function getSortedSignatures(uint32 count) public view returns (CompactSignature[] memory signatures) {
+        signatures = getSignatures(count);
+        return sortSignatures(signatures);
     }
 
     function getTotalWeight(PillarBlock.WithChanges memory validatorBlock) public pure returns (uint256 totalWeight) {
@@ -106,7 +123,7 @@ contract TaraClientTest is Test {
     function test_signatures() public view {
         uint32 signatures_count = 200;
         uint256 weight =
-            client.getSignaturesWeight(PillarBlock.getVoteHash(currentBlock), getSignatures(signatures_count));
+            client.getSignaturesWeight(PillarBlock.getVoteHash(currentBlock), getSortedSignatures(signatures_count));
         assertEq(weight, uint256(signatures_count));
     }
 
@@ -129,7 +146,7 @@ contract TaraClientTest is Test {
         }
         blocks[0] = currentBlock;
 
-        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+        client.finalizeBlocks(blocks, getSortedSignatures(PILLAR_BLOCK_THRESHOLD));
         (bytes32 blockHash,, uint256 finalizedAt) = client.finalized();
         assertEq(blockHash, PillarBlock.getHash(currentBlock));
         assertEq(finalizedAt, block.number);
@@ -142,7 +159,7 @@ contract TaraClientTest is Test {
         currentBlock.block.period += 1;
 
         vm.expectRevert();
-        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+        client.finalizeBlocks(blocks, getSortedSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
     function makePillarChain(uint256 count) public returns (PillarBlock.WithChanges[] memory blocks) {
@@ -159,7 +176,7 @@ contract TaraClientTest is Test {
         updateCurrentBlockVoteChanges(getVoteCountChanges());
         PillarBlock.WithChanges[] memory blocks = makePillarChain(10);
 
-        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+        client.finalizeBlocks(blocks, getSortedSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
     function test_rejectBatchWithWrongPrevHash() public {
@@ -169,7 +186,7 @@ contract TaraClientTest is Test {
         blocks[3].block.prevHash = bytes32(0);
 
         vm.expectRevert();
-        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+        client.finalizeBlocks(blocks, getSortedSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
     function test_rejectBatchWithWrongSignatures() public {
@@ -179,7 +196,7 @@ contract TaraClientTest is Test {
         // set some block in the middle to create signatures for
         currentBlock.block = blocks[3].block;
         vm.expectRevert();
-        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+        client.finalizeBlocks(blocks, getSortedSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
     function test_weightChanges() public {
@@ -252,7 +269,7 @@ contract TaraClientTest is Test {
         PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
         currentBlock.block.epoch += 1;
         blocks[0] = currentBlock;
-        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+        client.finalizeBlocks(blocks, getSortedSignatures(PILLAR_BLOCK_THRESHOLD));
     }
 
     function test_revertOnFutureEpoch() public {
@@ -263,6 +280,25 @@ contract TaraClientTest is Test {
         blocks[0] = currentBlock;
 
         vm.expectRevert();
-        client.finalizeBlocks(blocks, getSignatures(PILLAR_BLOCK_THRESHOLD));
+        client.finalizeBlocks(blocks, getSortedSignatures(PILLAR_BLOCK_THRESHOLD));
+    }
+
+    function test_SignaturesNotSorted() public {
+        PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
+        blocks[0] = currentBlock;
+
+        CompactSignature[] memory signatures = getSignatures(PILLAR_BLOCK_THRESHOLD);
+        vm.expectRevert();
+        client.finalizeBlocks(blocks, signatures);
+    }
+
+    function test_DuplicateSignatures() public {
+        PillarBlock.WithChanges[] memory blocks = new PillarBlock.WithChanges[](1);
+        blocks[0] = currentBlock;
+
+        CompactSignature[] memory signatures = getSignatures(PILLAR_BLOCK_THRESHOLD);
+        signatures[1] = signatures[0];
+        vm.expectRevert();
+        client.finalizeBlocks(blocks, signatures);
     }
 }

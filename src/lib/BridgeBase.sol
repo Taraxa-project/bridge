@@ -22,7 +22,7 @@ import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
 import {Receiver} from "./Receiver.sol";
 
 abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
-    /// Mapping of connectors to their source and destination addresses
+    /// Mapping of connectors to the token address
     mapping(address => IBridgeConnector) public connectors;
     /// Mapping of source and destination addresses to the connector address
     mapping(address => address) public localAddress;
@@ -164,19 +164,11 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         return bridgeRoots[finalizedEpoch];
     }
 
-    function isContract(address addr) internal view returns (bool) {
-        uint256 size;
-        assembly {
-            size := extcodesize(addr)
-        }
-        return size > 0;
-    }
-
     /**
      * @dev Registers a contract with the EthBridge by providing a connector contract.
      * @param connector The address of the connector contract.
      */
-    function registerContract(IBridgeConnector connector) public payable {
+    function registerConnector(IBridgeConnector connector) public payable {
         if (msg.value < registrationFee) {
             revert InsufficientFunds(registrationFee, msg.value);
         }
@@ -184,9 +176,6 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         address srcContract = connector.getSourceContract();
         address dstContract = connector.getDestinationContract();
 
-        if (connectors[address(connector)] != IBridgeConnector(address(0))) {
-            return;
-        }
         if (srcContract == address(0)) {
             revert ZeroAddressCannotBeRegistered();
         }
@@ -224,6 +213,8 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         if (state_with_proof.state.epoch != appliedEpoch + 1) {
             revert NotSuccessiveEpochs({epoch: appliedEpoch, nextEpoch: state_with_proof.state.epoch});
         }
+        // increment applied epoch before applying the state to avoid reentrancy
+        ++appliedEpoch;
         uint256 statesLength = state_with_proof.state.states.length;
         uint256 idx = 0;
         while (idx < statesLength) {
@@ -237,13 +228,11 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
             }
             bytes32 stateHash = keccak256(state.state);
             if (stateHash != proofStateHash.stateHash) {
-                unchecked {
-                    ++idx;
-                }
                 revert InvalidStateHash(stateHash, proofStateHash.stateHash);
             }
-            if (isContract(address(connectors[localAddress[proofStateHash.contractAddress]]))) {
-                try connectors[localAddress[proofStateHash.contractAddress]].applyState(state.state) {} catch {}
+            IBridgeConnector connector = connectors[localAddress[proofStateHash.contractAddress]];
+            if (address(connector).code.length > 0) {
+                try connector.applyState(state.state) {} catch {}
             }
             unchecked {
                 ++idx;
@@ -257,7 +246,6 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
                 revert TransferFailed(msg.sender, payout);
             }
         }
-        ++appliedEpoch;
     }
 
     /**
@@ -266,13 +254,12 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
      * @return A boolean value indicating whether the current epoch should be finalized.
      */
     function shouldFinalizeEpoch() public view returns (bool) {
-        bool shouldFinalize = false;
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             if (!connectors[tokenAddresses[i]].isStateEmpty()) {
                 return true;
             }
         }
-        return shouldFinalize;
+        return false;
     }
 
     /**

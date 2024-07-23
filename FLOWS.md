@@ -29,7 +29,7 @@ Ficus bridge is a simple contract setup that first and foremost, migrates state 
 
 ## Token registration
 
-While permissionless by design, in order to be able to bridge tokens, Ficus Bridge requires the registration of the tokens on both sides. This is done by the calling the [registerContract](./src/lib/BridgeBase.sol#142) method on each side. This method register a special smart contract called _Connector_ that acts as multi-faces utility contract for the Bridge. Without a connector, the bridge will not be able to interact with the tokens on the respective chain.
+While permissionless by design, in order to be able to bridge tokens, Ficus Bridge requires the registration of the tokens on both sides. This is done by the calling the [registerConnector](./src/lib/BridgeBase.sol#142) method on each side. This method register a special smart contract called _Connector_ that acts as multi-faces utility contract for the Bridge. Without a connector, the bridge will not be able to interact with the tokens on the respective chain.
 
 ### Connector requirements
 

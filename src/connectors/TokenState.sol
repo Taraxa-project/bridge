@@ -4,9 +4,6 @@ pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "../lib/SharedStructs.sol";
-import {StateIsNotEmpty} from "../errors/ConnectorErrors.sol";
-
 struct Transfer {
     address account;
     uint256 amount;
@@ -14,8 +11,8 @@ struct Transfer {
 
 contract TokenState is Ownable {
     uint256 public epoch;
-    address[] accounts;
-    mapping(address => uint256) balances;
+    address[] public accounts;
+    mapping(address => uint256) public balances;
 
     /// Events
     event TransferAdded(address indexed account, uint256 amount);
@@ -37,9 +34,6 @@ contract TokenState is Ownable {
     }
 
     function increaseEpoch() public onlyOwner {
-        if (!empty()) {
-            revert StateIsNotEmpty();
-        }
         epoch = epoch + 1;
     }
 
@@ -60,5 +54,12 @@ contract TokenState is Ownable {
             transfers[i] = transfer;
         }
         return transfers;
+    }
+
+    function cleanup() public onlyOwner {
+        for (uint256 i = 0; i < accounts.length; i++) {
+            delete balances[accounts[i]];
+        }
+        delete accounts;
     }
 }

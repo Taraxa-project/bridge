@@ -18,7 +18,7 @@ fi
 
 echo "Running deployment script for TaraClient & EthBridge"
 
-res=$(forge script ./script/Eth.deploy.s.sol:EthDeployer --rpc-url $RPC_HOLESKY --force --broadcast --legacy --resume --ffi | tee /dev/tty)
+res=$(forge script ./script/Eth.deploy.s.sol:EthDeployer --rpc-url $RPC_HOLESKY --force --broadcast --legacy --ffi | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for EthBridge"

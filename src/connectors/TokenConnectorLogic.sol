@@ -2,15 +2,8 @@
 
 pragma solidity ^0.8.17;
 
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import {TransferFailed, InsufficientFunds} from "../errors/CommonErrors.sol";
 import {NotBridge, InvalidEpoch, NoFinalizedState} from "../errors/ConnectorErrors.sol";
-import {SharedStructs} from "../lib/SharedStructs.sol";
-import {Constants} from "../lib/Constants.sol";
 import {TokenState, Transfer} from "./TokenState.sol";
 import {BridgeBase} from "../lib/BridgeBase.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
@@ -20,16 +13,12 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
     address public token;
     address public otherNetworkAddress;
     TokenState public state;
-    TokenState public finalizedState;
+    bytes public finalizedState;
     mapping(address => uint256) public toClaim;
     mapping(address => uint256) public feeToClaim;
 
     /// Events
-    event Funded(address indexed sender, address indexed connectorBase, uint256 amount);
-    event Refunded(address indexed receiver, uint256 amount);
     event Finalized(uint256 indexed epoch);
-    event ClaimAccrued(address indexed account, uint256 value);
-    event Claimed(address indexed account, uint256 value);
 
     modifier onlySettled() {
         uint256 fee = estimateSettlementFee(msg.sender);
@@ -77,24 +66,22 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
             revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
         }
 
-        // increase epoch if there are no pending transfers
-        if (state.empty() && address(finalizedState) != address(0) && finalizedState.empty()) {
-            state.increaseEpoch();
-            finalizedState.increaseEpoch();
+        Transfer[] memory transfers = state.getTransfers();
+        state.increaseEpoch();
+        // if no transfers was made, then the finalized state should be empty
+        if (transfers.length == 0) {
+            finalizedState = new bytes(0);
         } else {
-            finalizedState = state;
-            state = new TokenState(epoch_to_finalize + 1);
-        }
-        Transfer[] memory epochTransfers = finalizedState.getTransfers();
-        if (epochTransfers.length > 0) {
-            uint256 settlementFeesToForward = bridge.settlementFee() * epochTransfers.length;
+            finalizedState = abi.encode(transfers);
+            state.cleanup();
+            uint256 settlementFeesToForward = bridge.settlementFee() * transfers.length;
             (bool success,) = address(bridge).call{value: settlementFeesToForward}("");
             if (!success) {
                 revert TransferFailed(address(bridge), settlementFeesToForward);
             }
         }
         emit Finalized(epoch_to_finalize);
-        return keccak256(abi.encode(epochTransfers));
+        return keccak256(finalizedState);
     }
 
     /**
@@ -102,14 +89,7 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
      * @return A bytes serialized finalized state
      */
     function getFinalizedState() public view override returns (bytes memory) {
-        if (address(finalizedState) == address(0)) {
-            revert NoFinalizedState();
-        }
-
-        if (finalizedState.empty()) {
-            return new bytes(0);
-        }
-        return abi.encode(finalizedState.getTransfers());
+        return finalizedState;
     }
 
     /**

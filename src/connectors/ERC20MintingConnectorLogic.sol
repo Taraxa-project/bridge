@@ -4,7 +4,6 @@ pragma solidity ^0.8.17;
 
 import {InsufficientFunds} from "../errors/CommonErrors.sol";
 import {ZeroValueCall} from "../errors/ConnectorErrors.sol";
-import {SharedStructs} from "../lib/SharedStructs.sol";
 
 import {Transfer} from "./TokenState.sol";
 import {TokenConnectorLogic} from "./TokenConnectorLogic.sol";
@@ -22,7 +21,7 @@ abstract contract ERC20MintingConnectorLogic is TokenConnectorLogic {
         Transfer[] memory transfers = decodeTransfers(_state);
         uint256 transfersLength = transfers.length;
         for (uint256 i = 0; i < transfersLength;) {
-            IERC20MintableBurnable(address(token)).mintTo(transfers[i].account, transfers[i].amount);
+            IERC20MintableBurnable(token).mintTo(transfers[i].account, transfers[i].amount);
             unchecked {
                 ++i;
             }
@@ -38,7 +37,7 @@ abstract contract ERC20MintingConnectorLogic is TokenConnectorLogic {
         if (value == 0) {
             revert ZeroValueCall();
         }
-        IERC20MintableBurnable mintableContract = IERC20MintableBurnable(address(token));
+        IERC20MintableBurnable mintableContract = IERC20MintableBurnable(token);
         try mintableContract.burnFrom(msg.sender, value) {
             state.addAmount(msg.sender, value);
             emit Burned(msg.sender, value);

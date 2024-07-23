@@ -9,13 +9,14 @@ import {StorageProof} from "beacon-light-client/src/trie/StorageProof.sol";
 import {InvalidBridgeRoot, ZeroAddress} from "../errors/BridgeBaseErrors.sol";
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 
-contract EthClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
+/// @custom:oz-upgrades-from EthClient
+contract EthClientV2 is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
     BeaconLightClient public client;
     address public ethBridgeAddress;
     bytes32 public bridgeRootsMappingPosition;
 
     uint256 public lastEpoch;
-    mapping(uint256 => bytes32) public bridgeRoots;
+    mapping(uint256 => bytes32) bridgeRoots;
 
     /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
     /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
@@ -37,7 +38,6 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
             revert ZeroAddress("BeaconLightClient");
         }
         __UUPSUpgradeable_init();
-        __Ownable_init(msg.sender);
         bridgeRootsMappingPosition = 0x0000000000000000000000000000000000000000000000000000000000000002;
         ethBridgeAddress = _eth_bridge_address;
         client = _client;
@@ -56,6 +56,10 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
     function bridgeRootKeyByEpoch(uint256 epoch) public view returns (bytes32) {
         bytes32 paddedEpoch = bytes32(epoch);
         return keccak256(abi.encodePacked(paddedEpoch, bridgeRootsMappingPosition));
+    }
+
+    function setBeaconLightClient(BeaconLightClient _client) external onlyOwner {
+        client = _client;
     }
 
     /**

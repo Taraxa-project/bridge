@@ -31,7 +31,7 @@ contract TaraDeployer is Script {
 
     BeaconLightClient beaconClient;
 
-    uint256 constant FINALIZATION_INTERVAL = 100;
+    uint256 constant FINALIZATION_INTERVAL = 1000;
     uint256 constant FEE_MULTIPLIER_TARA_FINALIZE = 105;
     uint256 constant FEE_MULTIPLIER_TARA_APPLY = 205;
     uint256 constant REGISTRATION_FEE_TARA = 1 ether;
@@ -155,7 +155,9 @@ contract TaraDeployer is Script {
         );
 
         // Initialize TaraConnector
-        TaraBridge(taraBrigdeProxy).registerContract{value: REGISTRATION_FEE_TARA}(IBridgeConnector(taraConnectorProxy));
+        TaraBridge(taraBrigdeProxy).registerConnector{value: REGISTRATION_FEE_TARA}(
+            IBridgeConnector(taraConnectorProxy)
+        );
 
         address ethMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
@@ -172,7 +174,7 @@ contract TaraDeployer is Script {
         );
 
         // Initialize EthMintingConnectorProxy
-        TaraBridge(taraBrigdeProxy).registerContract{value: REGISTRATION_FEE_TARA}(
+        TaraBridge(taraBrigdeProxy).registerConnector{value: REGISTRATION_FEE_TARA}(
             IBridgeConnector(ethMintingConnectorProxy)
         );
 

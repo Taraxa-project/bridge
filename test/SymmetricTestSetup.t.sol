@@ -84,7 +84,7 @@ contract SymmetricTestSetup is Test {
         taraConnector = NativeConnector(payable(taraConnectorProxy));
 
         vm.deal(caller, REGISTRATION_FEE_TARA);
-        taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraConnector);
+        taraBridge.registerConnector{value: REGISTRATION_FEE_TARA}(taraConnector);
 
         address ethOnTaraMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
@@ -100,7 +100,7 @@ contract SymmetricTestSetup is Test {
         // ethOnTaraMintingConnector.transferOwnership(address(taraBridge));
 
         vm.deal(caller, address(caller).balance + REGISTRATION_FEE_TARA);
-        taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(ethOnTaraMintingConnector);
+        taraBridge.registerConnector{value: REGISTRATION_FEE_TARA}(ethOnTaraMintingConnector);
 
         // Set Up ETH side of the bridge
         address ethConnectorProxy = Upgrades.deployUUPSProxy(
@@ -109,7 +109,7 @@ contract SymmetricTestSetup is Test {
         ethConnector = NativeConnector(payable(ethConnectorProxy));
 
         vm.deal(caller, address(caller).balance + REGISTRATION_FEE_ETH);
-        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethConnector);
+        ethBridge.registerConnector{value: REGISTRATION_FEE_ETH}(ethConnector);
 
         address taraOnEthMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
@@ -125,7 +125,7 @@ contract SymmetricTestSetup is Test {
         // taraOnEthMintingConnector.transferOwnership(address(ethBridge));
 
         vm.deal(caller, address(caller).balance + REGISTRATION_FEE_ETH);
-        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(taraOnEthMintingConnector);
+        ethBridge.registerConnector{value: REGISTRATION_FEE_ETH}(taraOnEthMintingConnector);
 
         vm.stopPrank();
     }
@@ -161,9 +161,9 @@ contract SymmetricTestSetup is Test {
         // taraTestTokenConnector.transferOwnership(address(taraBridge));
         // ethTestTokenConnector.transferOwnership(address(ethBridge));
         vm.deal(address(caller), REGISTRATION_FEE_TARA);
-        taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
+        taraBridge.registerConnector{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
         vm.deal(address(caller), REGISTRATION_FEE_ETH);
-        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
+        ethBridge.registerConnector{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
 
         vm.stopPrank();
     }

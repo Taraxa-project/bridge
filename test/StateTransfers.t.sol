@@ -18,7 +18,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         uint256 value = 1 ether;
         NativeConnector taraBridgeToken =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
-        taraBridgeToken.lock{value: value + settlementFee}();
+        taraBridgeToken.lock{value: value + settlementFee}(value);
 
         // vm.roll(FINALIZATION_INTERVAL);
 
@@ -40,7 +40,7 @@ contract StateTransfersTest is SymmetricTestSetup {
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         uint256 value = settlementFee / 2;
         vm.expectRevert(abi.encodeWithSelector(InsufficientFunds.selector, settlementFee, value));
-        taraBridgeToken.lock{value: value}();
+        taraBridgeToken.lock{value: value}(value);
 
         vm.roll(FINALIZATION_INTERVAL);
 
@@ -54,7 +54,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         NativeConnector taraBridgeToken =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         vm.expectRevert();
-        taraBridgeToken.lock{value: settlementFee}();
+        taraBridgeToken.lock{value: settlementFee}(0);
     }
 
     function test_toEth() public {
@@ -63,7 +63,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         uint256 value = 1 ether;
         NativeConnector taraBridgeToken =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
-        taraBridgeToken.lock{value: value + settlementFee}();
+        taraBridgeToken.lock{value: value + settlementFee}(value);
 
         vm.roll(FINALIZATION_INTERVAL);
 
@@ -100,7 +100,7 @@ contract StateTransfersTest is SymmetricTestSetup {
     function test_Revert_OnChangedState() public {
         uint256 settlementFee = taraBridge.settlementFee();
         uint256 value = 1 ether;
-        taraConnector.lock{value: value + settlementFee}();
+        taraConnector.lock{value: value + settlementFee}(value);
 
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
@@ -120,7 +120,7 @@ contract StateTransfersTest is SymmetricTestSetup {
     function test_Revert_OnChangedEpoch() public {
         uint256 settlementFee = taraBridge.settlementFee();
         uint256 value = 1 ether;
-        taraConnector.lock{value: value + settlementFee}();
+        taraConnector.lock{value: value + settlementFee}(value);
 
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
@@ -150,7 +150,7 @@ contract StateTransfersTest is SymmetricTestSetup {
     function test_benchmark_singlebridge_Epoch() public {
         uint256 settlementFee = taraBridge.settlementFee();
         uint256 value = 1 ether;
-        taraConnector.lock{value: value + settlementFee}();
+        taraConnector.lock{value: value + settlementFee}(value);
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         uint256 finalizedEpoch = taraBridge.getStateWithProof().state.epoch;
@@ -169,11 +169,11 @@ contract StateTransfersTest is SymmetricTestSetup {
     function test_futureEpoch() public {
         uint256 value = 1 ether;
         uint256 settlementFee = taraBridge.settlementFee();
-        taraConnector.lock{value: value + settlementFee}();
+        taraConnector.lock{value: value + settlementFee}(value);
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state1 = taraBridge.getStateWithProof();
-        taraConnector.lock{value: value + settlementFee}();
+        taraConnector.lock{value: value + settlementFee}(value);
         vm.roll(2 * FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
         SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
@@ -212,7 +212,7 @@ contract StateTransfersTest is SymmetricTestSetup {
             vm.deal(addr, value + settlementFee);
             addrs[i] = addr;
             vm.prank(addr);
-            taraConnector.lock{value: value + settlementFee}();
+            taraConnector.lock{value: value + settlementFee}(value);
         }
         vm.roll(FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
