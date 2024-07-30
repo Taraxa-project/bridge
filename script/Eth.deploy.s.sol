@@ -20,7 +20,8 @@ contract EthDeployer is Script {
     address public ethAddressOnTara;
     uint256 public deployerPrivateKey;
 
-    uint256 constant FINALIZATION_INTERVAL = 100;
+    uint256 constant PILLAR_BLOCK_INTERVAL = 10;
+    uint256 constant FINALIZATION_INTERVAL = 10;
     uint256 constant FEE_MULTIPLIER_ETH_FINALIZE = 101;
     uint256 constant FEE_MULTIPLIER_ETH_APPLY = 201;
     uint256 constant REGISTRATION_FEE_ETH = 0.001 ether;
@@ -57,7 +58,7 @@ contract EthDeployer is Script {
         opts.defender.useDefenderDeploy = false;
 
         address taraClientProxy = Upgrades.deployUUPSProxy(
-            "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (FINALIZATION_INTERVAL)), opts
+            "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (PILLAR_BLOCK_INTERVAL)), opts
         );
 
         console.log("TaraClient.sol proxy address: %s", taraClientProxy);

@@ -46,6 +46,14 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     /**
+     * @dev Sets the BeaconLightClient instance.
+     * @param _client The address of the new BeaconLightClient contract.
+     */
+    function setBeaconLightClient(BeaconLightClient _client) external onlyOwner {
+        client = _client;
+    }
+
+    /**
      * @dev Implements the IBridgeLightClient interface method
      * @return The finalized bridge root as a bytes32 value.
      */

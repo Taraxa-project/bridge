@@ -133,9 +133,7 @@ contract TaraDeployer is Script {
 
         address ethClientProxy = deployEthClient();
 
-        uint256 finalizationInterval = 100;
-
-        address payable taraBrigdeProxy = payable(deployTaraBridge(ethClientProxy, finalizationInterval));
+        address payable taraBrigdeProxy = payable(deployTaraBridge(ethClientProxy, FINALIZATION_INTERVAL));
 
         address taraConnectorProxy = Upgrades.deployUUPSProxy(
             "NativeConnector.sol",
