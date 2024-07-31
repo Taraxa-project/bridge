@@ -5,7 +5,8 @@ import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import {Constants} from "../src/lib/Constants.sol";
+import "./DeploymentConstants.sol";
+import "../src/lib/Constants.sol";
 import {EthBridge} from "../src/eth/EthBridge.sol";
 import {TaraClient, PillarBlock} from "../src/eth/TaraClient.sol";
 import {TestERC20} from "../src/lib/TestERC20.sol";
@@ -20,13 +21,6 @@ contract EthDeployer is Script {
     address public ethAddressOnTara;
     uint256 public deployerPrivateKey;
 
-    uint256 constant PILLAR_BLOCK_INTERVAL = 10;
-    uint256 constant FINALIZATION_INTERVAL = 10;
-    uint256 constant FEE_MULTIPLIER_ETH_FINALIZE = 101;
-    uint256 constant FEE_MULTIPLIER_ETH_APPLY = 201;
-    uint256 constant REGISTRATION_FEE_ETH = 0.001 ether;
-    uint256 constant SETTLEMENT_FEE_ETH = 5 gwei;
-
     function setUp() public {
         deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         deployerAddress = vm.envAddress("DEPLOYMENT_ADDRESS");
@@ -36,7 +30,7 @@ contract EthDeployer is Script {
             revert("Skipping deployment because PRIVATE_KEY is not set");
         }
 
-        if (address(deployerAddress).balance < (2 * REGISTRATION_FEE_ETH)) {
+        if (address(deployerAddress).balance < (2 * EthDeployConstants.REGISTRATION_FEE)) {
             revert("Skipping deployment because balance is less than 2 *  REGISTRATION_FEE_ETH");
         }
 
@@ -58,7 +52,7 @@ contract EthDeployer is Script {
         opts.defender.useDefenderDeploy = false;
 
         address taraClientProxy = Upgrades.deployUUPSProxy(
-            "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (PILLAR_BLOCK_INTERVAL)), opts
+            "TaraClient.sol", abi.encodeCall(TaraClient.initialize, (EthDeployConstants.PILLAR_BLOCK_INTERVAL)), opts
         );
 
         console.log("TaraClient.sol proxy address: %s", taraClientProxy);
@@ -70,11 +64,11 @@ contract EthDeployer is Script {
                 EthBridge.initialize,
                 (
                     IBridgeLightClient(taraClientProxy),
-                    FINALIZATION_INTERVAL,
-                    FEE_MULTIPLIER_ETH_FINALIZE,
-                    FEE_MULTIPLIER_ETH_APPLY,
-                    REGISTRATION_FEE_ETH,
-                    SETTLEMENT_FEE_ETH
+                    EthDeployConstants.FINALIZATION_INTERVAL,
+                    EthDeployConstants.FEE_MULTIPLIER_FINALIZE,
+                    EthDeployConstants.FEE_MULTIPLIER_APPLY,
+                    EthDeployConstants.REGISTRATION_FEE,
+                    EthDeployConstants.SETTLEMENT_FEE
                 )
             ),
             opts
@@ -107,14 +101,14 @@ contract EthDeployer is Script {
         TestERC20(taraAddressOnEth).transferOwnership(mintingConnectorProxy);
 
         // Add the connector to the bridge
-        ethBridge.registerConnector{value: REGISTRATION_FEE_ETH}(IBridgeConnector(mintingConnectorProxy));
+        ethBridge.registerConnector{value: EthDeployConstants.REGISTRATION_FEE}(IBridgeConnector(mintingConnectorProxy));
 
         // Instantiate and register the NativeConnector
         address nativeConnectorProxy = Upgrades.deployUUPSProxy(
             "NativeConnector.sol", abi.encodeCall(NativeConnector.initialize, (ethBridge, ethAddressOnTara)), opts
         );
 
-        ethBridge.registerConnector{value: REGISTRATION_FEE_ETH}(IBridgeConnector(nativeConnectorProxy));
+        ethBridge.registerConnector{value: EthDeployConstants.REGISTRATION_FEE}(IBridgeConnector(nativeConnectorProxy));
         console.log("NativeConnector.sol proxy address: %s", nativeConnectorProxy);
         console.log(
             "NativeConnector.sol implementation address: %s", Upgrades.getImplementationAddress(nativeConnectorProxy)
