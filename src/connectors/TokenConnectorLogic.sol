@@ -14,11 +14,14 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
     address public otherNetworkAddress;
     TokenState public state;
     bytes public finalizedState;
-    mapping(address => uint256) public toClaim;
-    mapping(address => uint256) public feeToClaim;
 
     /// Events
     event Finalized(uint256 indexed epoch);
+    event AssetBridged(
+        address indexed connector,
+        address indexed account,
+        uint256 value
+    );
 
     modifier onlySettled() {
         uint256 fee = estimateSettlementFee(msg.sender);
