@@ -2,15 +2,8 @@
 
 pragma solidity ^0.8.17;
 
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import {TransferFailed, InsufficientFunds} from "../errors/CommonErrors.sol";
 import {NotBridge, InvalidEpoch, NoFinalizedState} from "../errors/ConnectorErrors.sol";
-import {SharedStructs} from "../lib/SharedStructs.sol";
-import {Constants} from "../lib/Constants.sol";
 import {TokenState, Transfer} from "./TokenState.sol";
 import {BridgeBase} from "../lib/BridgeBase.sol";
 import {IBridgeConnector} from "../connectors/IBridgeConnector.sol";
@@ -21,15 +14,9 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
     address public otherNetworkAddress;
     TokenState public state;
     TokenState public finalizedState;
-    mapping(address => uint256) public toClaim;
-    mapping(address => uint256) public feeToClaim;
 
     /// Events
-    event Funded(address indexed sender, address indexed connectorBase, uint256 amount);
-    event Refunded(address indexed receiver, uint256 amount);
     event Finalized(uint256 indexed epoch);
-    event ClaimAccrued(address indexed account, uint256 value);
-    event Claimed(address indexed account, uint256 value);
 
     modifier onlySettled() {
         uint256 fee = estimateSettlementFee(msg.sender);

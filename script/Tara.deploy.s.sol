@@ -153,7 +153,9 @@ contract TaraDeployer is Script {
         );
 
         // Initialize TaraConnector
-        TaraBridge(taraBrigdeProxy).registerContract{value: REGISTRATION_FEE_TARA}(IBridgeConnector(taraConnectorProxy));
+        TaraBridge(taraBrigdeProxy).registerConnector{value: REGISTRATION_FEE_TARA}(
+            IBridgeConnector(taraConnectorProxy)
+        );
 
         address ethMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
@@ -170,7 +172,7 @@ contract TaraDeployer is Script {
         );
 
         // Initialize EthMintingConnectorProxy
-        TaraBridge(taraBrigdeProxy).registerContract{value: REGISTRATION_FEE_TARA}(
+        TaraBridge(taraBrigdeProxy).registerConnector{value: REGISTRATION_FEE_TARA}(
             IBridgeConnector(ethMintingConnectorProxy)
         );
 

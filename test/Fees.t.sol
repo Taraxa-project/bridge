@@ -20,7 +20,7 @@ contract FeesTest is SymmetricTestSetup {
 
         uint256 balanceOfNativeConnectorBefore = address(taraBridgeToken).balance;
         uint256 settlementFee = taraBridge.settlementFee();
-        taraBridgeToken.lock{value: value + settlementFee}();
+        taraBridgeToken.lock{value: value + settlementFee}(value);
 
         uint256 balanceOfNativeConnectorAfter = address(taraBridgeToken).balance;
 
@@ -62,10 +62,10 @@ contract FeesTest is SymmetricTestSetup {
         uint256 bridgeSettlementFee = taraBridge.settlementFee();
         uint256 settlementFee = nativeConnector.estimateSettlementFee(address(this));
         vm.assertEq(settlementFee, bridgeSettlementFee, "Settlement fee should be the same as the bridge's");
-        nativeConnector.lock{value: value + settlementFee}();
+        nativeConnector.lock{value: value + settlementFee}(value);
         uint256 newSettlementFee = nativeConnector.estimateSettlementFee(address(this));
         vm.assertEq(newSettlementFee, 0, "Settlement fee should be 0");
-        nativeConnector.lock{value: value + newSettlementFee}();
+        nativeConnector.lock{value: value + newSettlementFee}(value);
 
         uint256 balanceOfNativeConnectorAfter = address(nativeConnector).balance;
 
@@ -103,10 +103,10 @@ contract FeesTest is SymmetricTestSetup {
 
         uint256 balanceOfNativeConnectorBefore = address(nativeConnector).balance;
         uint256 settlementFee = taraBridge.settlementFee();
-        nativeConnector.lock{value: value + settlementFee}();
+        nativeConnector.lock{value: value + settlementFee}(value);
         vm.deal(address(caller), value + settlementFee);
         vm.prank(address(caller));
-        nativeConnector.lock{value: value + settlementFee}();
+        nativeConnector.lock{value: value + settlementFee}(value);
 
         uint256 balanceOfNativeConnectorAfter = address(nativeConnector).balance;
 
@@ -149,7 +149,7 @@ contract FeesTest is SymmetricTestSetup {
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
 
         uint256 settlementFee = taraBridge.settlementFee();
-        taraBridgeToken.lock{value: value + settlementFee}();
+        taraBridgeToken.lock{value: value + settlementFee}(value);
 
         uint256 relayerBalanceBefore = address(relayer).balance;
         vm.txGasPrice(20 gwei);
@@ -191,12 +191,12 @@ contract FeesTest is SymmetricTestSetup {
         NativeConnector taraBridgeToken =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         uint256 settlementFee = taraBridge.settlementFee();
-        taraBridgeToken.lock{value: value + settlementFee}();
+        taraBridgeToken.lock{value: value + settlementFee}(value);
         for (uint256 i = 1; i <= 100; i++) {
             address locker = vm.addr(i);
             vm.deal(locker, value + settlementFee);
             vm.prank(locker);
-            taraBridgeToken.lock{value: value + settlementFee}();
+            taraBridgeToken.lock{value: value + settlementFee}(value);
         }
 
         uint256 relayerBalanceBefore = address(relayer).balance;
@@ -242,7 +242,7 @@ contract FeesTest is SymmetricTestSetup {
 
         uint256 settlementFee = taraBridge.settlementFee();
         vm.deal(address(this), 2 * value + settlementFee);
-        taraBridgeToken.lock{value: value + settlementFee}();
+        taraBridgeToken.lock{value: value + settlementFee}(value);
 
         ERC20LockingConnector erc20onTara2Connector =
             ERC20LockingConnector(payable(address(taraBridge.connectors(address(erc20onTara2)))));

@@ -66,7 +66,7 @@ contract RegisterDogeOnEth is Script {
             revert("Failed to fund the LockingConnector");
         }
 
-        ethBridge.registerContract{value: ethBridge.registrationFee()}(IBridgeConnector(dogeLockingConnectorProxy));
+        ethBridge.registerConnector{value: ethBridge.registrationFee()}(IBridgeConnector(dogeLockingConnectorProxy));
 
         vm.stopBroadcast();
     }

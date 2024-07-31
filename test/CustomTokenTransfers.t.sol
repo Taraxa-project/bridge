@@ -41,9 +41,9 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         // taraTestTokenConnector.transferOwnership(address(taraBridge));
         // ethTestTokenConnector.transferOwnership(address(ethBridge));
         vm.deal(address(caller), REGISTRATION_FEE_TARA);
-        taraBridge.registerContract{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
+        taraBridge.registerConnector{value: REGISTRATION_FEE_TARA}(taraTestTokenConnector);
         vm.deal(address(caller), REGISTRATION_FEE_ETH);
-        ethBridge.registerContract{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
+        ethBridge.registerConnector{value: REGISTRATION_FEE_ETH}(ethTestTokenConnector);
 
         uint256 settlementFee = taraBridge.settlementFee();
         vm.deal(address(caller), settlementFee);
@@ -77,7 +77,7 @@ contract CustomTokenTransfersTest is SymmetricTestSetup {
         NativeConnector taraBridgeTokenConnector =
             NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
         vm.deal(address(caller), settlementFee + 1 ether);
-        taraBridgeTokenConnector.lock{value: value + settlementFee}();
+        taraBridgeTokenConnector.lock{value: value + settlementFee}(value);
 
         vm.roll(2 * FINALIZATION_INTERVAL);
         taraBridge.finalizeEpoch();
