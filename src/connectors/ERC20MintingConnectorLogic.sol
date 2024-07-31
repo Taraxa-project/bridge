@@ -20,8 +20,13 @@ abstract contract ERC20MintingConnectorLogic is TokenConnectorLogic {
     function applyState(bytes calldata _state) public virtual override onlyBridge {
         Transfer[] memory transfers = decodeTransfers(_state);
         uint256 transfersLength = transfers.length;
-        for (uint256 i = 0; i < transfersLength;) {
+        for (uint256 i = 0; i < transfersLength; ) {
             IERC20MintableBurnable(token).mintTo(transfers[i].account, transfers[i].amount);
+            emit AssetBridged(
+                address(this),
+                transfers[i].account,
+                transfers[i].amount
+            );
             unchecked {
                 ++i;
             }

@@ -17,6 +17,7 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
 
     /// Events
     event Finalized(uint256 indexed epoch);
+    event AssetBridged(address indexed connector, address indexed account, uint256 value);
 
     modifier onlySettled() {
         uint256 fee = estimateSettlementFee(msg.sender);
