@@ -20,6 +20,7 @@ contract EthDeployer is Script {
     address public taraAddressOnEth;
     address public ethAddressOnTara;
     uint256 public deployerPrivateKey;
+    uint256 public pillarChainInterval;
 
     function setUp() public {
         deployerPrivateKey = vm.envUint("PRIVATE_KEY");
@@ -43,6 +44,14 @@ contract EthDeployer is Script {
 
         if (ethAddressOnTara == address(0) || taraAddressOnEth == address(0)) {
             revert("Skipping deployment because ETH_ADDRESS_ON_TARA or TARA_ADDRESS_ON_ETH is not set");
+        }
+
+        pillarChainInterval = vm.envUint("PILLAR_CHAIN_INTERVAL");
+        if (pillarChainInterval == 0) {
+            revert("Skipping deployment because PILLAR_CHAIN_INTERVAL is not set");
+        }
+        if (pillarChainInterval != EthDeployConstants.PILLAR_BLOCK_INTERVAL) {
+            revert("PILLAR_BLOCK_INTERVAL and PILLAR_CHAIN_INTERVAL do not match");
         }
     }
 

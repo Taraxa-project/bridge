@@ -28,6 +28,7 @@ contract TaraDeployer is Script {
     address deployerAddress;
     address taraAddressOnEth;
     address ethAddressOnTara;
+    uint256 pillarChainInterval;
 
     BeaconLightClient beaconClient;
 
@@ -52,6 +53,14 @@ contract TaraDeployer is Script {
         console.log("ETH_ADDRESS_ON_TARA: %s", ethAddressOnTara);
         if (taraAddressOnEth == address(0) || ethAddressOnTara == address(0)) {
             revert("Skipping deployment because TARA_ADDRESS_ON_ETH or ETH_ADDRESS_ON_TARA is not set");
+        }
+
+        pillarChainInterval = vm.envUint("PILLAR_CHAIN_INTERVAL");
+        if (pillarChainInterval == 0) {
+            revert("Skipping deployment because PILLAR_CHAIN_INTERVAL is not set");
+        }
+        if (pillarChainInterval != TaraDeployConstants.FINALIZATION_INTERVAL) {
+            revert("FINALIZATION_INTERVAL and PILLAR_CHAIN_INTERVAL do not match");
         }
     }
 

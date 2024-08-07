@@ -27,10 +27,10 @@ source .venv/bin/activate
 pip3 install -r requirements.txt
 
 
-echo "RPC: $RPC_FICUS_PRNET"
+echo "RPC: $TARAXA_RPC"
 # Check if the RPC_URL and PRIVATE_KEY are set
-if [ -z "$RPC_FICUS_PRNET" ] || [ -z "$PRIVATE_KEY" ] || [ -z "$ETH_BRIDGE_ADDRESS" ] || [ -z "$TARA_CLIENT" ]; then
-  echo "Please set the RPC_FICUS_PRNET, ETH_BRIDGE_ADDRESS, TARA_CLIENT and PRIVATE_KEY in the .env file"
+if [ -z "$TARAXA_RPC" ] || [ -z "$PRIVATE_KEY" ] || [ -z "$ETH_BRIDGE_ADDRESS" ] || [ -z "$TARA_CLIENT" ]; then
+  echo "Please set the TARAXA_RPC, ETH_BRIDGE_ADDRESS, TARA_CLIENT and PRIVATE_KEY in the .env file"
   exit 1
 fi
 
@@ -45,8 +45,10 @@ fi
 
 source .env
 
+export PILLAR_CHAIN_INTERVAL=$(curl -X POST --data '{"jsonrpc":"2.0","method":"taraxa_getConfig","params":[],"id":74}' $TARAXA_RPC | jq .result.hardforks.ficus_hf.pillar_blocks_interval | xargs printf "%d\n")
+
 # Run the deployment script for TaraClient
-res=$(forge script ./script/Tara.deploy.s.sol:TaraDeployer --force --gas-estimate-multiplier 200 --ffi --rpc-url $RPC_FICUS_PRNET --broadcast --legacy | tee /dev/tty)
+res=$(forge script ./script/Tara.deploy.s.sol:TaraDeployer --force --gas-estimate-multiplier 200 --ffi --rpc-url $TARAXA_RPC --broadcast --legacy | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for TaraClient"
@@ -83,7 +85,7 @@ echo "TARA_BRIDGE_ADDRESS=$taraBridgeProxy" >> .env
 
 echo "{" > $deploymentFile
 echo "  \"taradeploy-$currentTimestamp\": {" >> $deploymentFile
-echo "    \"RPC\": \"$RPC_FICUS_PRNET\"," >> $deploymentFile
+echo "    \"RPC\": \"$TARAXA_RPC\"," >> $deploymentFile
 echo "    \"BeaconLightClient\":  \"$blcAddress\"," >> $deploymentFile
 echo "    \"EthClient\": {" >> $deploymentFile
 echo "      \"implAddress\": \"$ethClientImpl\"," >> $deploymentFile

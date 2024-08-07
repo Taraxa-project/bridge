@@ -9,16 +9,18 @@ echo "#################################"
 
 source .env
 
-echo "RPC: $RPC_HOLESKY"
+echo "RPC: $ETHEREUM_RPC"
 # Check if the RPC_URL and PRIVATE_KEY are set
-if [ -z "$RPC_HOLESKY" ] || [ -z "$PRIVATE_KEY" ] || [ -z "$TARA_ADDRESS_ON_ETH" ]|| [ -z "$ETH_ADDRESS_ON_TARA" ]; then
-  echo "Please set the RPC_HOLESKY, TARA_ADDRESS_ON_ETH, ETH_ADDRESS_ON_TARA and PRIVATE_KEY in the .env file"
+if [ -z "$ETHEREUM_RPC" ] || [ -z "$PRIVATE_KEY" ] || [ -z "$TARA_ADDRESS_ON_ETH" ]|| [ -z "$ETH_ADDRESS_ON_TARA" ]; then
+  echo "Please set the ETHEREUM_RPC, TARA_ADDRESS_ON_ETH, ETH_ADDRESS_ON_TARA and PRIVATE_KEY in the .env file"
   exit 1
 fi
 
 echo "Running deployment script for TaraClient & EthBridge"
 
-res=$(forge script ./script/Eth.deploy.s.sol:EthDeployer --rpc-url $RPC_HOLESKY --force --broadcast --legacy --ffi | tee /dev/tty)
+export PILLAR_CHAIN_INTERVAL=$(curl -X POST --data '{"jsonrpc":"2.0","method":"taraxa_getConfig","params":[],"id":74}' $TARAXA_RPC | jq .result.hardforks.ficus_hf.pillar_blocks_interval | xargs printf "%d\n")
+
+res=$(forge script ./script/Eth.deploy.s.sol:EthDeployer --rpc-url $ETHEREUM_RPC --force --broadcast --legacy --ffi | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error running deployment script for EthBridge"
@@ -48,7 +50,7 @@ currentTimestamp=$(date +%s)
 deploymentFile="./deployments/.eth.deployment.$currentTimestamp.json"
 echo "{" > $deploymentFile
 echo "  \"ethdeploy-$currentTimestamp\": {" >> $deploymentFile
-echo "    \"RPC\": \"$RPC_HOLESKY\"," >> $deploymentFile
+echo "    \"RPC\": \"$ETHEREUM_RPC\"," >> $deploymentFile
 echo "    \"TaraClient\": {" >> $deploymentFile
 echo "      \"implAddress\": \"$taraClientOnEthImpl\"," >> $deploymentFile
 echo "      \"proxyAddress\": \"$taraClientOnEthProxy\"" >> $deploymentFile
