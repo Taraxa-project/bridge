@@ -18,7 +18,7 @@ fi
 
 echo "Running deployment script for TaraClient & EthBridge"
 
-export PILLAR_CHAIN_INTERVAL=$(curl -X POST --data '{"jsonrpc":"2.0","method":"taraxa_getConfig","params":[],"id":74}' $TARAXA_RPC | jq .result.hardforks.ficus_hf.pillar_blocks_interval | xargs printf "%d\n")
+export PILLAR_CHAIN_INTERVAL=$(curl --silent -X POST --data '{"jsonrpc":"2.0","method":"taraxa_getConfig","params":[],"id":74}' $TARAXA_RPC | jq .result.hardforks.ficus_hf.pillar_blocks_interval | xargs printf "%d\n")
 
 res=$(forge script ./script/Eth.deploy.s.sol:EthDeployer --rpc-url $ETHEREUM_RPC --force --broadcast --legacy --ffi | tee /dev/tty)
 

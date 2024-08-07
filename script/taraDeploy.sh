@@ -45,7 +45,7 @@ fi
 
 source .env
 
-export PILLAR_CHAIN_INTERVAL=$(curl -X POST --data '{"jsonrpc":"2.0","method":"taraxa_getConfig","params":[],"id":74}' $TARAXA_RPC | jq .result.hardforks.ficus_hf.pillar_blocks_interval | xargs printf "%d\n")
+export PILLAR_CHAIN_INTERVAL=$(curl --silent -X POST --data '{"jsonrpc":"2.0","method":"taraxa_getConfig","params":[],"id":74}' $TARAXA_RPC | jq .result.hardforks.ficus_hf.pillar_blocks_interval | xargs printf "%d\n")
 
 # Run the deployment script for TaraClient
 res=$(forge script ./script/Tara.deploy.s.sol:TaraDeployer --force --gas-estimate-multiplier 200 --ffi --rpc-url $TARAXA_RPC --broadcast --legacy | tee /dev/tty)

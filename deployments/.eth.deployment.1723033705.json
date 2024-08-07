@@ -1,0 +1,21 @@
+{
+  "ethdeploy-1723033705": {
+    "RPC": "https://mainnet.infura.io",
+    "TaraClient": {
+      "implAddress": "0x9732044c8AF3C96382Ba5D4252ae2f99ad18BcA6",
+      "proxyAddress": "0xcDF14446F78ea7EBCaa62Fdb0584e4D2e536B999"
+    },
+    "EthBridge": {
+      "implAddress": "0x5c3031a020a067Aeb238cBe29Db6caD992F10Dc3",
+      "proxyAddress": "0x359CF536b1fd6248ebAd1449E1B3727caB33A01d"
+    },
+    "ERC20MintingConnector": {
+      "implAddress": "0xa134A9513589FA446F0A4Da548A18488E38729B1",
+      "proxyAddress": "0xfF235eA751964bBA3887392dE889a834A2Bdfbde"
+    },
+    "NativeConnector": {
+      "implAddress": "0x87c7Aaa50fa200c6c26B37B7C31C3e996B0B85D1",
+      "proxyAddress": "0x2B5eC5C4A513eB21d49449d09e2B0c75CEbE51dA"
+    }
+  }
+}

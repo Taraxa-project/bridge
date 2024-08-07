@@ -1,0 +1,22 @@
+{
+  "taradeploy-1723033705": {
+    "RPC": "https://rpc.mainnet.taraxa.io",
+    "BeaconLightClient": "0x97Eb8E024bE036eCdb25aDf842C5D6241189FB53",
+    "EthClient": {
+      "implAddress": "0x0F75f4870D1981Be80525C84DAfD2d20fc29DebF",
+      "proxyAddress": "0x7157233800c3c1f2ac8b12Cefe2cBE796C04446B"
+    },
+    "TaraBridge": {
+      "implAddress": "0x8eB23BA07aadB69C44E67e901BfC0Ec516B490d1",
+      "proxyAddress": "0xe126E0BaeAE904b8Cfd619Be1A8667A173b763a1"
+    },
+    "ERC20MintingConnector": {
+      "implAddress": "0x59619AD0c271eb7609102ba79Cb1A359f52657da",
+      "proxyAddress": "0xD014293ED981c7f557C0Cf55F7FbA025082Ed266"
+    },
+    "NativeConnector": {
+      "implAddress": "0x5d58590B00854253b6996EC4Be6696E6d4A12A29",
+      "proxyAddress": "0x7C5E17A43c6cb223a86C5d63288273E0c1F1283F"
+    }
+  }
+}
