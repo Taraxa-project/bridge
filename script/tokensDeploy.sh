@@ -9,15 +9,15 @@ echo "#################################"
 
 source .env
 
-echo "Holesky RPC: $RPC_HOLESKY"
-echo "Tara RPC: $RPC_FICUS_PRNET"
+echo "Holesky RPC: $ETHEREUM_RPC"
+echo "Tara RPC: $TARAXA_RPC"
 
 echo "Running deployment script for TARA on ETH"
 
 export SYMBOL="TARA"
 export NAME="Taraxa"
 # # Deploy the Tara token to Holesky using forge create
-resTara=$(forge script ./script/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_HOLESKY --broadcast --legacy --ffi | tee /dev/tty)
+resTara=$(forge script ./script/Token.deploy.s.sol:TokenDeployer --rpc-url $ETHEREUM_RPC --broadcast --legacy --ffi | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error deploying Tara token"
@@ -36,7 +36,7 @@ echo "Running deployment script for ETH on TARA"
 export SYMBOL="ETH"
 export NAME="Ethereum"
 
-resEth=$(forge script ./script/Token.deploy.s.sol:TokenDeployer --rpc-url $RPC_FICUS_PRNET --broadcast --legacy --ffi | tee /dev/tty)
+resEth=$(forge script ./script/Token.deploy.s.sol:TokenDeployer --rpc-url $TARAXA_RPC --broadcast --legacy --ffi | tee /dev/tty)
 
 if [ $? -ne 0 ]; then
   echo "Error deploying Tara token"
@@ -56,11 +56,11 @@ echo "{" > $deploymentFile
 echo "  \"tokendeploy-$currentTimestamp\": {" >> $deploymentFile
 echo "    \"TARA\": {" >> $deploymentFile
 echo "      \"address\": \"$taraAddress\"," >> $deploymentFile
-echo "      \"RPC\": \"$RPC_HOLESKY\"" >> $deploymentFile
+echo "      \"RPC\": \"$ETHEREUM_RPC\"" >> $deploymentFile
 echo "    }," >> $deploymentFile
 echo "    \"ETH\": {" >> $deploymentFile
 echo "      \"address\": \"$ethAddress\"," >> $deploymentFile
-echo "      \"RPC\": \"$RPC_FICUS_PRNET\"" >> $deploymentFile
+echo "      \"RPC\": \"$TARAXA_RPC\"" >> $deploymentFile
 echo "    }" >> $deploymentFile
 echo "  }" >> $deploymentFile
 echo "}" >> $deploymentFile

@@ -7,9 +7,9 @@ import "beacon-light-client/src/BeaconChain.sol";
 
 import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
-// import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/Defender.sol";
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
+import "./DeploymentConstants.sol";
 import "../src/lib/Constants.sol";
 import {EthBridge} from "../src/eth/EthBridge.sol";
 import {TaraClient, PillarBlock} from "../src/eth/TaraClient.sol";
@@ -28,14 +28,9 @@ contract TaraDeployer is Script {
     address deployerAddress;
     address taraAddressOnEth;
     address ethAddressOnTara;
+    uint256 pillarChainInterval;
 
     BeaconLightClient beaconClient;
-
-    uint256 constant FINALIZATION_INTERVAL = 100;
-    uint256 constant FEE_MULTIPLIER_TARA_FINALIZE = 105;
-    uint256 constant FEE_MULTIPLIER_TARA_APPLY = 205;
-    uint256 constant REGISTRATION_FEE_TARA = 1 ether;
-    uint256 constant SETTLEMENT_FEE_TARA = 500 gwei;
 
     function setUp() public {
         deployerPrivateKey = vm.envUint("PRIVATE_KEY");
@@ -46,7 +41,7 @@ contract TaraDeployer is Script {
             revert("Skipping deployment because PRIVATE_KEY is not set");
         }
         // check if balance is at least 2 * MINIMUM_CONNECTOR_DEPOSIT
-        if (address(deployerAddress).balance < (2 * REGISTRATION_FEE_TARA)) {
+        if (address(deployerAddress).balance < (2 * TaraDeployConstants.REGISTRATION_FEE)) {
             revert(
                 "Skipping deployment because balance is less than 2 * MINIMUM_CONNECTOR_DEPOSIT + REGISTRATION_FEE_ETH"
             );
@@ -58,6 +53,14 @@ contract TaraDeployer is Script {
         console.log("ETH_ADDRESS_ON_TARA: %s", ethAddressOnTara);
         if (taraAddressOnEth == address(0) || ethAddressOnTara == address(0)) {
             revert("Skipping deployment because TARA_ADDRESS_ON_ETH or ETH_ADDRESS_ON_TARA is not set");
+        }
+
+        pillarChainInterval = vm.envUint("PILLAR_CHAIN_INTERVAL");
+        if (pillarChainInterval == 0) {
+            revert("Skipping deployment because PILLAR_CHAIN_INTERVAL is not set");
+        }
+        if (pillarChainInterval != TaraDeployConstants.FINALIZATION_INTERVAL) {
+            revert("FINALIZATION_INTERVAL and PILLAR_CHAIN_INTERVAL do not match");
         }
     }
 
@@ -113,10 +116,10 @@ contract TaraDeployer is Script {
                 (
                     IBridgeLightClient(_ethClientProxy),
                     _finalizationInterval,
-                    FEE_MULTIPLIER_TARA_FINALIZE,
-                    FEE_MULTIPLIER_TARA_APPLY,
-                    REGISTRATION_FEE_TARA,
-                    SETTLEMENT_FEE_TARA
+                    TaraDeployConstants.FEE_MULTIPLIER_FINALIZE,
+                    TaraDeployConstants.FEE_MULTIPLIER_APPLY,
+                    TaraDeployConstants.REGISTRATION_FEE,
+                    TaraDeployConstants.SETTLEMENT_FEE
                 )
             )
         );
@@ -133,7 +136,8 @@ contract TaraDeployer is Script {
 
         address ethClientProxy = deployEthClient();
 
-        address payable taraBrigdeProxy = payable(deployTaraBridge(ethClientProxy, FINALIZATION_INTERVAL));
+        address payable taraBrigdeProxy =
+            payable(deployTaraBridge(ethClientProxy, TaraDeployConstants.FINALIZATION_INTERVAL));
 
         address taraConnectorProxy = Upgrades.deployUUPSProxy(
             "NativeConnector.sol",
@@ -153,7 +157,7 @@ contract TaraDeployer is Script {
         );
 
         // Initialize TaraConnector
-        TaraBridge(taraBrigdeProxy).registerConnector{value: REGISTRATION_FEE_TARA}(
+        TaraBridge(taraBrigdeProxy).registerConnector{value: TaraDeployConstants.REGISTRATION_FEE}(
             IBridgeConnector(taraConnectorProxy)
         );
 
@@ -172,7 +176,7 @@ contract TaraDeployer is Script {
         );
 
         // Initialize EthMintingConnectorProxy
-        TaraBridge(taraBrigdeProxy).registerConnector{value: REGISTRATION_FEE_TARA}(
+        TaraBridge(taraBrigdeProxy).registerConnector{value: TaraDeployConstants.REGISTRATION_FEE}(
             IBridgeConnector(ethMintingConnectorProxy)
         );
 
