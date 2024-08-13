@@ -48,10 +48,12 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     uint256 public registrationFee;
     /// Global transaction settlement fee. Connector must pay `settlementFee * numberOfTransactions` to settle the transaction
     uint256 public settlementFee;
+    /// The maximum gas price allowed for transactions
+    uint256 public gasPriceLimit;
 
     /// gap for upgrade safety <- can be used to add new storage variables(using up to 49  32 byte slots) in new versions of this contract
     /// If used, decrease the number of slots in the next contract that inherits this one(ex. uint256[48] __gap;)
-    uint256[49] __gap;
+    uint256[48] __gap;
 
     /// Events
     event Finalized(uint256 indexed epoch, bytes32 bridgeRoot);
@@ -149,6 +151,15 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
+     * @dev Sets the gas price limit for the bridge.
+     * @param _gasPriceLimit The new gas price limit to be set.
+     * @notice Only the owner can call this function.
+     */
+    function setGasPriceLimit(uint256 _gasPriceLimit) public onlyOwner {
+        gasPriceLimit = _gasPriceLimit;
+    }
+
+    /**
      * @return An array of addresses of the registered tokens.
      */
     function registeredTokens() public view returns (address[] memory) {
@@ -204,11 +215,26 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
+     * @dev Returns the gas price to be used for payout calculations.
+     * @return The gas price, capped at the contract's gas price limit.
+     */
+    function getGasPriceForPayout() internal view returns (uint256) {
+        if (tx.gasprice > gasPriceLimit) {
+            return gasPriceLimit;
+        }
+        return tx.gasprice;
+    }
+
+    /**
      * @dev Applies the given state with proof to the contracts.
      * @param state_with_proof The state with proof to be applied.
      */
     function applyState(SharedStructs.StateWithProof calldata state_with_proof) public {
         uint256 gasleftbefore = gasleft();
+
+        if (state_with_proof.state.epoch != appliedEpoch + 1) {
+            revert NotSuccessiveEpochs({epoch: appliedEpoch, nextEpoch: state_with_proof.state.epoch});
+        }
         // get bridge root from light client and compare it (it should be proved there)
         if (
             SharedStructs.getBridgeRoot(state_with_proof.state.epoch, state_with_proof.state_hashes)
@@ -218,9 +244,6 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
                 stateRoot: SharedStructs.getBridgeRoot(state_with_proof.state.epoch, state_with_proof.state_hashes),
                 bridgeRoot: lightClient.getFinalizedBridgeRoot(state_with_proof.state.epoch)
             });
-        }
-        if (state_with_proof.state.epoch != appliedEpoch + 1) {
-            revert NotSuccessiveEpochs({epoch: appliedEpoch, nextEpoch: state_with_proof.state.epoch});
         }
         // increment applied epoch before applying the state to avoid reentrancy
         ++appliedEpoch;
@@ -247,7 +270,8 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
                 ++idx;
             }
         }
-        uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
+
+        uint256 used = (gasleftbefore - gasleft()) * getGasPriceForPayout();
         uint256 payout = used * feeMultiplierApply / 100;
         if (address(this).balance >= payout) {
             (bool success,) = payable(msg.sender).call{value: payout}("");
@@ -329,7 +353,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         }
         bridgeRoots[finalizedEpoch] = SharedStructs.getBridgeRoot(finalizedEpoch, finalHashes);
 
-        uint256 used = (gasleftbefore - gasleft()) * tx.gasprice;
+        uint256 used = (gasleftbefore - gasleft()) * getGasPriceForPayout();
         uint256 payout = used * feeMultiplierFinalize / 100;
         if (address(this).balance > payout) {
             (bool success,) = payable(msg.sender).call{value: payout}("");
