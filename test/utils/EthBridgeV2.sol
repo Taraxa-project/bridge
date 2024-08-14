@@ -47,7 +47,8 @@ contract EthBridgeV2 is BridgeBase {
             _feeMultiplierFinalize,
             _feeMultiplierApply,
             _registrationFee,
-            _settlementFee
+            _settlementFee,
+            2 gwei
         );
     }
 

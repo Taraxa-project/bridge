@@ -5,14 +5,16 @@ pragma solidity ^0.8.17;
 import {IBridgeLightClient} from "../lib/IBridgeLightClient.sol";
 import {BridgeBase} from "../lib/BridgeBase.sol";
 
-contract EthBridge is BridgeBase {
+/// @custom:oz-upgrades-from EthBridge
+contract EthBridgeGasLimit is BridgeBase {
     function initialize(
         IBridgeLightClient _lightClient,
         uint256 _finalizationInterval,
         uint256 _feeMultiplierFinalize,
         uint256 _feeMultiplierApply,
         uint256 _registrationFee,
-        uint256 _settlementFee
+        uint256 _settlementFee,
+        uint256 _gasPriceLimit
     ) public initializer {
         __initialize_EthBridge_unchained(
             _lightClient,
@@ -20,7 +22,8 @@ contract EthBridge is BridgeBase {
             _feeMultiplierFinalize,
             _feeMultiplierApply,
             _registrationFee,
-            _settlementFee
+            _settlementFee,
+            _gasPriceLimit
         );
     }
 
@@ -30,7 +33,8 @@ contract EthBridge is BridgeBase {
         uint256 _feeMultiplierFinalize,
         uint256 _feeMultiplierApply,
         uint256 _registrationFee,
-        uint256 _settlementFee
+        uint256 _settlementFee,
+        uint256 _gasPriceLimit
     ) internal onlyInitializing {
         __BridgeBase_init(
             _lightClient,
@@ -39,7 +43,7 @@ contract EthBridge is BridgeBase {
             _feeMultiplierApply,
             _registrationFee,
             _settlementFee,
-            2 gwei
+            _gasPriceLimit
         );
     }
 }

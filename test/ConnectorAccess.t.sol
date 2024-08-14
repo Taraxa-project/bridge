@@ -91,4 +91,39 @@ contract ConnectorAccessLevelTest is SymmetricTestSetup {
 
         assertEq(taraTokenOnEth.balanceOf(address(this)), value);
     }
+
+    function test_Plain_toEth_with_gasPrice_aboveLimit_paysLimit() public {
+        uint256 settlementFee = taraBridge.settlementFee();
+
+        uint256 value = 1 ether;
+        NativeConnector taraBridgeToken =
+            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
+        taraBridgeToken.lock{value: value + settlementFee}(value);
+
+        vm.roll(FINALIZATION_INTERVAL);
+
+        uint256 maxGasPrice = taraBridge.gasPriceLimit();
+
+        uint256 currentBalance = address(this).balance;
+        vm.txGasPrice(maxGasPrice + 1 gwei);
+        taraBridge.finalizeEpoch();
+        uint256 newBalance = address(this).balance;
+        uint256 payout = newBalance - currentBalance;
+        assertTrue(payout >= 0, "Payout should be greater than 0");
+        SharedStructs.StateWithProof memory state = taraBridge.getStateWithProof();
+        taraLightClient.setBridgeRoot(state);
+        ethBridge.applyState(state);
+
+        assertEq(taraTokenOnEth.balanceOf(address(this)), value);
+
+        taraBridgeToken.lock{value: value + settlementFee}(value);
+
+        vm.roll(2 * FINALIZATION_INTERVAL);
+
+        vm.txGasPrice(maxGasPrice + 100 gwei);
+        taraBridge.finalizeEpoch();
+        SharedStructs.StateWithProof memory state2 = taraBridge.getStateWithProof();
+        taraLightClient.setBridgeRoot(state2);
+        ethBridge.applyState(state2);
+    }
 }

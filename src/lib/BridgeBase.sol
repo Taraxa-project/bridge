@@ -61,6 +61,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         address indexed connector, address indexed token_source, address indexed token_destination
     );
     event ConnectorDelisted(address indexed connector, uint256 indexed epoch);
+    event GasFeeExceededLimit(uint256 indexed gasFee, address indexed sender);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -73,7 +74,8 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         uint256 _feeMultiplierFinalize,
         uint256 _feeMultiplierApply,
         uint256 _registrationFee,
-        uint256 _settlementFee
+        uint256 _settlementFee,
+        uint256 _gasPriceLimit
     ) internal onlyInitializing {
         __BridgeBase_init_unchained(
             _lightClient,
@@ -81,7 +83,8 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
             _feeMultiplierFinalize,
             _feeMultiplierApply,
             _registrationFee,
-            _settlementFee
+            _settlementFee,
+            _gasPriceLimit
         );
     }
 
@@ -91,7 +94,8 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         uint256 _feeMultiplierFinalize,
         uint256 _feeMultiplierApply,
         uint256 _registrationFee,
-        uint256 _settlementFee
+        uint256 _settlementFee,
+        uint256 _gasPriceLimit
     ) internal onlyInitializing {
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
@@ -101,6 +105,7 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         feeMultiplierApply = _feeMultiplierApply;
         registrationFee = _registrationFee;
         settlementFee = _settlementFee;
+        gasPriceLimit = _gasPriceLimit;
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -218,8 +223,9 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
      * @dev Returns the gas price to be used for payout calculations.
      * @return The gas price, capped at the contract's gas price limit.
      */
-    function getGasPriceForPayout() internal view returns (uint256) {
+    function getGasPriceForPayout() internal returns (uint256) {
         if (tx.gasprice > gasPriceLimit) {
+            emit GasFeeExceededLimit(tx.gasprice, msg.sender);
             return gasPriceLimit;
         }
         return tx.gasprice;

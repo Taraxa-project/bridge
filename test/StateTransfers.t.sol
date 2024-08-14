@@ -128,7 +128,7 @@ contract StateTransfersTest is SymmetricTestSetup {
         ethLightClient.setBridgeRoot(state);
         state.state.epoch = 2;
 
-        bytes32 root = SharedStructs.getBridgeRoot(state.state.epoch, state.state_hashes);
+        SharedStructs.getBridgeRoot(state.state.epoch, state.state_hashes);
 
         vm.expectRevert(abi.encodeWithSelector(NotSuccessiveEpochs.selector, 0, 2));
         ethBridge.applyState(state);

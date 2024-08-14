@@ -61,6 +61,7 @@ contract SymmetricTestSetup is Test {
             )
         );
         taraBridge = TaraBridge(payable(taraBridgeProxy));
+        taraBridge.setGasPriceLimit(13 gwei);
         address ethBridgeProxy = Upgrades.deployUUPSProxy(
             "EthBridge.sol",
             abi.encodeCall(
@@ -76,6 +77,7 @@ contract SymmetricTestSetup is Test {
             )
         );
         ethBridge = EthBridge(payable(ethBridgeProxy));
+        ethBridge.setGasPriceLimit(13 gwei);
 
         // Set Up TARA side of the bridge
         address taraConnectorProxy = Upgrades.deployUUPSProxy(
