@@ -1,0 +1,18 @@
+{
+  "usdtdeploy-1725364455": {
+    "RPC_ETH": "https://mainnet.infura.io",
+    "RPC_TARA": "https://rpc.mainnet.taraxa.io",
+    "USDT": {
+      "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      "syntheticAddress": "0x81d87E0a53EAf3723Ecc5B57AB11cC04639c9dEa"
+    },
+    "USDT_CONNECTOR_ETH": {
+      "implAddress": "0x365b19127425552cafEb1Dd94C7dC1D0FC6e9517",
+      "proxyAddress": "0x5df28f560AA911B40C316EDad78F9ad378f8aF46"
+    },
+    "USDT_CONNECTOR_TARA": {
+      "implAddress": "0x2b51B4Fed62703b056A78341042AF9CA2E3Dd28b",
+      "proxyAddress": "0x386331BEF4551b476B2c803B13373193B004289E"
+    }
+  }
+}

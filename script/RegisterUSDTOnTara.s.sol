@@ -11,11 +11,11 @@ import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol
 import {TaraBridge} from "../src/tara/TaraBridge.sol";
 import {IBridgeConnector} from "../src/connectors/IBridgeConnector.sol";
 
-contract RegisterDogeOnTara is Script {
+contract RegisterUSDTOnTara is Script {
     address public deployerAddress;
     TaraBridge public taraBridge;
-    address public dogeAddressOnTara;
-    address public dogeAddressOnEth;
+    address public usdtAddressOnTara;
+    address public usdtAddressOnEth;
     uint256 public deployerPrivateKey;
     uint256 public finalizationInterval = 100;
 
@@ -32,37 +32,37 @@ contract RegisterDogeOnTara is Script {
         address payable taraBridgeAddress = payable(vm.envAddress("TARA_BRIDGE_ADDRESS"));
         console.log("TARA_BRIDGE_ADDRESS: %s", taraBridgeAddress);
         taraBridge = TaraBridge(taraBridgeAddress);
-        dogeAddressOnEth = vm.envAddress("DOGE_ON_ETH");
-        console.log("DOGE_ON_ETH: %s", dogeAddressOnEth);
-        dogeAddressOnTara = vm.envAddress("DOGE_ON_TARA");
-        console.log("DOGE_ON_TARA: %s", dogeAddressOnTara);
+        usdtAddressOnEth = vm.envAddress("USDT_ON_ETH");
+        console.log("USDT_ON_ETH: %s", usdtAddressOnEth);
+        usdtAddressOnTara = vm.envAddress("USDT_ON_TARA");
+        console.log("USDT_ON_TARA: %s", usdtAddressOnTara);
     }
 
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
 
-        TestERC20 dogeToken = TestERC20(dogeAddressOnTara);
+        TestERC20 usdtToken = TestERC20(usdtAddressOnTara);
         // Deploy ERC20MintingConnector on TARA
-        address dogeMintingConnectorProxy = Upgrades.deployUUPSProxy(
+        address usdtMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",
-            abi.encodeCall(ERC20MintingConnector.initialize, (taraBridge, dogeToken, dogeAddressOnEth))
+            abi.encodeCall(ERC20MintingConnector.initialize, (taraBridge, usdtToken, usdtAddressOnEth))
         );
 
         // Transfer token ownership to the MintingConnector
-        dogeToken.transferOwnership(dogeMintingConnectorProxy);
-        console.log("ERC20MintingConnector.sol proxy address: %s", dogeMintingConnectorProxy);
+        usdtToken.transferOwnership(usdtMintingConnectorProxy);
+        console.log("ERC20MintingConnector.sol proxy address: %s", usdtMintingConnectorProxy);
         console.log(
             "ERC20MintingConnector.sol implementation address: %s",
-            Upgrades.getImplementationAddress(dogeMintingConnectorProxy)
+            Upgrades.getImplementationAddress(usdtMintingConnectorProxy)
         );
 
         // Fund the MintingConnector with  ETH
-        (bool success,) = payable(dogeMintingConnectorProxy).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
+        (bool success,) = payable(usdtMintingConnectorProxy).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success) {
             revert("Failed to fund the MintingConnector");
         }
 
-        taraBridge.registerConnector{value: taraBridge.registrationFee()}(IBridgeConnector(dogeMintingConnectorProxy));
+        taraBridge.registerConnector{value: taraBridge.registrationFee()}(IBridgeConnector(usdtMintingConnectorProxy));
 
         vm.stopBroadcast();
     }
