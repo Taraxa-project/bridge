@@ -184,7 +184,6 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
 
         address srcContract = connector.getSourceContract();
         address dstContract = connector.getDestinationContract();
-
         if (srcContract == address(0)) {
             revert ZeroAddressCannotBeRegistered();
         }
@@ -201,6 +200,27 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         localAddress[dstContract] = srcContract;
         tokenAddresses.push(srcContract);
         emit ConnectorRegistered(address(connector), srcContract, dstContract);
+    }
+
+    function removeTokenAddress(address tokenAddress) internal {
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            if (tokenAddresses[i] == tokenAddress) {
+                // replace removed element with last element
+                if (i != tokenAddresses.length - 1) {
+                    tokenAddresses[i] = tokenAddresses[tokenAddresses.length - 1];
+                }
+                // Remove the last element
+                tokenAddresses.pop();
+                break;
+            }
+        }
+    }
+
+    function delistConnector(IBridgeConnector connector) internal {
+        delete connectors[connector.getSourceContract()];
+        delete localAddress[connector.getDestinationContract()];
+        removeTokenAddress(connector.getSourceContract());
+        emit ConnectorDelisted(address(connector), finalizedEpoch);
     }
 
     /**
@@ -287,27 +307,25 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
         SharedStructs.ContractStateHash[] memory hashes = new SharedStructs.ContractStateHash[](tokenAddresses.length);
 
         uint256 finalizedIndex = 0;
-        for (uint256 i = 0; i < tokenAddresses.length;) {
-            IBridgeConnector c = connectors[tokenAddresses[i]];
+        for (uint256 idx = 0; idx < tokenAddresses.length;) {
+            IBridgeConnector c = connectors[tokenAddresses[idx]];
             uint256 stateLength = c.getStateLength();
             // check if the connector has settlement fee * stateLength
             if (address(c).balance < settlementFee * stateLength) {
-                delete connectors[tokenAddresses[i]];
-                emit ConnectorDelisted(address(c), finalizedEpoch);
-                unchecked {
-                    ++i;
-                }
+                delistConnector(c);
+                // idx don't need to be incremented because
+                // during the delist last rokenAddress is put to the position of the delisted one
                 continue;
             }
             bool isStateEmpty = c.isStateEmpty();
             bytes32 finalizedHash = c.finalize(finalizedEpoch);
             if (isStateEmpty) {
-                ++i;
+                ++idx;
                 continue;
             }
-            hashes[finalizedIndex] = SharedStructs.ContractStateHash(tokenAddresses[i], finalizedHash);
+            hashes[finalizedIndex] = SharedStructs.ContractStateHash(tokenAddresses[idx], finalizedHash);
             unchecked {
-                ++i;
+                ++idx;
                 ++finalizedIndex;
             }
         }
