@@ -5,16 +5,16 @@ import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
 import {Constants} from "../src/lib/Constants.sol";
-import {BridgeDoge} from "../src/lib/BridgeDoge.sol";
+import {BridgeUSDT} from "../src/lib/BridgeUSDT.sol";
 import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
 import {EthBridge} from "../src/eth/EthBridge.sol";
 import {IBridgeConnector} from "../src/connectors/IBridgeConnector.sol";
 
-contract RegisterDogeOnEth is Script {
+contract RegisterUSDTOnEth is Script {
     address public deployerAddress;
     EthBridge public ethBridge;
-    address public dogeAddressOnTara;
-    address public dogeAddressOnEth;
+    address public usdtAddressOnTara;
+    address public usdtAddressOnEth;
     uint256 public deployerPrivateKey;
 
     function setUp() public {
@@ -30,43 +30,36 @@ contract RegisterDogeOnEth is Script {
         address payable ethBridgeAddress = payable(vm.envAddress("ETH_BRIDGE_ADDRESS"));
         console.log("ETH_BRIDGE_ADDRESS: %s", ethBridgeAddress);
         ethBridge = EthBridge(ethBridgeAddress);
-        dogeAddressOnEth = vm.envAddress("DOGE_ON_ETH");
-        console.log("DOGE_ON_ETH: %s", dogeAddressOnEth);
-        dogeAddressOnTara = vm.envAddress("DOGE_ON_TARA");
-        console.log("DOGE_ON_TARA: %s", dogeAddressOnTara);
+        usdtAddressOnEth = vm.envAddress("USDT_ON_ETH");
+        console.log("USDT_ON_ETH: %s", usdtAddressOnEth);
+        usdtAddressOnTara = vm.envAddress("USDT_ON_TARA");
+        console.log("USDT_ON_TARA: %s", usdtAddressOnTara);
     }
 
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
 
-        BridgeDoge doge = BridgeDoge(dogeAddressOnEth);
-
-        //check deployer's balance
-        uint256 balance = doge.balanceOf(deployerAddress);
-        console.log("Deployer's balance: %s", balance);
-        if (balance != 100000000 * 10 ** doge.decimals()) {
-            revert("Deployer's balance is less than 100000000 DOGE");
-        }
+        BridgeUSDT usdt = BridgeUSDT(usdtAddressOnEth);
 
         // Deploy ERC20LockingConnector on ETH
-        address dogeLockingConnectorProxy = Upgrades.deployUUPSProxy(
+        address usdtLockingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20LockingConnector.sol",
-            abi.encodeCall(ERC20LockingConnector.initialize, (ethBridge, doge, dogeAddressOnTara))
+            abi.encodeCall(ERC20LockingConnector.initialize, (ethBridge, usdt, usdtAddressOnTara))
         );
 
-        console.log("ERC20LockingConnector.sol proxy address: %s", dogeLockingConnectorProxy);
+        console.log("ERC20LockingConnector.sol proxy address: %s", usdtLockingConnectorProxy);
         console.log(
             "ERC20LockingConnector.sol implementation address: %s",
-            Upgrades.getImplementationAddress(dogeLockingConnectorProxy)
+            Upgrades.getImplementationAddress(usdtLockingConnectorProxy)
         );
 
         // Fund the LockingConnector with  ETH
-        (bool success,) = payable(dogeLockingConnectorProxy).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
+        (bool success,) = payable(usdtLockingConnectorProxy).call{value: Constants.MINIMUM_CONNECTOR_DEPOSIT}("");
         if (!success) {
             revert("Failed to fund the LockingConnector");
         }
 
-        ethBridge.registerConnector{value: ethBridge.registrationFee()}(IBridgeConnector(dogeLockingConnectorProxy));
+        ethBridge.registerConnector{value: ethBridge.registrationFee()}(IBridgeConnector(usdtLockingConnectorProxy));
 
         vm.stopBroadcast();
     }
