@@ -64,9 +64,9 @@ abstract contract TokenConnectorLogic is IBridgeConnector {
         if (state.epoch() != 0 && epoch_to_finalize != state.epoch()) {
             revert InvalidEpoch({expected: state.epoch(), actual: epoch_to_finalize});
         }
+        state.setEpoch(epoch_to_finalize + 1);
 
         Transfer[] memory transfers = state.getTransfers();
-        state.increaseEpoch();
         // if no transfers was made, then the finalized state should be empty
         if (transfers.length == 0) {
             finalizedState = new bytes(0);
