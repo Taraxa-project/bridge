@@ -149,6 +149,19 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
+     * @dev Changes the connector owner.
+     * @param connector_address The connector address.
+     * @param newOwner The new owner address.
+     * @notice Only the owner can call this function.
+     */
+    function setConnectorOwner(
+        address connector_address,
+        address newOwner
+    ) public onlyOwner {
+        OwnableUpgradeable(connector_address).transferOwnership(newOwner);
+    }
+
+    /**
      * @return An array of addresses of the registered tokens.
      */
     function registeredTokens() public view returns (address[] memory) {
