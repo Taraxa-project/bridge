@@ -5,7 +5,7 @@ import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
 import {Constants} from "../src/lib/Constants.sol";
-import {TestERC20} from "../src/lib/TestERC20.sol";
+import {USDT} from "../src/lib/USDT.sol";
 import {ERC20LockingConnector} from "../src/connectors/ERC20LockingConnector.sol";
 import {ERC20MintingConnector} from "../src/connectors/ERC20MintingConnector.sol";
 import {TaraBridge} from "../src/tara/TaraBridge.sol";
@@ -41,7 +41,7 @@ contract RegisterUSDTOnTara is Script {
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
 
-        TestERC20 usdtToken = TestERC20(usdtAddressOnTara);
+        USDT usdtToken = USDT(usdtAddressOnTara);
         // Deploy ERC20MintingConnector on TARA
         address usdtMintingConnectorProxy = Upgrades.deployUUPSProxy(
             "ERC20MintingConnector.sol",

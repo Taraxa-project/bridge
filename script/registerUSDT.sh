@@ -23,7 +23,7 @@ if [ ! -z "$USDT_ON_ETH" ]; then
   usdtAddressOnEth=$USDT_ON_ETH
 else
 
-  usdtDeploy=$(forge create src/lib/BridgeUSDT.sol:BridgeUSDT --legacy --rpc-url=$ETHEREUM_RPC --private-key=$PRIVATE_KEY | tee /dev/tty)
+  usdtDeploy=$(forge create src/lib/BridgeUSDT.sol:BridgeUSDT --rpc-url=$ETHEREUM_RPC --private-key=$PRIVATE_KEY | tee /dev/tty)
 
   if [ $? -ne 0 ]; then
     echo "Error Deploying USDT on $ETHEREUM_RPC"
@@ -45,7 +45,7 @@ if [ ! -z "$USDT_ON_TARA" ]; then
   usdtSyntheticAddressOnTara=$USDT_ON_TARA
 else
 
-  usdtSyntheticDeploy=$(forge create src/lib/TestERC20.sol:TestERC20 --legacy --rpc-url=$TARAXA_RPC --private-key=$PRIVATE_KEY --constructor-args "Tether USD" "USDT" | tee /dev/tty)
+  usdtSyntheticDeploy=$(forge create src/lib/USDT.sol:USDT --legacy --rpc-url=$TARAXA_RPC --private-key=$PRIVATE_KEY | tee /dev/tty)
 
   if [ $? -ne 0 ]; then
     echo "Error Deploying USDT synthetic token on $TARAXA_RPC"

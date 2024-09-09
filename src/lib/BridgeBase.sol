@@ -162,6 +162,28 @@ abstract contract BridgeBase is Receiver, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
+     * @dev Removes a connector from the bridge.
+     * @param connector_address The connector address.
+     * @notice Only the owner can call this function.
+     */
+    function removeConnector(address connector_address) public onlyOwner {
+        delistConnector(IBridgeConnector(connector_address));
+    }
+
+    /**
+     * @dev Withdraws the funds from the contract.
+     * @notice Only the owner can call this function.
+     */
+    function withdrawFunds() public onlyOwner {
+        (bool success, ) = payable(msg.sender).call{
+            value: address(this).balance
+        }("");
+        if (!success) {
+            revert TransferFailed(msg.sender, address(this).balance);
+        }
+    }
+
+    /**
      * @return An array of addresses of the registered tokens.
      */
     function registeredTokens() public view returns (address[] memory) {

@@ -7,4 +7,8 @@ contract BridgeUSDT is ERC20 {
     constructor() ERC20("BridgeUSDT", "USDT") {
         _mint(msg.sender, 100000000 * 10 ** decimals());
     }
+
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
 }
