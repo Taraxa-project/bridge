@@ -1,0 +1,18 @@
+{
+  "usdtdeploy-1733415777": {
+    "RPC_ETH": "https://holesky.infura.io/v3/f9ff70ed52a54593827ab62a291fdc01",
+    "RPC_TARA": "https://rpc.testnet.taraxa.io",
+    "USDT": {
+      "address": "0x6698C8557e6F85f05222574Ee132ff2b6224d8D8",
+      "syntheticAddress": "0x331214a6bc3ae31d76d49c44e933630dae2aec4e"
+    },
+    "USDT_CONNECTOR_ETH": {
+      "implAddress": "0x1037125900dc64A016226C9ada7711cE527b690d",
+      "proxyAddress": "0x6C22FDae5Cb30ae825e4556F3a0107f088289859"
+    },
+    "USDT_CONNECTOR_TARA": {
+      "implAddress": "0xd3EAF83f1984308633E1bB26a8DA49bA0658e587",
+      "proxyAddress": "0xFEBFE005CfeBC59590C7f22b61C13a296AF01f49"
+    }
+  }
+}

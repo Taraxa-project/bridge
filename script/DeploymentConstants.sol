@@ -3,7 +3,7 @@
 pragma solidity ^0.8.17;
 
 library EthDeployConstants {
-    uint256 constant PILLAR_BLOCK_INTERVAL = 4000;
+    uint256 constant PILLAR_BLOCK_INTERVAL = 1000;
     uint256 constant FINALIZATION_INTERVAL = 80;
     uint256 constant FEE_MULTIPLIER_FINALIZE = 105;
     uint256 constant FEE_MULTIPLIER_APPLY = 205;
