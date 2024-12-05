@@ -33,8 +33,8 @@ contract TokenState is Ownable {
         return accounts.length;
     }
 
-    function increaseEpoch() public onlyOwner {
-        epoch = epoch + 1;
+    function setEpoch(uint256 _epoch) public onlyOwner {
+        epoch = _epoch;
     }
 
     function addAmount(address account, uint256 amount) public onlyOwner {
