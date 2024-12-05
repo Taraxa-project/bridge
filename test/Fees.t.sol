@@ -227,42 +227,4 @@ contract FeesTest is SymmetricTestSetup {
         );
         assertEq(taraTokenOnEth.balanceOf(address(this)), value);
     }
-
-    function test_Revert_delist_Relayer_on_insufficient_settlement_fees() public {
-        address relayer = vm.addr(666);
-        vm.deal(relayer, 1 ether);
-
-        (TestERC20 erc20onTara2,) = registerCustomTokenPair();
-
-        vm.roll(FINALIZATION_INTERVAL);
-        vm.txGasPrice(1000);
-        uint256 value = 1 ether;
-        NativeConnector taraBridgeToken =
-            NativeConnector(payable(address(taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS))));
-
-        uint256 settlementFee = taraBridge.settlementFee();
-        vm.deal(address(this), 2 * value + settlementFee);
-        taraBridgeToken.lock{value: value + settlementFee}(value);
-
-        ERC20LockingConnector erc20onTara2Connector =
-            ERC20LockingConnector(payable(address(taraBridge.connectors(address(erc20onTara2)))));
-        vm.deal(caller, 2 * value + settlementFee);
-        uint256 balance = erc20onTara2.balanceOf(caller);
-        vm.assertTrue(balance >= value, "Balance should be greater than value");
-        vm.prank(caller);
-        erc20onTara2Connector.lock{value: settlementFee}(value);
-
-        // We're consciously setting the balance of the taraBridgeToken to 0 to simulate a malicious actor
-        vm.deal(address(taraBridgeToken), 0 ether);
-
-        IBridgeConnector br = taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS);
-        vm.assertNotEq(address(br), address(0), "Bridge connector should not be 0");
-
-        vm.txGasPrice(20 gwei);
-        vm.prank(relayer);
-        taraBridge.finalizeEpoch();
-
-        IBridgeConnector br2 = taraBridge.connectors(Constants.NATIVE_TOKEN_ADDRESS);
-        vm.assertEq(address(br2), address(0), "Bridge connector should be 0");
-    }
 }

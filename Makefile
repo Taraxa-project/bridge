@@ -37,5 +37,8 @@ add-deployment-metadata :; bash ./script/addToDeployMarkdown.sh
 
 register-usdt :; bash ./script/registerUSDT.sh
 
+eth-bridge-upgrade :; bash ./script/ethBridgeUpgrade.sh
+tara-bridge-upgrade :; bash ./script/taraBridgeUpgrade.sh
+
 -include ${FCT_PLUGIN_PATH}/makefile-external
 

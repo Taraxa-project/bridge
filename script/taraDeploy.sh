@@ -29,8 +29,8 @@ pip3 install -r requirements.txt
 
 echo "RPC: $TARAXA_RPC"
 # Check if the RPC_URL and PRIVATE_KEY are set
-if [ -z "$TARAXA_RPC" ] || [ -z "$PRIVATE_KEY" ] || [ -z "$ETH_BRIDGE_ADDRESS" ] || [ -z "$TARA_CLIENT" ]; then
-  echo "Please set the TARAXA_RPC, ETH_BRIDGE_ADDRESS, TARA_CLIENT and PRIVATE_KEY in the .env file"
+if [ -z "$TARAXA_RPC" ] || [ -z "$PRIVATE_KEY" ] || [ -z "$ETH_BRIDGE_ADDRESS" ]; then
+  echo "Please set the TARAXA_RPC, ETH_BRIDGE_ADDRESS and PRIVATE_KEY in the .env file"
   exit 1
 fi
 
