@@ -78,7 +78,9 @@ contract EthClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
         bytes memory br = StorageProof.verify(stateRoot, ethBridgeAddress, account_proof, bridgeRootKey, storage_proof);
         bytes32 br32 = bytes32(br);
         if (br.length != 32) {
-            revert InvalidBridgeRoot(br32);
+            // it is possible that the bridge root is smaller than 32 bytes, so offset the value
+            uint256 offset = 32 - br.length;
+            br32 >>= offset * 8;
         }
 
         lastEpoch = epoch;
