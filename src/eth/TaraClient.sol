@@ -87,7 +87,6 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
      */
     function finalizeBlocks(PillarBlock.WithChanges[] memory blocks, CompactSignature[] memory lastBlockSigs) public {
         uint256 blocksLength = blocks.length;
-        uint256 weightThreshold = totalWeight / 2 + 1;
         for (uint256 i = 0; i < blocksLength;) {
             bytes32 pbh = PillarBlock.getHash(blocks[i]);
             if (blocks[i].block.prevHash != finalized.blockHash) {
@@ -108,6 +107,7 @@ contract TaraClient is IBridgeLightClient, OwnableUpgradeable, UUPSUpgradeable {
             processValidatorChanges(blocks[i].validatorChanges);
             // skip verification for the first(genesis) block. And verify signatures only for the last block in the batch
             if (finalized.block.period != 0 && i == (blocks.length - 1)) {
+                uint256 weightThreshold = totalWeight / 2 + 1;
                 uint256 weight =
                     getSignaturesWeight(PillarBlock.getVoteHash(blocks[i].block.period + 1, pbh), lastBlockSigs);
                 if (weight < weightThreshold) {
